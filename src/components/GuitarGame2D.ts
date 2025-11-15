@@ -127,7 +127,7 @@ export default class GuitarGame2D extends Phaser.Scene {
       delete this.chordNotes[string];
 
       // ตรวจสอบว่าเหลือสายที่ต้องกด (fret > 0) หรือไม่
-      const remaining = Object.entries(this.chordNotes).filter(([s, f]) => f > 0);
+      const remaining = Object.entries(this.chordNotes).filter(([, f]) => f > 0);
 
       if (remaining.length === 0) {
         // ถ้าไม่มีสายที่ต้องกด → เปลี่ยนคอร์ด
