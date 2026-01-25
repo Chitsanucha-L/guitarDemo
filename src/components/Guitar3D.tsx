@@ -27,12 +27,32 @@ const chords: Record<string, Record<Note, { fret: number; finger?: Finger }>> = 
 };
 
 const meshToNote: Record<string, Note> = {
-  String_E: "E6",
-  String_A: "A",
-  String_D: "D",
-  String_G: "G",
-  String_B: "B",
-  String_e: "e1",
+  String_6_0: "E6",
+  String_5_0: "A",
+  String_4_0: "D",
+  String_3_0: "G",
+  String_2_0: "B",
+  String_1_0: "e1",
+};
+
+// แปลงจาก string number + fret เป็นชื่อโน้ต
+const getNoteName = (stringNum: number, fret: number): string => {
+  const notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+  // Open string notes (MIDI note numbers)
+  const openNotes: Record<number, number> = {
+    1: 64, // E4
+    2: 59, // B3
+    3: 55, // G3
+    4: 50, // D3
+    5: 45, // A2
+    6: 40, // E2
+  };
+  
+  const midiNote = openNotes[stringNum] + fret;
+  const octave = Math.floor((midiNote - 12) / 12);
+  const noteName = notes[midiNote % 12];
+  
+  return `${noteName}${octave}`;
 };
 
 const fingerNames: Record<Finger, string> = {
@@ -44,6 +64,7 @@ const fingerNames: Record<Finger, string> = {
 export default function Guitar3D() {
   const [highlightChord, setHighlightChord] = useState<Record<Note, { fret: number; finger?: Finger }> | null>(null);
   const [isHoldingPick, setIsHoldingPick] = useState(false);
+  const [currentNote, setCurrentNote] = useState<string>("");
 
   return (
     <div className="w-full max-w-screen h-screen relative overflow-hidden bg-[#1a1a1a]">
@@ -77,6 +98,14 @@ export default function Guitar3D() {
         </button>
       </div>
 
+      {/* ✅ แสดงโน้ตที่กำลังเล่น */}
+      {currentNote && (
+        <div className="absolute top-5 right-5 z-10 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg shadow-xl">
+          <div className="text-sm opacity-80">กำลังเล่น:</div>
+          <div className="text-3xl font-bold">{currentNote}</div>
+        </div>
+      )}
+
       {/* ✅ Legend อธิบายสีแต่ละนิ้ว */}
       {highlightChord && (
         <div className="absolute bottom-5 left-5 z-10 bg-black bg-opacity-60 text-white p-3 rounded">
@@ -97,7 +126,7 @@ export default function Guitar3D() {
         <Environment preset="apartment" />
         <ambientLight intensity={0.6} />
         <directionalLight position={[5, 10, 5]} intensity={1} castShadow />
-        <GuitarModel highlightChord={highlightChord} canPlay={isHoldingPick} />
+        <GuitarModel highlightChord={highlightChord} canPlay={isHoldingPick} onNotePlay={setCurrentNote} />
         <OrbitControls enableDamping enableRotate={!isHoldingPick} />
       </Canvas>
     </div>
@@ -105,48 +134,64 @@ export default function Guitar3D() {
 }
 
 
-function GuitarModel({ highlightChord, canPlay }: { highlightChord: Record<Note, { fret: number; finger?: Finger }> | null; canPlay: boolean }) {
+function GuitarModel({ 
+  highlightChord, 
+  canPlay, 
+  onNotePlay 
+}: { 
+  highlightChord: Record<Note, { fret: number; finger?: Finger }> | null; 
+  canPlay: boolean;
+  onNotePlay: (note: string) => void;
+}) {
   const { scene } = useGLTF("/models/guitar.glb") as any;
   const audioContext = useMemo(() => new (window.AudioContext || (window as any).webkitAudioContext)(), []);
-  const sounds = useMemo<{ [key in Note]?: AudioBuffer }>(() => ({}), []);
+  const sounds = useMemo<{ [key: string]: AudioBuffer }>(() => ({}), []);
   const volume = 0.3;
 
-  const raycaster = useMemo(() => new THREE.Raycaster(), []);
   const stringMeshes = useRef<THREE.Mesh[]>([]);
-  const prevPointer = useRef<THREE.Vector3 | null>(null);
-  const lastPlayed = useRef<{ note: Note; time: number } | null>(null);
+  const lastPlayed = useRef<{ meshName: string; time: number } | null>(null);
 
-  // โหลดเสียง
+  // โหลดเสียงทุกไฟล์
   useEffect(() => {
-    const soundFiles: Record<Note, string> = {
-      E6: "/sounds/E6.mp3",
-      A: "/sounds/A.mp3",
-      D: "/sounds/D.mp3",
-      G: "/sounds/G.mp3",
-      B: "/sounds/B.mp3",
-      e1: "/sounds/e1.mp3",
-    };
     async function loadSounds() {
-      for (const note of Object.keys(soundFiles) as Note[]) {
-        try {
-          const res = await fetch(soundFiles[note]);
-          const buf = await res.arrayBuffer();
-          sounds[note] = await audioContext.decodeAudioData(buf);
-        } catch (err) {
-          console.warn(`Cannot load ${note}`, err);
+      // โหลดเสียงทุกสาย (1-6) ทุก fret (0-20)
+      for (let stringNum = 1; stringNum <= 6; stringNum++) {
+        for (let fret = 0; fret <= 20; fret++) {
+          const meshName = `String_${stringNum}_${fret}`;
+          try {
+            const res = await fetch(`/sounds/${meshName}.mp3`);
+            const buf = await res.arrayBuffer();
+            sounds[meshName] = await audioContext.decodeAudioData(buf);
+          } catch (err) {
+            console.warn(`Cannot load ${meshName}`, err);
+          }
         }
       }
     }
     loadSounds();
   }, [audioContext, sounds]);
 
-  // assign note ให้ mesh
+  // assign metadata ให้ mesh ทุกสายทุก fret
   useEffect(() => {
     const meshes: THREE.Mesh[] = [];
     scene.traverse((child: THREE.Object3D) => {
-      if ((child as THREE.Mesh).isMesh && meshToNote[child.name]) {
-        (child as any).userData.note = meshToNote[child.name];
-        meshes.push(child as THREE.Mesh);
+      if ((child as THREE.Mesh).isMesh) {
+        // ตรวจสอบว่าชื่อ mesh เป็นรูปแบบ String_X_Y หรือไม่
+        const match = child.name.match(/^String_(\d+)_(\d+)$/);
+        if (match) {
+          const stringNum = parseInt(match[1]);
+          const fret = parseInt(match[2]);
+          (child as any).userData.stringNum = stringNum;
+          (child as any).userData.fret = fret;
+          (child as any).userData.meshName = child.name;
+          
+          // assign note สำหรับ open strings (fret 0) เพื่อใช้กับ chord highlighting
+          if (meshToNote[child.name]) {
+            (child as any).userData.note = meshToNote[child.name];
+          }
+          
+          meshes.push(child as THREE.Mesh);
+        }
       }
     });
     stringMeshes.current = meshes;
@@ -200,15 +245,15 @@ function GuitarModel({ highlightChord, canPlay }: { highlightChord: Record<Note,
     scene.add(markerGroup);
   }, [highlightChord, scene]);
 
-  const playSound = (note: Note) => {
+  const playSound = (meshName: string, stringNum: number, fret: number) => {
     if (audioContext.state === "suspended") audioContext.resume();
 
-    // กันกดซ้ำสายเดียวกันเร็วเกิน 250ms
+    // กันกดซ้ำเร็วเกิน 250ms
     const now = performance.now();
-    if (lastPlayed.current?.note === note && now - lastPlayed.current.time < 250) return;
-    lastPlayed.current = { note, time: now };
+    if (lastPlayed.current?.meshName === meshName && now - lastPlayed.current.time < 250) return;
+    lastPlayed.current = { meshName, time: now };
 
-    const buf = sounds[note];
+    const buf = sounds[meshName];
     if (!buf) return; // ถ้าโหลดเสียงไม่ทัน ให้เงียบไปเลย
 
     const src = audioContext.createBufferSource();
@@ -218,36 +263,34 @@ function GuitarModel({ highlightChord, canPlay }: { highlightChord: Record<Note,
     src.connect(gainNode);
     gainNode.connect(audioContext.destination);
     src.start();
+
+    console.log(meshName, stringNum, fret);
+
+    // แสดงชื่อโน้ตบนหน้าจอ
+    const noteName = getNoteName(stringNum, fret);
+    onNotePlay(noteName);
+    
+    // ซ่อนชื่อโน้ตหลังจาก 1 วินาที
+    setTimeout(() => onNotePlay(""), 1000);
   };
 
-  // Raycaster + interpolation
-  const handlePointerMove = (e: any) => {
-    if (!canPlay || !prevPointer.current) return;
-    const currentPointer = e.point.clone();
-    const samples = 5;
-    for (let i = 0; i <= samples; i++) {
-      const t = i / samples;
-      const interp = new THREE.Vector3().lerpVectors(prevPointer.current, currentPointer, t);
-      raycaster.set(interp, new THREE.Vector3(0, 0, -1));
-      const intersects = raycaster.intersectObjects(stringMeshes.current);
-      if (intersects.length) {
-        const note: Note = intersects[0].object.userData.note;
-        if (note) playSound(note);
+  // คลิกบนสายเพื่อเล่นเสียง
+  const handleClick = (e: any) => {
+    if (!canPlay) return;
+    
+    // ตรวจสอบว่าคลิกโดนสายหรือไม่
+    if (e.object && e.object.userData) {
+      const userData = e.object.userData;
+      if (userData.meshName && userData.stringNum && userData.fret !== undefined) {
+        playSound(userData.meshName, userData.stringNum, userData.fret);
       }
     }
-    prevPointer.current = currentPointer;
   };
 
   return (
     <primitive
       object={scene}
-      onPointerDown={(e: any) => {
-        if (!canPlay) return;
-        prevPointer.current = e.point.clone();
-        handlePointerMove(e); // เล่นทันที
-      }}
-      onPointerMove={handlePointerMove}
-      onPointerUp={() => { prevPointer.current = null; }}
+      onClick={handleClick}
     />
   );
 }
