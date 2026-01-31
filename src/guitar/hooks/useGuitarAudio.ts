@@ -73,7 +73,7 @@ export function useGuitarAudio(
     }
 
     // ตั้ง timeout ใหม่สำหรับซ่อนชื่อโน้ตหลังจาก 2 วินาที
-    noteDisplayTimeout.current = setTimeout(() => {
+    noteDisplayTimeout.current = window.setTimeout(() => {
       onNotePlay("");
       noteDisplayTimeout.current = null;
     }, 2000);
