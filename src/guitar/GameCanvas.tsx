@@ -22,7 +22,7 @@ function FixedCamera() {
    * worldHeight = สิ่งที่คุณอยากเห็น “สูงเท่าเดิมเสมอ”
    * ปรับค่านี้ครั้งเดียว → ทุกจอเหมือนกัน
    */
-  const worldHeight = 1.45;
+  const worldHeight = 1.9;
 
   return (
     <OrthographicCamera
