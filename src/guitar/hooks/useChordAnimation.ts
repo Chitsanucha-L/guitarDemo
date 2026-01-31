@@ -217,7 +217,6 @@ export function useChordAnimation(
   previousChord: ChordData | null,
   stringMeshMap: React.MutableRefObject<Record<Note, THREE.Object3D>>,
   fretMeshMap: React.MutableRefObject<Record<number, THREE.Object3D>>,
-  modelPosition: [number, number, number] = [0.12, 0, -0.06],
 ) {
   const animationIdRef = useRef<number>(0);
 
@@ -309,10 +308,6 @@ export function useChordAnimation(
 
       const markerGroup = new THREE.Group();
       markerGroup.name = "HighlightMarkers";
-
-      // Position offset ที่ตรงกับ primitive position
-      // คำนวณ offset จาก position ที่ได้รับมา (ใช้ค่าตรงข้าม)
-      const modelOffset = new THREE.Vector3(-modelPosition[0], -modelPosition[1], -modelPosition[2]);
 
       // รวบรวมข้อมูลทุกตำแหน่งก่อน (ใช้ cached references แทน scene.traverse)
       const positions: Array<{
