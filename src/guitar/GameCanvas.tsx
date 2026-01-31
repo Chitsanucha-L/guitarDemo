@@ -22,7 +22,7 @@ function FixedCamera() {
    * worldHeight = สิ่งที่คุณอยากเห็น “สูงเท่าเดิมเสมอ”
    * ปรับค่านี้ครั้งเดียว → ทุกจอเหมือนกัน
    */
-  const worldHeight = 1.9;
+  const worldHeight = 1.25;
 
   return (
     <OrthographicCamera
@@ -56,7 +56,7 @@ function GameCanvas({ currentChord, canPlay, onStringPress }: GameCanvasProps) {
         <directionalLight position={[5, 10, 5]} intensity={1} />
 
         <GuitarModel
-          position={[-0.3, 0, 0]}
+          position={[-0.8, 0, 0]}
           rotation={[Math.PI / 2, -Math.PI / 2 + 0.01, 0]}
           highlightChord={currentChord}
           previousChord={previousChordRef.current}
