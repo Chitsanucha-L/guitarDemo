@@ -1,6 +1,6 @@
 // src/pages/HomePage.tsx
 import { Link } from "react-router-dom";
-import Guitar3D from "../components/Guitar3D";
+import Guitar3D from "../guitar/Guitar3D";
 
 export default function HomePage() {
   return (

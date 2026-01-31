@@ -4,3 +4,13 @@
 body {
   font-family: "Noto Sans Thai", sans-serif;
 }
+
+@keyframes shake {
+  0%, 100% { transform: translate(-50%, -50%) translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translate(-50%, -50%) translateX(-10px); }
+  20%, 40%, 60%, 80% { transform: translate(-50%, -50%) translateX(10px); }
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
