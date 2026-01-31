@@ -40,7 +40,7 @@ export default function GuitarModel({
     onStringPress
   );
 
-  useChordAnimation(scene, highlightChord, previousChord, stringMeshMap, fretMeshMap, position, scale);
+  useChordAnimation(scene, highlightChord, previousChord, stringMeshMap, fretMeshMap, position);
 
   return (
     <group 

@@ -218,7 +218,6 @@ export function useChordAnimation(
   stringMeshMap: React.MutableRefObject<Record<Note, THREE.Object3D>>,
   fretMeshMap: React.MutableRefObject<Record<number, THREE.Object3D>>,
   modelPosition: [number, number, number] = [0.12, 0, -0.06],
-  modelScale: number = 1
 ) {
   const animationIdRef = useRef<number>(0);
 
