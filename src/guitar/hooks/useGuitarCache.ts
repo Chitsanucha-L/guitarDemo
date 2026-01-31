@@ -13,9 +13,9 @@ export function useGuitarCache(scene: THREE.Group | THREE.Scene) {
     const hitboxGroup = new THREE.Group();
     hitboxGroup.name = "StringHitboxes";
 
-    // ลบ hitbox เก่าถ้ามี
+    //Check if hitboxes already exist
     const oldHitboxes = scene.getObjectByName("StringHitboxes");
-    if (oldHitboxes) scene.remove(oldHitboxes);
+    if (oldHitboxes) return;
 
     // Clear and rebuild caches
     stringMeshMap.current = {} as Record<Note, THREE.Object3D>;
@@ -57,8 +57,6 @@ export function useGuitarCache(scene: THREE.Group | THREE.Scene) {
 
           const hitboxMaterial = new THREE.MeshBasicMaterial({
             visible: false,
-            transparent: true,
-            opacity: 0,
           });
 
           const hitbox = new THREE.Mesh(hitboxGeometry, hitboxMaterial);

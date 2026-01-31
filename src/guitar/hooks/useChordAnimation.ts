@@ -90,7 +90,7 @@ function animateFingerDot(
 
         const elapsed = performance.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
-        
+
         // Ease-out cubic
         const easeOut = 1 - Math.pow(1 - progress, 3);
 
@@ -154,17 +154,17 @@ function animateBarre(
       const material = barreMesh.material as THREE.MeshStandardMaterial;
       const startOpacity = material.opacity;
       const endOpacity = type === "fadeOut" ? 0 : 1;
-      
+
       // Apply scale to the GROUP, not the mesh
       const startScale = barreGroup.scale.clone();
-      
+
       // Barre animates on X axis (width)
       const endScaleX = type === "fadeOut" ? 0.8 : 1;
       const endScale = new THREE.Vector3(endScaleX, startScale.y, startScale.z);
 
       // Configurable slide direction for future fretboard orientation changes
       const barreSlideDirection = -1; // -1 = slide from left, +1 = slide from right
-      
+
       // Slight slide effect on X axis for realism - apply to GROUP
       const startX = barreGroup.position.x;
       const slideAmount = type === "fadeIn" ? 0.01 : 0;
@@ -181,7 +181,7 @@ function animateBarre(
 
         const elapsed = performance.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
-        
+
         // Ease-out cubic
         const easeOut = 1 - Math.pow(1 - progress, 3);
 
@@ -223,7 +223,7 @@ export function useChordAnimation(
 
   useEffect(() => {
     const oldMarkers = scene.getObjectByName("HighlightMarkers");
-    
+
     // Get chord shapes
     const prevShape = getChordShape(previousChord);
     const nextShape = getChordShape(highlightChord);
@@ -249,7 +249,7 @@ export function useChordAnimation(
       // Get old marker elements
       const oldDots: THREE.Mesh[] = [];
       const oldBarres: THREE.Group[] = [];
-      
+
       oldMarkers.children.forEach((child: THREE.Object3D) => {
         // Barres are now wrapped in Groups
         if (child instanceof THREE.Group) {
@@ -268,16 +268,16 @@ export function useChordAnimation(
         await Promise.all(oldDots.map((dot) => animateFingerDot(dot, "fadeOut", currentAnimationId, animationIdRef)));
         renderNewChord();
         animateNewMarkers(false, false, currentAnimationId);
-        
+
       } else if (!prevHasBarre && nextHasBarre) {
         // ====== Normal → Barre ======
         // Phase 1: Release (fade out old dots)
         await Promise.all(oldDots.map((dot) => animateFingerDot(dot, "fadeOut", currentAnimationId, animationIdRef)));
-        
+
         // Phase 2: Place barre chord (barre first, then dots with stagger)
         renderNewChord();
         animateNewMarkers(true, false, currentAnimationId);
-        
+
       } else if (prevHasBarre && !nextHasBarre) {
         // ====== Barre → Normal ======
         // Fade out barre and dots, then fade in new dots with stagger
@@ -285,10 +285,10 @@ export function useChordAnimation(
           ...oldBarres.map((barre) => animateBarre(barre, "fadeOut", currentAnimationId, animationIdRef)),
           ...oldDots.map((dot) => animateFingerDot(dot, "fadeOut", currentAnimationId, animationIdRef)),
         ]);
-        
+
         renderNewChord();
         animateNewMarkers(false, true, currentAnimationId); // Use stagger for normal chords after barre
-        
+
       } else {
         // ====== Barre → Barre ======
         // Fade out old barre, then fade in new barre
@@ -296,7 +296,7 @@ export function useChordAnimation(
           ...oldBarres.map((barre) => animateBarre(barre, "fadeOut", currentAnimationId, animationIdRef)),
           ...oldDots.map((dot) => animateFingerDot(dot, "fadeOut", currentAnimationId, animationIdRef)),
         ]);
-        
+
         renderNewChord();
         animateNewMarkers(true, false, currentAnimationId);
       }
@@ -319,8 +319,8 @@ export function useChordAnimation(
         note: Note;
         fret: number;
         finger?: Finger;
-        stringPos: THREE.Vector3;
-        fretPos: THREE.Vector3;
+        stringLocal: THREE.Vector3;
+        fretLocal: THREE.Vector3;
         xOffset: number;
         yOffset: number;
       }> = [];
@@ -328,7 +328,7 @@ export function useChordAnimation(
       // Iterate through chord notes using cached string mesh references
       Object.entries(highlightChord.notes).forEach(([noteKey, chordNote]) => {
         const note = noteKey as Note;
-        
+
         // Skip open strings
         if (!chordNote || chordNote.fret === 0) return;
 
@@ -340,10 +340,16 @@ export function useChordAnimation(
         const fretMesh = fretMeshMap.current[chordNote.fret];
         if (!fretMesh) return;
 
-        const stringPos = new THREE.Vector3();
-        stringMesh.getWorldPosition(stringPos);
-        const fretPos = new THREE.Vector3();
-        fretMesh.getWorldPosition(fretPos);
+        const stringWorld = new THREE.Vector3();
+        stringMesh.getWorldPosition(stringWorld);
+
+        const fretWorld = new THREE.Vector3();
+        fretMesh.getWorldPosition(fretWorld);
+
+        // 🔑 แปลง world → local (ของ guitar)
+        const stringLocal = scene.worldToLocal(stringWorld.clone());
+        const fretLocal = scene.worldToLocal(fretWorld.clone());
+
 
         let xOffset = 0;
         if (note === "E6") xOffset = 0.02;
@@ -360,8 +366,8 @@ export function useChordAnimation(
           note,
           fret: chordNote.fret,
           finger: chordNote.finger,
-          stringPos,
-          fretPos,
+          stringLocal,
+          fretLocal,
           xOffset,
           yOffset,
         });
@@ -386,12 +392,20 @@ export function useChordAnimation(
 
         if (fromStringMesh && toStringMesh && fretMesh) {
           // Calculate positions for barre endpoints
-          const fromStringPos = new THREE.Vector3();
-          fromStringMesh.getWorldPosition(fromStringPos);
-          const toStringPos = new THREE.Vector3();
-          toStringMesh.getWorldPosition(toStringPos);
-          const fretPos = new THREE.Vector3();
-          fretMesh.getWorldPosition(fretPos);
+          const fromWorld = new THREE.Vector3();
+          fromStringMesh.getWorldPosition(fromWorld);
+
+          const toWorld = new THREE.Vector3();
+          toStringMesh.getWorldPosition(toWorld);
+
+          const fretWorld = new THREE.Vector3();
+          fretMesh.getWorldPosition(fretWorld);
+
+          // 🔑 WORLD → LOCAL (ของ guitar)
+          const fromLocal = scene.worldToLocal(fromWorld.clone());
+          const toLocal = scene.worldToLocal(toWorld.clone());
+          const fretLocal = scene.worldToLocal(fretWorld.clone());
+
 
           // Calculate offsets for each string
           let fromXOffset = 0;
@@ -412,28 +426,32 @@ export function useChordAnimation(
 
           let fromYOffset = -0.008;
           if (fromString === "E6") fromYOffset = -0.002;
-          
+
           let toYOffset = -0.008;
           if (toString === "E6") toYOffset = -0.002;
 
           // Calculate barre dimensions
-          const minX = Math.min(fromStringPos.x + fromXOffset, toStringPos.x + toXOffset);
-          const maxX = Math.max(fromStringPos.x + fromXOffset, toStringPos.x + toXOffset);
+          const minX = Math.min(fromLocal.x + fromXOffset, toLocal.x + toXOffset);
+          const maxX = Math.max(fromLocal.x + fromXOffset, toLocal.x + toXOffset);
+
           const centerX = (minX + maxX) / 2;
           const length = maxX - minX;
 
-          const avgY = ((fromStringPos.y + fromYOffset) + (toStringPos.y + toYOffset)) / 2;
-          const avgZ = fretPos.z;
+          const avgY =
+            ((fromLocal.y + fromYOffset) + (toLocal.y + toYOffset)) / 2;
+
+          const avgZ = fretLocal.z;
+
 
           // สร้างแถบยาวแบบ rounded rectangle (แบนแต่หัวท้ายโค้ง)
           const barreWidth = 0.02; // ความกว้าง
           const cornerRadius = 0.01; // รัศมีมุมโค้ง
-          
+
           // สร้าง shape แบบ rounded rectangle
           const shape = new THREE.Shape();
           const halfWidth = length / 2;
           const halfHeight = barreWidth / 2;
-          
+
           // วาด rounded rectangle
           shape.moveTo(-halfWidth + cornerRadius, -halfHeight);
           shape.lineTo(halfWidth - cornerRadius, -halfHeight);
@@ -444,7 +462,7 @@ export function useChordAnimation(
           shape.quadraticCurveTo(-halfWidth, halfHeight, -halfWidth, halfHeight - cornerRadius);
           shape.lineTo(-halfWidth, -halfHeight + cornerRadius);
           shape.quadraticCurveTo(-halfWidth, -halfHeight, -halfWidth + cornerRadius, -halfHeight);
-          
+
           const extrudeSettings = {
             depth: 0.0001,
             bevelEnabled: true,
@@ -452,10 +470,10 @@ export function useChordAnimation(
             bevelSize: 0.007,
             bevelSegments: 2
           };
-          
+
           const barreBar = new THREE.Mesh(
             new THREE.ExtrudeGeometry(shape, extrudeSettings),
-            new THREE.MeshStandardMaterial({ 
+            new THREE.MeshStandardMaterial({
               color,
               transparent: true,
               opacity: isTransition ? 0 : 1,
@@ -463,25 +481,25 @@ export function useChordAnimation(
           );
 
           barreBar.position.set(
-            centerX + modelOffset.x,
-            avgY + modelOffset.y - 0.003,
-            avgZ + modelOffset.z
+            centerX,
+            avgY - 0.003,
+            avgZ
           );
-          
+
           // หมุนให้วางแบนบนคอ
           barreBar.rotation.set(-Math.PI / 2, 0, 0);
-          
+
           // Wrap barre in a group for correct animation transforms
           const barreGroup = new THREE.Group();
           barreGroup.position.copy(barreBar.position);
           barreBar.position.set(0, 0, 0); // Reset mesh position (relative to group)
           barreGroup.add(barreBar);
-          
+
           // Set initial scale for animation on the GROUP
           if (isTransition) {
             barreGroup.scale.set(0.8, 1, 1);
           }
-          
+
           markerGroup.add(barreGroup);
 
           // Mark positions that use the barre finger at the barre fret as "used"
@@ -501,8 +519,8 @@ export function useChordAnimation(
         const color = pos.finger ? fingerColors[pos.finger] : "yellow";
         const marker = new THREE.Mesh(
           new THREE.CircleGeometry(0.02, 32),
-          new THREE.MeshStandardMaterial({ 
-            color, 
+          new THREE.MeshStandardMaterial({
+            color,
             side: THREE.DoubleSide,
             transparent: true,
             opacity: isTransition ? 0 : 1,
@@ -510,20 +528,22 @@ export function useChordAnimation(
         );
 
         marker.position.set(
-          pos.stringPos.x + pos.xOffset + modelOffset.x,
-          pos.stringPos.y + pos.yOffset + modelOffset.y,
-          pos.fretPos.z + modelOffset.z
+          pos.stringLocal.x + pos.xOffset,
+          pos.stringLocal.y + pos.yOffset,
+          pos.fretLocal.z
         );
+
         marker.rotation.x = -Math.PI / 2;
-        
+
+
         // Set initial scale for animation
         if (isTransition) {
           marker.scale.set(0.9, 0.9, 0.9);
         }
-        
+
         // Store finger index for staggered animation
         (marker as any).userData.fingerIndex = pos.finger;
-        
+
         markerGroup.add(marker);
       });
 
