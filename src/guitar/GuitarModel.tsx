@@ -28,7 +28,7 @@ export default function GuitarModel({
 }: GuitarModelProps) {
   const { scene } = useGLTF("/models/guitar.glb") as any;
 
-  const { stringMeshMap, fretMeshMap, stringFretMap, stringMeshes } = useGuitarCache(scene);
+  const { stringFretMap, stringMeshes } = useGuitarCache(scene);
   const { playSound, strumAllStrings } = useGuitarAudio(highlightChord, onNotePlay);
   const { handleClick, handlePointerDown, handlePointerMove, handlePointerUp } = useGuitarInteraction(
     canPlay,
