@@ -1,84 +1,74 @@
-import { useState, useRef } from "react";
+import { useState, useRef, Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
-import { Environment, OrbitControls } from "@react-three/drei";
-import type { ChordData, TensionType } from "./data/types";
-import { chords } from "./data/chords";
-import { chordTensions } from "./data/chordTensions";
+import { Environment, OrbitControls, useProgress } from "@react-three/drei";
+import type { ChordData } from "./data/types";
+import type { ChordVoicing } from "./data/chordLibrary";
+import { resolveChordByName } from "./data/chordLibrary";
 import GuitarModel from "./GuitarModel";
 import ChordSelector from "./ui/ChordSelector";
-import TensionSelector from "./ui/TensionSelector";
 import PickToggle from "./ui/PickToggle";
-import SelectedChordDisplay from "./ui/SelectedChordDisplay";
 import CurrentNoteDisplay from "./ui/CurrentNoteDisplay";
 import FingerLegend from "./ui/FingerLegend";
 
+function LoadingScreen() {
+  const { progress, active } = useProgress();
+
+  if (!active) return null;
+
+  return (
+    <div className="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-[#1a1a1a]">
+      <div className="flex flex-col items-center gap-6">
+        <div className="relative h-16 w-16">
+          <div className="absolute inset-0 rounded-full border-4 border-gray-700" />
+          <div
+            className="absolute inset-0 rounded-full border-4 border-t-yellow-400 animate-spin"
+          />
+        </div>
+        <div className="text-center">
+          <p className="text-white text-lg font-semibold">Loading Guitar Model</p>
+          <p className="text-gray-400 text-sm mt-1">{progress.toFixed(0)}%</p>
+        </div>
+        <div className="w-64 h-2 bg-gray-700 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-yellow-400 rounded-full transition-all duration-300 ease-out"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Guitar3D() {
+  const { active: isLoading } = useProgress();
   const [highlightChord, setHighlightChord] = useState<ChordData | null>(null);
   const [selectedChordName, setSelectedChordName] = useState<string | null>(null);
-  const [selectedTensions, setSelectedTensions] = useState<TensionType[]>([]);
   const [isHoldingPick, setIsHoldingPick] = useState(false);
   const [currentNote, setCurrentNote] = useState<string>("");
   const previousChordRef = useRef<ChordData | null>(null);
 
-  const handleChordSelect = (chordName: string) => {
-    const newChord = chords[chordName];
+  const handleChordSelect = (chordName: string, voicing?: ChordVoicing) => {
+    const newChord = voicing ? voicing.data : resolveChordByName(chordName);
     previousChordRef.current = highlightChord;
     setHighlightChord(newChord);
     setSelectedChordName(chordName);
-    setSelectedTensions([]); // รีเซ็ต tension เมื่อเลือกคอร์ดใหม่
   };
 
   const handleClearChord = () => {
     previousChordRef.current = highlightChord;
     setHighlightChord(null);
     setSelectedChordName(null);
-    setSelectedTensions([]);
-  };
-
-  const handleTensionToggle = (tension: TensionType) => {
-    if (!selectedChordName) return;
-    
-    setSelectedTensions(prev => {
-      const newTensions = prev.includes(tension)
-        ? prev.filter(t => t !== tension) // ถ้ามีอยู่แล้ว ให้ลบออก
-        : [...prev, tension]; // ถ้ายังไม่มี ให้เพิ่ม
-      
-      // Store current chord before updating
-      previousChordRef.current = highlightChord;
-      
-      // อัพเดทคอร์ดตาม tension ที่เลือก
-      if (newTensions.length === 0) {
-        // ถ้าไม่มี tension เลย กลับไปใช้ base chord
-        setHighlightChord(chords[selectedChordName]);
-      } else {
-        // ใช้ tension สุดท้ายที่เลือก (หรือสามารถใช้ logic การผสมที่ซับซ้อนกว่านี้)
-        const lastTension = newTensions[newTensions.length - 1];
-        if (chordTensions[selectedChordName]?.[lastTension]) {
-          setHighlightChord(chordTensions[selectedChordName][lastTension]);
-        }
-      }
-      
-      return newTensions;
-    });
   };
 
   return (
     <div className="w-full max-w-screen h-screen relative overflow-hidden bg-[#1a1a1a]">
 
-      <div className="absolute top-16 left-5 w-full h-full z-50 pointer-events-none">
-        <div className="pointer-events-auto space-y-3 max-w-md">
+      <div className={`absolute top-16 left-5 w-full h-full z-50 pointer-events-none ${isLoading ? "opacity-0" : "opacity-100 transition-opacity duration-500"}`}>
+        <div className={`space-y-3 max-w-md ${isLoading ? "pointer-events-none" : "pointer-events-auto"}`}>
           <ChordSelector 
             selectedChordName={selectedChordName}
             onSelect={handleChordSelect}
             onClear={handleClearChord}
-          />
-
-          <SelectedChordDisplay selectedChordName={selectedChordName} />
-
-          <TensionSelector
-            selectedChordName={selectedChordName}
-            selectedTensions={selectedTensions}
-            onToggle={handleTensionToggle}
           />
 
           <PickToggle 
@@ -90,20 +80,26 @@ export default function Guitar3D() {
         </div>
       </div>
 
-      <FingerLegend highlightChord={highlightChord} />
+      <div className={isLoading ? "opacity-0 pointer-events-none" : "opacity-100 transition-opacity duration-500"}>
+        <FingerLegend highlightChord={highlightChord} />
+      </div>
+
+      <LoadingScreen />
 
       {/* ✅ Canvas */}
       <Canvas shadows camera={{ position: [0.3, 6, 0.01], fov: 30 }} gl={{ preserveDrawingBuffer: true }} className="pointer-events-auto">
-        <Environment preset="apartment" />
+        <Suspense fallback={null}>
+          <Environment preset="apartment" />
+          <GuitarModel 
+            rotation={[0, -0.015, 0]}
+            highlightChord={highlightChord} 
+            previousChord={previousChordRef.current}
+            canPlay={isHoldingPick} 
+            onNotePlay={setCurrentNote}
+          />
+        </Suspense>
         <ambientLight intensity={0.6} />
         <directionalLight position={[5, 10, 5]} intensity={1} castShadow />
-        <GuitarModel 
-          rotation={[0, -0.015, 0]}
-          highlightChord={highlightChord} 
-          previousChord={previousChordRef.current}
-          canPlay={isHoldingPick} 
-          onNotePlay={setCurrentNote}
-        />
         <OrbitControls enableDamping enableRotate={!isHoldingPick} />
       </Canvas>
     </div>

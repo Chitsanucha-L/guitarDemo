@@ -28,8 +28,7 @@ export default function GuitarModel({
 }: GuitarModelProps) {
   const { scene } = useGLTF("/models/guitar.glb") as any;
 
-  // Use hooks
-  const { stringMeshMap, fretMeshMap, stringMeshes } = useGuitarCache(scene);
+  const { stringMeshMap, fretMeshMap, stringFretMap, stringMeshes } = useGuitarCache(scene);
   const { playSound, strumAllStrings } = useGuitarAudio(highlightChord, onNotePlay);
   const { handleClick, handlePointerDown, handlePointerMove, handlePointerUp } = useGuitarInteraction(
     canPlay,
@@ -40,7 +39,7 @@ export default function GuitarModel({
     onStringPress
   );
 
-  useChordAnimation(scene, highlightChord, previousChord, stringMeshMap, fretMeshMap);
+  useChordAnimation(scene, highlightChord, previousChord, stringFretMap);
 
   return (
     <group 

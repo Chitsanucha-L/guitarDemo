@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import type { ChordData } from "../data/types";
-import { chords, majorChords, minorChords } from "../data/chords";
+import { GAME_CHORDS } from "../data/chordShapes";
 
 export type GameStatus = "idle" | "playing" | "correct" | "wrong" | "gameover";
 
@@ -47,10 +47,8 @@ export function useChordGame() {
 
   // Select random chord
   const selectRandomChord = useCallback(() => {
-    const allChordNames = [...majorChords, ...minorChords];
-    const randomName = allChordNames[Math.floor(Math.random() * allChordNames.length)];
-    const chordData = chords[randomName];
-    setCurrentChord({ name: randomName, data: chordData });
+    const pick = GAME_CHORDS[Math.floor(Math.random() * GAME_CHORDS.length)];
+    setCurrentChord({ name: pick.name, data: pick.data });
     setPressedPositions([]);
   }, []);
 
