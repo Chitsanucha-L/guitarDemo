@@ -114,8 +114,9 @@ export function useGuitarAudio(
       ? [6, 5, 4, 3, 2, 1]
       : [1, 2, 3, 4, 5, 6];
 
-    // Main beats (quarter notes): play ALL 6 strings at full volume
-    const isMainBeat = subdivision !== undefined && subdivision % 4 === 0;
+    // Manual strum (spacebar, no subdivision): play ALL 6 strings
+    // Strumming engine: main beats (0,4,8,12) = all strings; off-beats = partial (3 primary)
+    const playAllStrings = subdivision === undefined || subdivision % 4 === 0;
 
     const primaryStrings: Set<number> = direction === "down"
       ? new Set([6, 5, 4])
@@ -127,7 +128,7 @@ export function useGuitarAudio(
     for (const stringNum of order) {
       if (strumGeneration.current !== gen) return;
 
-      const isPrimary = isMainBeat || primaryStrings.has(stringNum);
+      const isPrimary = playAllStrings || primaryStrings.has(stringNum);
 
       if (!isPrimary && Math.random() > SECONDARY_PLAY_CHANCE) continue;
 
