@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useCallback, useRef } from "react";
+import type { MutableRefObject } from "react";
 import type { ChordData } from "../data/types";
 import { stringToNote, getNoteName } from "../data/constants";
 
 export function useGuitarAudio(
   highlightChord: ChordData | null,
-  onNotePlay: (note: string) => void
+  onNotePlay: (note: string) => void,
+  chordRef?: MutableRefObject<ChordData | null>,
 ) {
   const audioContext = useMemo(() => new (window.AudioContext || (window as any).webkitAudioContext)(), []);
   const sounds = useMemo<{ [key: string]: AudioBuffer }>(() => ({}), []);
@@ -13,6 +15,7 @@ export function useGuitarAudio(
   const lastPlayed = useRef<{ meshName: string; time: number } | null>(null);
   const isStrumming = useRef(false);
   const noteDisplayTimeout = useRef<number | null>(null);
+  const activeSources = useRef<Map<number, { source: AudioBufferSourceNode; gain: GainNode }>>(new Map());
 
   // โหลดเสียงทุกไฟล์
   useEffect(() => {
@@ -53,7 +56,15 @@ export function useGuitarAudio(
     }
 
     const buf = sounds[meshName];
-    if (!buf) return; // ถ้าโหลดเสียงไม่ทัน ให้เงียบไปเลย
+    if (!buf) return;
+
+    const prev = activeSources.current.get(stringNum);
+    if (prev) {
+      try {
+        prev.gain.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.03);
+        prev.source.stop(audioContext.currentTime + 0.03);
+      } catch { /* already stopped */ }
+    }
 
     const src = audioContext.createBufferSource();
     src.buffer = buf;
@@ -62,6 +73,13 @@ export function useGuitarAudio(
     src.connect(gainNode);
     gainNode.connect(audioContext.destination);
     src.start();
+
+    activeSources.current.set(stringNum, { source: src, gain: gainNode });
+    src.onended = () => {
+      if (activeSources.current.get(stringNum)?.source === src) {
+        activeSources.current.delete(stringNum);
+      }
+    };
 
     // แสดงชื่อโน้ตบนหน้าจอ
     const noteName = getNoteName(stringNum, fret);
@@ -79,33 +97,52 @@ export function useGuitarAudio(
     }, 2000);
   }, [audioContext, sounds, onNotePlay]);
 
-  // ฟังก์ชัน strum - เล่นเสียงจากสาย 6 ถึงสาย 1
-  const strumAllStrings = useCallback(async () => {
-    if (isStrumming.current) return; // ป้องกันการ strum ซ้อนกัน
+  const strumDirection = useCallback(async (direction: "down" | "up", delayMs = 75) => {
+    if (isStrumming.current) return;
     isStrumming.current = true;
 
-    // เล่นเสียงแต่ละสายโดยมี delay 50ms ระหว่างแต่ละสาย
-    for (let stringNum = 6; stringNum >= 1; stringNum--) {
-      let fret = 0; // default เป็น open string
+    const chord = chordRef?.current ?? highlightChord;
 
-      // ถ้ามี highlightChord ให้ใช้ fret จากคอร์ด
-      if (highlightChord) {
+    const order = direction === "down"
+      ? [6, 5, 4, 3, 2, 1]
+      : [1, 2, 3, 4, 5, 6];
+
+    for (const stringNum of order) {
+      let fret = 0;
+      if (chord) {
         const noteName = stringToNote[stringNum];
-        if (noteName && highlightChord.notes[noteName]) {
-          fret = highlightChord.notes[noteName].fret;
+        if (noteName && chord.notes[noteName]) {
+          const chordFret = chord.notes[noteName].fret;
+          if (chordFret >= 0) fret = chordFret;
         }
       }
 
       const meshName = `String_${stringNum}_${fret}`;
-      playSound(meshName, stringNum, fret, true); // skipTimeCheck = true
-      await new Promise(resolve => setTimeout(resolve, 50)); // delay 50ms
+      playSound(meshName, stringNum, fret, true);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
     }
 
     isStrumming.current = false;
-  }, [playSound, highlightChord]);
+  }, [playSound, highlightChord, chordRef]);
+
+  const strumAllStrings = useCallback(async () => {
+    strumDirection("down");
+  }, [strumDirection]);
+
+  const stopAllStrings = useCallback(() => {
+    for (const [, node] of activeSources.current) {
+      try {
+        node.gain.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.05);
+        node.source.stop(audioContext.currentTime + 0.05);
+      } catch { /* already stopped */ }
+    }
+    activeSources.current.clear();
+  }, [audioContext]);
 
   return {
     playSound,
     strumAllStrings,
+    strumDirection,
+    stopAllStrings,
   };
 }

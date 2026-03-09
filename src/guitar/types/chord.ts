@@ -21,18 +21,12 @@ export type Tension =
   | "add9"
   | "add11"
   | "add13"
-  | "9"
-  | "11"
-  | "13"
-  | "b9"
-  | "#9"
-  | "#11"
-  | "b13";
+  | "9";
 
 export interface ChordSelection {
   root: Root;
   quality: Quality;
-  tensions: Tension[];
+  tension: Tension | null;
 }
 
 export const ALL_ROOTS: Root[] = [
@@ -44,7 +38,7 @@ export const ALL_QUALITIES: Quality[] = [
 ];
 
 export const ALL_TENSIONS: Tension[] = [
-  "add9", "add11", "add13", "9", "11", "13", "b9", "#9", "#11", "b13",
+  "add9", "add11", "add13", "9",
 ];
 
 export const QUALITY_LABELS: Record<Quality, string> = {
@@ -78,10 +72,10 @@ const QUALITY_SUFFIX: Record<Quality, string> = {
 };
 
 export function buildChordName(selection: ChordSelection): string {
-  const { root, quality, tensions } = selection;
+  const { root, quality, tension } = selection;
   let name = root + QUALITY_SUFFIX[quality];
-  if (tensions.length > 0) {
-    name += `(${tensions.join(",")})`;
+  if (tension) {
+    name += `(${tension})`;
   }
   return name;
 }
@@ -112,23 +106,22 @@ const QUALITY_INTERVALS: Record<Quality, number[]> = {
 };
 
 const TENSION_INTERVALS: Record<Tension, number> = {
-  add9: 2,  "9": 2,
-  add11: 5, "11": 5,
-  add13: 9, "13": 9,
-  b9: 1,    "#9": 3,
-  "#11": 6, b13: 8,
+  add9: 2,
+  add11: 5,
+  add13: 9,
+  "9": 2,
 };
 
 export function buildChordNotes(
   root: Root,
   quality: Quality,
-  tensions: Tension[] = [],
+  tension: Tension | null = null,
 ): string[] {
   const rootIndex = CHROMATIC.indexOf(root);
   const intervals = [...QUALITY_INTERVALS[quality]];
 
-  for (const t of tensions) {
-    const interval = TENSION_INTERVALS[t];
+  if (tension) {
+    const interval = TENSION_INTERVALS[tension];
     if (!intervals.includes(interval)) {
       intervals.push(interval);
     }

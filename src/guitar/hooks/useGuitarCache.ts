@@ -10,19 +10,20 @@ export function useGuitarCache(scene: THREE.Group | THREE.Scene) {
   const stringMeshes = useRef<THREE.Mesh[]>([]);
 
   useEffect(() => {
+    const oldHitboxes = scene.getObjectByName("StringHitboxes");
+    if (oldHitboxes) return;
+
     const meshes: THREE.Mesh[] = [];
     const hitboxGroup = new THREE.Group();
     hitboxGroup.name = "StringHitboxes";
-
-    const oldHitboxes = scene.getObjectByName("StringHitboxes");
-    if (oldHitboxes) return;
+    scene.add(hitboxGroup);
 
     stringMeshMap.current = {} as Record<Note, THREE.Object3D>;
     fretMeshMap.current = {} as Record<number, THREE.Object3D>;
     stringFretMap.current = {};
 
     scene.traverse((child: THREE.Object3D) => {
-      if ((child as THREE.Mesh).isMesh) {
+      if (child instanceof THREE.Mesh) {
         const match = child.name.match(/^String_(\d+)_(\d+)$/);
         if (match) {
           const stringNum = parseInt(match[1]);
@@ -49,17 +50,19 @@ export function useGuitarCache(scene: THREE.Group | THREE.Scene) {
             }
           }
 
-          const stringMesh = child as THREE.Mesh;
+          const stringMesh = child;
           const box = new THREE.Box3().setFromObject(stringMesh);
           const size = new THREE.Vector3();
           box.getSize(size);
+
           const center = new THREE.Vector3();
-          box.getCenter(center);
+          stringMesh.getWorldPosition(center);
+          hitboxGroup.worldToLocal(center);
 
           const hitboxGeometry = new THREE.BoxGeometry(
             0.03,
             0.01,
-            size.z - 0.01,
+            size.z * 0.9,
           );
 
           const hitboxMaterial = new THREE.MeshBasicMaterial({
@@ -86,7 +89,6 @@ export function useGuitarCache(scene: THREE.Group | THREE.Scene) {
       }
     });
 
-    scene.add(hitboxGroup);
     stringMeshes.current = meshes;
   }, [scene]);
 

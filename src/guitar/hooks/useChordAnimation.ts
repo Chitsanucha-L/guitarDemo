@@ -71,7 +71,8 @@ function animateFingerDot(
       const duration = type === "fadeOut" ? 100 : 120;
       const material = element.material as THREE.MeshBasicMaterial;
       const startOpacity = material.opacity;
-      const endOpacity = type === "fadeOut" ? 0 : 1;
+      const targetOpacity = (element as any).userData?.targetOpacity;
+      const endOpacity = type === "fadeOut" ? 0 : (targetOpacity ?? 1);
       const startScale = element.scale.clone();
       const endScale = new THREE.Vector3(
         type === "fadeOut" ? 0.9 : 1,
@@ -196,8 +197,20 @@ function animateBarre(
 }
 
 // ---------------------------------------------------------------------------
-// Per-string cosmetic offsets
+// Cleanup helper – dispose geometries & materials to prevent GPU leaks
 // ---------------------------------------------------------------------------
+
+function disposeGroup(obj: THREE.Object3D) {
+  obj.traverse((child) => {
+    if (child instanceof THREE.Mesh) {
+      child.geometry?.dispose();
+      if (child.material) {
+        const mats = Array.isArray(child.material) ? child.material : [child.material];
+        mats.forEach((m) => m.dispose());
+      }
+    }
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Main hook
@@ -272,8 +285,17 @@ export function useChordAnimation(
       }
     }
 
+    function removeAllMarkers() {
+      let existing = scene.getObjectByName("HighlightMarkers");
+      while (existing) {
+        disposeGroup(existing);
+        scene.remove(existing);
+        existing = scene.getObjectByName("HighlightMarkers");
+      }
+    }
+
     function renderNewChord() {
-      if (oldMarkers) scene.remove(oldMarkers);
+      removeAllMarkers();
       if (!highlightChord) return;
 
       const markerGroup = new THREE.Group();
@@ -286,27 +308,59 @@ export function useChordAnimation(
         local: THREE.Vector3;
       }> = [];
 
-      console.group("[Highlight] Rendering dots");
+      console.log("[Voicing]", Object.fromEntries(
+        Object.entries(highlightChord.notes).map(([k, v]) => [k, v.fret])
+      ), highlightChord._barre ? `barre: fret ${highlightChord._barre.fret} ${highlightChord._barre.fromString}→${highlightChord._barre.toString}` : "no barre");
+
       Object.entries(highlightChord.notes).forEach(([noteKey, chordNote]) => {
         const note = noteKey as Note;
 
-        if (!chordNote || chordNote.fret < 0) {
-          console.log(`  ${note}: muted → skip`);
-          return;
-        }
+        if (!chordNote || chordNote.fret < 0) return;
 
         const stringNum = NOTE_TO_STRING_NUM[note];
         const mesh = stringFretMap.current[stringNum]?.[chordNote.fret];
         if (!mesh) {
-          console.warn(`  ${note}: String_${stringNum}_${chordNote.fret} not found → SKIPPED`);
+          console.warn(`[Voicing] Missing mesh: String_${stringNum}_${chordNote.fret} (${note})`);
           return;
         }
 
         const world = new THREE.Vector3();
-        mesh.getWorldPosition(world);
+        if (chordNote.fret === 0) {
+          // Open string: place marker at nut end of segment (mesh pivot may be at fret end)
+          const mesh1 = stringFretMap.current[stringNum]?.[1];
+          if (mesh1) {
+            const box = new THREE.Box3().setFromObject(mesh);
+            const p1 = new THREE.Vector3();
+            mesh1.getWorldPosition(p1);
+            const min = box.min;
+            const max = box.max;
+            const corners = [
+              min.clone(),
+              new THREE.Vector3(max.x, min.y, min.z),
+              new THREE.Vector3(min.x, max.y, min.z),
+              new THREE.Vector3(max.x, max.y, min.z),
+              new THREE.Vector3(min.x, min.y, max.z),
+              new THREE.Vector3(max.x, min.y, max.z),
+              new THREE.Vector3(min.x, max.y, max.z),
+              max.clone(),
+            ];
+            let best = min.clone();
+            let bestDist = -1;
+            for (const c of corners) {
+              const d = c.distanceToSquared(p1);
+              if (d > bestDist) {
+                bestDist = d;
+                best.copy(c);
+              }
+            }
+            world.copy(best);
+          } else {
+            mesh.getWorldPosition(world);
+          }
+        } else {
+          mesh.getWorldPosition(world);
+        }
         const local = scene.worldToLocal(world.clone());
-
-        console.log(`  ${note}: fret ${chordNote.fret}, finger ${chordNote.finger ?? "-"}`);
 
         positions.push({
           note,
@@ -315,8 +369,6 @@ export function useChordAnimation(
           local,
         });
       });
-      console.log(`  Total dots: ${positions.length}`);
-      console.groupEnd();
 
       const usedPositions = new Set<number>();
 
@@ -416,6 +468,8 @@ export function useChordAnimation(
         }
       }
 
+      const hasBarre = !!highlightChord._barre;
+
       positions.forEach((pos, index) => {
         if (usedPositions.has(index)) return;
 
@@ -424,7 +478,25 @@ export function useChordAnimation(
         if (!isOpen && !pos.finger) return;
 
         const color = isOpen ? "#ffffff" : fingerColors[pos.finger!];
-        const radius = isOpen ? 0.012 : 0.02;
+        const radius = isOpen ? 0.015 : 0.02;
+
+        if (!isOpen && !hasBarre) {
+          const glowRadius = radius * 1.6;
+          const glow = new THREE.Mesh(
+            new THREE.CircleGeometry(glowRadius, 32),
+            new THREE.MeshBasicMaterial({
+              color,
+              side: THREE.DoubleSide,
+              transparent: true,
+              opacity: isTransition ? 0 : 0.25,
+            })
+          );
+          glow.position.set(pos.local.x, pos.local.y + 0.0035, pos.local.z);
+          glow.rotation.x = -Math.PI / 2;
+          (glow as any).userData = { targetOpacity: 0.25 };
+          if (isTransition) glow.scale.set(0.9, 0.9, 0.9);
+          markerGroup.add(glow);
+        }
 
         const marker = new THREE.Mesh(
           isOpen
@@ -504,5 +576,9 @@ export function useChordAnimation(
     }
 
     playChordTransition();
+
+    return () => {
+      ++animationIdRef.current;
+    };
   }, [highlightChord, previousChord, scene, stringFretMap]);
 }

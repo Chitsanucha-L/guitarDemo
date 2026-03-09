@@ -1,14 +1,25 @@
-import { useState, useRef, Suspense } from "react";
+import { useState, useRef, useCallback, useEffect, Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Environment, OrbitControls, useProgress } from "@react-three/drei";
 import type { ChordData } from "./data/types";
 import type { ChordVoicing } from "./data/chordLibrary";
 import { resolveChordByName } from "./data/chordLibrary";
 import GuitarModel from "./GuitarModel";
+import type { StrumDirectionFn } from "./GuitarModel";
 import ChordSelector from "./ui/ChordSelector";
 import PickToggle from "./ui/PickToggle";
 import CurrentNoteDisplay from "./ui/CurrentNoteDisplay";
+import ChordDiagram from "./ui/ChordDiagram";
 import FingerLegend from "./ui/FingerLegend";
+import StrumPanel from "./ui/StrumPanel";
+import ScaleSelector from "./ui/ScaleSelector";
+import ProgressionPanel from "./ui/ProgressionPanel";
+import { useChordProgression } from "./hooks/useChordProgression";
+import type { ChordProgression } from "./data/chordProgressions";
+import type { Root } from "./types/chord";
+import type { Stroke } from "./hooks/useStrummingEngine";
+
+type PanelId = "chord" | "strum" | "progression" | "scale";
 
 function LoadingScreen() {
   const { progress, active } = useProgress();
@@ -39,6 +50,35 @@ function LoadingScreen() {
   );
 }
 
+function SectionHeader({
+  label,
+  icon,
+  isOpen,
+  onToggle,
+}: {
+  label: string;
+  icon: string;
+  isOpen: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      onClick={onToggle}
+      className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-gray-800/60 hover:bg-gray-800/90 transition group"
+    >
+      <div className="flex items-center gap-2">
+        <span className="text-sm">{icon}</span>
+        <span className="text-sm font-bold text-gray-300 uppercase tracking-wider group-hover:text-white transition">
+          {label}
+        </span>
+      </div>
+      <span className={`text-gray-500 text-[10px] transition-transform duration-200 ${isOpen ? "rotate-0" : "-rotate-90"}`}>
+        ▼
+      </span>
+    </button>
+  );
+}
+
 export default function Guitar3D() {
   const { active: isLoading } = useProgress();
   const [highlightChord, setHighlightChord] = useState<ChordData | null>(null);
@@ -46,56 +86,230 @@ export default function Guitar3D() {
   const [isHoldingPick, setIsHoldingPick] = useState(false);
   const [currentNote, setCurrentNote] = useState<string>("");
   const previousChordRef = useRef<ChordData | null>(null);
+  const chordRef = useRef<ChordData | null>(null);
+  const strumFnRef = useRef<StrumDirectionFn | null>(null);
+
+  const [openPanel, setOpenPanel] = useState<PanelId>("chord");
+
+  useEffect(() => {
+    chordRef.current = highlightChord;
+  }, [highlightChord]);
+
+  const [chordRoot, setChordRoot] = useState<Root>("C");
+  const [scaleNotes, setScaleNotes] = useState<number[] | null>(null);
+  const [rootSemitone, setRootSemitone] = useState<number | null>(null);
+  const [scaleFretRange, setScaleFretRange] = useState<[number, number]>([0, 12]);
+
+  const [activeProgression, setActiveProgression] = useState<ChordProgression | null>(null);
+  const progression = useChordProgression(activeProgression?.chords ?? ["C"]);
+
+  const togglePanel = useCallback((id: PanelId) => {
+    setOpenPanel(id);
+  }, []);
+
+  const applyChord = useCallback((name: string) => {
+    const chord = resolveChordByName(name);
+    previousChordRef.current = highlightChord;
+    chordRef.current = chord;
+    setHighlightChord(chord);
+    setSelectedChordName(name);
+    setScaleNotes(null);
+    setRootSemitone(null);
+  }, [highlightChord]);
 
   const handleChordSelect = (chordName: string, voicing?: ChordVoicing) => {
     const newChord = voicing ? voicing.data : resolveChordByName(chordName);
     previousChordRef.current = highlightChord;
+    chordRef.current = newChord;
     setHighlightChord(newChord);
     setSelectedChordName(chordName);
+    setScaleNotes(null);
+    setRootSemitone(null);
   };
 
   const handleClearChord = () => {
     previousChordRef.current = highlightChord;
+    chordRef.current = null;
     setHighlightChord(null);
     setSelectedChordName(null);
   };
 
+  const handleRootChange = useCallback((root: Root) => {
+    setChordRoot(root);
+  }, []);
+
+  const handleStrumReady = useCallback((fn: StrumDirectionFn) => {
+    strumFnRef.current = fn;
+  }, []);
+
+  const handleStroke = useCallback((stroke: Stroke) => {
+    if (strumFnRef.current) {
+      strumFnRef.current(stroke === "down" ? "down" : "up", 30);
+    }
+  }, []);
+
+  const handleBarChange = useCallback(() => {
+    if (!activeProgression) return;
+    const nextChord = progression.advance();
+    if (nextChord) {
+      applyChord(nextChord);
+    }
+  }, [activeProgression, progression, applyChord]);
+
+  const handleProgressionSelect = useCallback((prog: ChordProgression | null) => {
+    setActiveProgression(prog);
+    if (prog) {
+      progression.reset();
+      applyChord(prog.chords[0]);
+    }
+  }, [progression, applyChord]);
+
+  const handleScaleChange = useCallback(
+    (notes: number[] | null, root: number | null, fretRange: [number, number]) => {
+      if (notes) {
+        previousChordRef.current = highlightChord;
+        chordRef.current = null;
+        setHighlightChord(null);
+        setSelectedChordName(null);
+      }
+      setScaleNotes(notes);
+      setRootSemitone(root);
+      setScaleFretRange(fretRange);
+    },
+    [highlightChord],
+  );
+
   return (
     <div className="w-full max-w-screen h-screen relative overflow-hidden bg-[#1a1a1a]">
 
-      <div className={`absolute top-16 left-5 w-full h-full z-50 pointer-events-none ${isLoading ? "opacity-0" : "opacity-100 transition-opacity duration-500"}`}>
-        <div className={`space-y-3 max-w-md ${isLoading ? "pointer-events-none" : "pointer-events-auto"}`}>
-          <ChordSelector 
-            selectedChordName={selectedChordName}
-            onSelect={handleChordSelect}
-            onClear={handleClearChord}
-          />
-
-          <PickToggle 
+      {/* Left sidebar */}
+      <div className={`absolute top-18 left-4 z-50 pointer-events-none ${isLoading ? "opacity-0" : "opacity-100 transition-opacity duration-500"}`}>
+        <div
+          className={`w-80 max-h-[calc(100vh-5rem)] overflow-y-auto pr-1 space-y-2 ${
+            isLoading ? "pointer-events-none" : "pointer-events-auto"
+          }`}
+          style={{ scrollbarWidth: "thin", scrollbarColor: "#4b5563 transparent" }}
+        >
+          {/* Pick toggle — always visible */}
+          <PickToggle
             isHoldingPick={isHoldingPick}
             onToggle={() => setIsHoldingPick(!isHoldingPick)}
           />
 
-          <CurrentNoteDisplay currentNote={currentNote} />
+          {/* ── CHORD BUILDER ── */}
+          <div className="mt-1">
+            <p className="text-[10px] uppercase tracking-widest text-gray-500 font-semibold px-1 mb-1.5">Chord Builder</p>
+            <div className="bg-gray-900/80 rounded-xl backdrop-blur-sm overflow-hidden">
+              <SectionHeader
+                label="Chord Builder"
+                icon="🎸"
+                isOpen={openPanel === "chord"}
+                onToggle={() => togglePanel("chord")}
+              />
+              {openPanel === "chord" && (
+                <div className="px-3 pb-3 pt-1">
+                  <ChordSelector
+                    selectedChordName={selectedChordName}
+                    onSelect={handleChordSelect}
+                    onClear={handleClearChord}
+                    onRootChange={handleRootChange}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ── PLAY ── */}
+          <div className="mt-4 border-t border-gray-700/40 pt-3">
+            <p className="text-[10px] uppercase tracking-widest text-gray-500 font-semibold px-1 mb-1.5">Play</p>
+            <div className="space-y-2">
+              <div className="bg-gray-900/80 rounded-xl backdrop-blur-sm overflow-hidden">
+                <SectionHeader
+                  label="Strumming"
+                  icon="🎵"
+                  isOpen={openPanel === "strum"}
+                  onToggle={() => togglePanel("strum")}
+                />
+                {openPanel === "strum" && (
+                  <div className="px-3 pb-3 pt-1">
+                    <StrumPanel onStroke={handleStroke} onBarChange={handleBarChange} />
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-gray-900/80 rounded-xl backdrop-blur-sm overflow-hidden">
+                <SectionHeader
+                  label="Progression"
+                  icon="🔄"
+                  isOpen={openPanel === "progression"}
+                  onToggle={() => togglePanel("progression")}
+                />
+                {openPanel === "progression" && (
+                  <div className="px-3 pb-3 pt-1">
+                    <ProgressionPanel
+                      active={!!activeProgression}
+                      currentIndex={progression.index}
+                      onSelect={handleProgressionSelect}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* ── THEORY ── */}
+          <div className="mt-4 border-t border-gray-700/40 pt-3">
+            <p className="text-[10px] uppercase tracking-widest text-gray-500 font-semibold px-1 mb-1.5">Theory</p>
+            <div className="bg-gray-900/80 rounded-xl backdrop-blur-sm overflow-hidden">
+              <SectionHeader
+                label="Scale"
+                icon="🎹"
+                isOpen={openPanel === "scale"}
+                onToggle={() => togglePanel("scale")}
+              />
+              {openPanel === "scale" && (
+                <div className="px-3 pb-3 pt-1">
+                  <ScaleSelector root={chordRoot} onScaleChange={handleScaleChange} />
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
+      {/* Top center — Now Playing */}
+      <div className={`absolute top-18 left-1/2 -translate-x-1/2 z-50 ${isLoading ? "opacity-0" : "opacity-100 transition-opacity duration-500"}`}>
+        <CurrentNoteDisplay currentNote={currentNote} chordName={selectedChordName} />
+      </div>
+
+      {/* Right side — Chord Diagram */}
+      {highlightChord && selectedChordName && (
+        <div className={`absolute top-18 right-5 z-50 ${isLoading ? "opacity-0" : "opacity-100 transition-opacity duration-500"}`}>
+          <ChordDiagram chordName={selectedChordName} chordData={highlightChord} />
+        </div>
+      )}
+
+      {/* Finger legend */}
       <div className={isLoading ? "opacity-0 pointer-events-none" : "opacity-100 transition-opacity duration-500"}>
         <FingerLegend highlightChord={highlightChord} />
       </div>
 
       <LoadingScreen />
 
-      {/* ✅ Canvas */}
       <Canvas shadows camera={{ position: [0.3, 6, 0.01], fov: 30 }} gl={{ preserveDrawingBuffer: true }} className="pointer-events-auto">
         <Suspense fallback={null}>
           <Environment preset="apartment" />
-          <GuitarModel 
+          <GuitarModel
             rotation={[0, -0.015, 0]}
-            highlightChord={highlightChord} 
+            highlightChord={scaleNotes ? null : highlightChord}
+            chordRef={chordRef}
             previousChord={previousChordRef.current}
-            canPlay={isHoldingPick} 
+            canPlay={isHoldingPick}
             onNotePlay={setCurrentNote}
+            onStrumReady={handleStrumReady}
+            scaleNotes={highlightChord ? null : scaleNotes}
+            rootSemitone={highlightChord ? null : rootSemitone}
+            scaleFretRange={scaleFretRange}
           />
         </Suspense>
         <ambientLight intensity={0.6} />

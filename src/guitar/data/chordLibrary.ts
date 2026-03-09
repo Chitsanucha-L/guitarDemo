@@ -2,7 +2,7 @@ import type { ChordData } from "./types";
 import { generateFingering, generateFingerings } from "./chordShapes";
 import type { ChordVoicing } from "./chordShapes";
 import type { ChordSelection, Root, Quality, Tension } from "../types/chord";
-import { buildChordName, buildChordNotes } from "../types/chord";
+import { ALL_TENSIONS, buildChordName, buildChordNotes } from "../types/chord";
 
 export interface ChordInfo {
   name: string;
@@ -15,13 +15,10 @@ export interface ChordInfo {
 // ---------------------------------------------------------------------------
 
 export function resolveChordSelection(selection: ChordSelection): ChordData | null {
-  const { root, quality, tensions } = selection;
+  const { root, quality, tension } = selection;
 
   try {
-    const tension = tensions.length > 0
-      ? tensions[tensions.length - 1]
-      : undefined;
-    const result = generateFingering(root, quality, tension);
+    const result = generateFingering(root, quality, tension ?? undefined);
 
     console.group(`[Fingering] ${buildChordName(selection)}`);
     console.table(
@@ -45,7 +42,7 @@ export function hasFingering(selection: ChordSelection): boolean {
 export function resolveChordInfo(selection: ChordSelection): ChordInfo {
   return {
     name: buildChordName(selection),
-    notes: buildChordNotes(selection.root, selection.quality, selection.tensions),
+    notes: buildChordNotes(selection.root, selection.quality, selection.tension),
     fingering: resolveChordSelection(selection),
   };
 }
@@ -63,9 +60,8 @@ export function canAddTensions(_root: Root, _quality: Quality): boolean {
 }
 
 export function resolveChordVoicings(selection: ChordSelection): ChordVoicing[] {
-  const { root, quality, tensions } = selection;
-  const tension = tensions.length > 0 ? tensions[tensions.length - 1] : undefined;
-  return generateFingerings(root, quality, tension);
+  const { root, quality, tension } = selection;
+  return generateFingerings(root, quality, tension ?? undefined);
 }
 
 export type { ChordVoicing };
@@ -89,14 +85,16 @@ const SUFFIX_TO_QUALITY: Record<string, Quality> = {
   sus2: "sus2",
 };
 
+const KNOWN_TENSIONS = ALL_TENSIONS.slice().sort((a, b) => b.length - a.length);
+
 function parseChordName(name: string): ChordSelection | null {
-  let tensions: Tension[] = [];
+  let tension: Tension | null = null;
   let baseName = name;
 
   const tensionMatch = name.match(/\((.+)\)$/);
   if (tensionMatch) {
     baseName = name.slice(0, tensionMatch.index);
-    tensions = tensionMatch[1].split(",") as Tension[];
+    tension = tensionMatch[1] as Tension;
   }
 
   let root: Root;
@@ -110,10 +108,20 @@ function parseChordName(name: string): ChordSelection | null {
     qualitySuffix = baseName.slice(1);
   }
 
+  if (!tension) {
+    for (const t of KNOWN_TENSIONS) {
+      if (qualitySuffix.endsWith(t)) {
+        tension = t as Tension;
+        qualitySuffix = qualitySuffix.slice(0, -t.length);
+        break;
+      }
+    }
+  }
+
   const quality = SUFFIX_TO_QUALITY[qualitySuffix];
   if (!quality) return null;
 
-  return { root, quality, tensions };
+  return { root, quality, tension };
 }
 
 export function resolveChordByName(name: string): ChordData | null {
@@ -126,5 +134,5 @@ export function resolveChordByName(name: string): ChordData | null {
 export function resolveChordNotesByName(name: string): string[] {
   const selection = parseChordName(name);
   if (!selection) return [];
-  return buildChordNotes(selection.root, selection.quality, selection.tensions);
+  return buildChordNotes(selection.root, selection.quality, selection.tension);
 }

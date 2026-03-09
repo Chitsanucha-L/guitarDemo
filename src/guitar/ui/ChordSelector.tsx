@@ -22,64 +22,65 @@ interface ChordSelectorProps {
   selectedChordName: string | null;
   onSelect: (chordName: string, voicing?: ChordVoicing) => void;
   onClear: () => void;
+  onRootChange?: (root: Root) => void;
 }
 
 const QUALITY_COLORS: Record<Quality, { active: string; idle: string }> = {
   major: {
     active: "bg-gradient-to-r from-blue-600 to-blue-700 ring-2 ring-blue-300",
-    idle: "bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700",
+    idle: "bg-gradient-to-r from-blue-500/60 to-blue-600/60 hover:from-blue-500 hover:to-blue-600",
   },
   minor: {
     active: "bg-gradient-to-r from-purple-600 to-purple-700 ring-2 ring-purple-300",
-    idle: "bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700",
+    idle: "bg-gradient-to-r from-purple-500/60 to-purple-600/60 hover:from-purple-500 hover:to-purple-600",
   },
   "7": {
     active: "bg-gradient-to-r from-amber-600 to-amber-700 ring-2 ring-amber-300",
-    idle: "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700",
+    idle: "bg-gradient-to-r from-amber-500/60 to-amber-600/60 hover:from-amber-500 hover:to-amber-600",
   },
   maj7: {
     active: "bg-gradient-to-r from-rose-600 to-rose-700 ring-2 ring-rose-300",
-    idle: "bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700",
+    idle: "bg-gradient-to-r from-rose-500/60 to-rose-600/60 hover:from-rose-500 hover:to-rose-600",
   },
   m7: {
     active: "bg-gradient-to-r from-teal-600 to-teal-700 ring-2 ring-teal-300",
-    idle: "bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700",
+    idle: "bg-gradient-to-r from-teal-500/60 to-teal-600/60 hover:from-teal-500 hover:to-teal-600",
   },
   "6": {
     active: "bg-gradient-to-r from-lime-600 to-lime-700 ring-2 ring-lime-300",
-    idle: "bg-gradient-to-r from-lime-500 to-lime-600 hover:from-lime-600 hover:to-lime-700",
+    idle: "bg-gradient-to-r from-lime-500/60 to-lime-600/60 hover:from-lime-500 hover:to-lime-600",
   },
   m6: {
     active: "bg-gradient-to-r from-emerald-600 to-emerald-700 ring-2 ring-emerald-300",
-    idle: "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700",
+    idle: "bg-gradient-to-r from-emerald-500/60 to-emerald-600/60 hover:from-emerald-500 hover:to-emerald-600",
   },
   dim: {
     active: "bg-gradient-to-r from-zinc-600 to-zinc-700 ring-2 ring-zinc-300",
-    idle: "bg-gradient-to-r from-zinc-500 to-zinc-600 hover:from-zinc-600 hover:to-zinc-700",
+    idle: "bg-gradient-to-r from-zinc-500/60 to-zinc-600/60 hover:from-zinc-500 hover:to-zinc-600",
   },
   dim7: {
     active: "bg-gradient-to-r from-stone-600 to-stone-700 ring-2 ring-stone-300",
-    idle: "bg-gradient-to-r from-stone-500 to-stone-600 hover:from-stone-600 hover:to-stone-700",
+    idle: "bg-gradient-to-r from-stone-500/60 to-stone-600/60 hover:from-stone-500 hover:to-stone-600",
   },
   aug: {
     active: "bg-gradient-to-r from-fuchsia-600 to-fuchsia-700 ring-2 ring-fuchsia-300",
-    idle: "bg-gradient-to-r from-fuchsia-500 to-fuchsia-600 hover:from-fuchsia-600 hover:to-fuchsia-700",
+    idle: "bg-gradient-to-r from-fuchsia-500/60 to-fuchsia-600/60 hover:from-fuchsia-500 hover:to-fuchsia-600",
   },
   sus4: {
     active: "bg-gradient-to-r from-orange-600 to-orange-700 ring-2 ring-orange-300",
-    idle: "bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700",
+    idle: "bg-gradient-to-r from-orange-500/60 to-orange-600/60 hover:from-orange-500 hover:to-orange-600",
   },
   sus2: {
     active: "bg-gradient-to-r from-cyan-600 to-cyan-700 ring-2 ring-cyan-300",
-    idle: "bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700",
+    idle: "bg-gradient-to-r from-cyan-500/60 to-cyan-600/60 hover:from-cyan-500 hover:to-cyan-600",
   },
 };
 
-export default function ChordSelector({ selectedChordName, onSelect, onClear }: ChordSelectorProps) {
+export default function ChordSelector({ selectedChordName, onSelect, onClear, onRootChange }: ChordSelectorProps) {
   const [selection, setSelection] = useState<ChordSelection>({
     root: "C",
     quality: "major",
-    tensions: [],
+    tension: null,
   });
   const [showTensions, setShowTensions] = useState(false);
   const [voicings, setVoicings] = useState<ChordVoicing[]>([]);
@@ -106,24 +107,23 @@ export default function ChordSelector({ selectedChordName, onSelect, onClear }: 
   );
 
   const handleRoot = (root: Root) => {
-    const next: ChordSelection = { ...selection, root, tensions: [] };
+    const next: ChordSelection = { ...selection, root, tension: null };
     setSelection(next);
     setShowTensions(false);
     emitSelection(next);
+    onRootChange?.(root);
   };
 
   const handleQuality = (quality: Quality) => {
-    const next: ChordSelection = { ...selection, quality, tensions: [] };
+    const next: ChordSelection = { ...selection, quality, tension: null };
     setSelection(next);
     setShowTensions(false);
     emitSelection(next);
   };
 
-  const handleTension = (tension: Tension) => {
-    const newTensions = selection.tensions.includes(tension)
-      ? selection.tensions.filter(t => t !== tension)
-      : [...selection.tensions, tension];
-    const next: ChordSelection = { ...selection, tensions: newTensions };
+  const handleTension = (t: Tension) => {
+    const newTension = selection.tension === t ? null : t;
+    const next: ChordSelection = { ...selection, tension: newTension };
     setSelection(next);
     emitSelection(next);
   };
@@ -135,7 +135,7 @@ export default function ChordSelector({ selectedChordName, onSelect, onClear }: 
   };
 
   const handleClear = () => {
-    setSelection({ root: "C", quality: "major", tensions: [] });
+    setSelection({ root: "C", quality: "major", tension: null });
     setShowTensions(false);
     setVoicings([]);
     setActiveVoicingId("open");
@@ -143,26 +143,29 @@ export default function ChordSelector({ selectedChordName, onSelect, onClear }: 
   };
 
   const hasFingeringData = hasFingering(selection);
-  const chordTones = buildChordNotes(selection.root, selection.quality, selection.tensions);
+  const chordTones = buildChordNotes(selection.root, selection.quality, selection.tension);
   const tensionsAvailable = canAddTensions(selection.root, selection.quality);
 
   return (
-    <div className="mt-4 space-y-3">
-      {/* Root */}
+    <div className="space-y-3">
+      {/* Step 1 — Root */}
       <div>
-        <div className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1.5">
-          Root
+        <div className="flex items-center gap-2 mb-1.5">
+          <span className="text-[10px] font-bold text-indigo-400 bg-indigo-400/10 px-1.5 py-0.5 rounded">1</span>
+          <span className="text-gray-400 text-xs font-semibold uppercase tracking-wider">
+            Root Note
+          </span>
         </div>
         <div className="grid grid-cols-6 gap-1.5">
           {ALL_ROOTS.map(root => {
-            const isActive = selection.root === root;
+            const isActive = selectedChordName !== null && selection.root === root;
             return (
               <button
                 key={root}
                 className={`px-2 py-1.5 text-sm font-bold rounded-md shadow-md transition-all duration-200 ${
                   isActive
                     ? "bg-blue-600 text-white ring-2 ring-blue-300 scale-105"
-                    : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                    : "bg-gray-700/80 text-gray-300 hover:bg-gray-600"
                 }`}
                 onClick={() => handleRoot(root)}
               >
@@ -173,14 +176,17 @@ export default function ChordSelector({ selectedChordName, onSelect, onClear }: 
         </div>
       </div>
 
-      {/* Quality */}
+      {/* Step 2 — Quality */}
       <div>
-        <div className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1.5">
-          Quality
+        <div className="flex items-center gap-2 mb-1.5">
+          <span className="text-[10px] font-bold text-indigo-400 bg-indigo-400/10 px-1.5 py-0.5 rounded">2</span>
+          <span className="text-gray-400 text-xs font-semibold uppercase tracking-wider">
+            Chord Type
+          </span>
         </div>
         <div className="flex flex-wrap gap-1.5">
           {ALL_QUALITIES.map(quality => {
-            const isActive = selection.quality === quality;
+            const isActive = selectedChordName !== null && selection.quality === quality;
             const colors = QUALITY_COLORS[quality];
 
             return (
@@ -189,7 +195,7 @@ export default function ChordSelector({ selectedChordName, onSelect, onClear }: 
                 className={`px-3 py-1.5 text-sm font-bold rounded-md shadow-md transition-all duration-200 ${
                   isActive
                     ? `text-white scale-105 ${colors.active}`
-                    : `text-white ${colors.idle}`
+                    : `text-gray-200 ${colors.idle}`
                 }`}
                 onClick={() => handleQuality(quality)}
               >
@@ -200,38 +206,45 @@ export default function ChordSelector({ selectedChordName, onSelect, onClear }: 
         </div>
       </div>
 
-      {/* Tension panel */}
-      <div>
-        <button
-          disabled={!tensionsAvailable}
-          className={`px-3 py-1.5 text-sm font-semibold rounded-md shadow-md transition ${
-            !tensionsAvailable
-              ? "bg-gray-800 text-gray-600 cursor-not-allowed opacity-40"
-              : showTensions
-                ? "bg-yellow-600 hover:bg-yellow-700 text-white"
-                : "bg-green-500 hover:bg-green-600 text-white"
-          }`}
-          onClick={() => tensionsAvailable && setShowTensions(prev => !prev)}
-        >
-          {showTensions ? "− Hide Tensions" : "+ Add Tension"}
-        </button>
+      {/* Tension — optional */}
+      <div className="border-t border-gray-700/50 pt-2">
+        <div className="flex items-center justify-between mb-1.5">
+          <div className="flex items-center gap-2">
+            <span className="text-gray-500 text-xs font-semibold uppercase tracking-wider">
+              Tension
+            </span>
+            <span className="text-[10px] text-gray-600 italic">optional</span>
+          </div>
+          <button
+            disabled={!tensionsAvailable}
+            className={`text-xs font-semibold px-2 py-0.5 rounded transition ${
+              !tensionsAvailable
+                ? "text-gray-600 cursor-not-allowed"
+                : showTensions
+                  ? "text-yellow-400 hover:text-yellow-300"
+                  : "text-green-400 hover:text-green-300"
+            }`}
+            onClick={() => tensionsAvailable && setShowTensions(prev => !prev)}
+          >
+            {showTensions ? "Hide" : "+ Add"}
+          </button>
+        </div>
 
         {showTensions && tensionsAvailable && (
-          <div className="flex flex-wrap gap-1.5 mt-2">
-            {ALL_TENSIONS.map(tension => {
-              const isActive = selection.tensions.includes(tension);
-
+          <div className="flex flex-wrap gap-1.5">
+            {ALL_TENSIONS.map(t => {
+              const isActive = selection.tension === t;
               return (
                 <button
-                  key={tension}
-                  className={`px-2.5 py-1 text-sm font-bold rounded-md shadow-md transition-all duration-200 border-2 ${
+                  key={t}
+                  className={`px-2.5 py-1 text-sm font-bold rounded-md shadow-md transition-all duration-200 border ${
                     isActive
-                      ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white border-green-300 scale-105"
-                      : "bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600 hover:border-gray-500"
+                      ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white border-green-400 scale-105"
+                      : "bg-gray-700/80 text-gray-300 border-gray-600/50 hover:bg-gray-600"
                   }`}
-                  onClick={() => handleTension(tension)}
+                  onClick={() => handleTension(t)}
                 >
-                  {tension}
+                  {t}
                 </button>
               );
             })}
@@ -239,12 +252,12 @@ export default function ChordSelector({ selectedChordName, onSelect, onClear }: 
         )}
       </div>
 
-      {/* Chord name + notes + status */}
-      <div className="space-y-1.5">
-        <div className="flex items-center gap-3">
-          {selectedChordName && (
+      {/* Result — chord name + notes */}
+      {selectedChordName && (
+        <div className="border-t border-gray-700/50 pt-2 space-y-1.5">
+          <div className="flex items-center justify-between">
             <div
-              className={`px-4 py-2 rounded-lg text-lg font-bold ${
+              className={`px-3 py-1.5 rounded-lg text-base font-bold ${
                 hasFingeringData
                   ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white"
                   : "bg-gray-800 text-gray-400"
@@ -252,41 +265,39 @@ export default function ChordSelector({ selectedChordName, onSelect, onClear }: 
             >
               {buildChordName(selection)}
               {!hasFingeringData && (
-                <span className="ml-2 text-xs font-normal text-gray-500">
+                <span className="ml-1.5 text-[10px] font-normal text-gray-500">
                   (no fingering)
                 </span>
               )}
             </div>
-          )}
-          <button
-            className="px-4 py-2 bg-red-600 text-white text-[16px] font-medium rounded-md hover:bg-red-500 transition"
-            onClick={handleClear}
-          >
-            Clear
-          </button>
-        </div>
+            <button
+              className="text-red-400 text-xs font-medium transition px-2 py-1 rounded hover:bg-gray-800/50"
+              onClick={handleClear}
+            >
+              Reset
+            </button>
+          </div>
 
-        {selectedChordName && (
           <div className="flex items-center gap-1.5">
-            <span className="text-gray-500 text-xs font-semibold uppercase tracking-wider">
-              Notes:
+            <span className="text-gray-500 text-[10px] font-semibold uppercase tracking-wider">
+              Notes
             </span>
             {chordTones.map((note, i) => (
               <span
                 key={`${note}-${i}`}
-                className="px-2 py-0.5 bg-gray-700 text-gray-200 text-xs font-bold rounded"
+                className="px-1.5 py-0.5 bg-gray-700/60 text-gray-200 text-[11px] font-bold rounded"
               >
                 {note}
               </span>
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Voicing selector */}
       {selectedChordName && voicings.length > 1 && (
         <div>
-          <div className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1.5">
+          <div className="text-gray-500 text-[10px] font-semibold uppercase tracking-wider mb-1">
             Voicing
           </div>
           <div className="flex flex-wrap gap-1.5">
@@ -298,7 +309,7 @@ export default function ChordSelector({ selectedChordName, onSelect, onClear }: 
                   className={`px-3 py-1.5 text-sm font-bold rounded-md shadow-md transition-all duration-200 ${
                     isActive
                       ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white ring-2 ring-indigo-300 scale-105"
-                      : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                      : "bg-gray-700/80 text-gray-300 hover:bg-gray-600"
                   }`}
                   onClick={() => handleVoicing(v)}
                 >

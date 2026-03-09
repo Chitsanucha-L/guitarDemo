@@ -98,6 +98,52 @@ const SEMITONES: Record<Root, number> = {
 
 const STRING_NAMES: Note[] = ["E6", "A", "D", "G", "B", "e1"];
 
+const STRING_OPEN: Record<Note, number> = {
+  E6: 4, A: 9, D: 2, G: 7, B: 11, e1: 4,
+};
+
+// ---------------------------------------------------------------------------
+// Chord Formula Engine
+// ---------------------------------------------------------------------------
+
+const CHORD_FORMULAS: Record<Quality, number[]> = {
+  major:  [0, 4, 7],
+  minor:  [0, 3, 7],
+  "7":    [0, 4, 7, 10],
+  maj7:   [0, 4, 7, 11],
+  m7:     [0, 3, 7, 10],
+  "6":    [0, 4, 7, 9],
+  m6:     [0, 3, 7, 9],
+  dim:    [0, 3, 6],
+  dim7:   [0, 3, 6, 9],
+  aug:    [0, 4, 8],
+  sus4:   [0, 5, 7],
+  sus2:   [0, 2, 7],
+};
+
+const TENSION_INTERVALS: Record<string, number> = {
+  add9:  2,
+  add11: 5,
+  add13: 9,
+  "9":   2,
+};
+
+export function buildChordIntervals(quality: Quality, tension?: string): number[] {
+  const base = [...CHORD_FORMULAS[quality]];
+
+  if (tension) {
+    const interval = TENSION_INTERVALS[tension];
+    if (interval !== undefined && !base.includes(interval)) {
+      base.push(interval);
+    }
+    if (tension === "9" && !base.includes(10)) {
+      base.push(10);
+    }
+  }
+
+  return base;
+}
+
 // Two families per quality: E-shape (root on low E) and A-shape (root on A).
 // generateFingering picks whichever gives a lower position on the neck.
 
@@ -150,6 +196,41 @@ const SHAPES: Record<Quality, ChordShape[]> = {
   ],
 };
 
+// ---------------------------------------------------------------------------
+// Voicing validation (formula-based)
+// ---------------------------------------------------------------------------
+
+function getVoicingIntervals(chord: ChordData, root: Root): Set<number> {
+  const rootSemi = SEMITONES[root];
+  const intervals = new Set<number>();
+  for (const [name, data] of Object.entries(chord.notes)) {
+    if (data.fret < 0) continue;
+    const semi = (STRING_OPEN[name as Note] + data.fret) % 12;
+    intervals.add((semi - rootSemi + 12) % 12);
+  }
+  return intervals;
+}
+
+function validateVoicing(
+  chord: ChordData,
+  root: Root,
+  quality: Quality,
+): boolean {
+  const actual = getVoicingIntervals(chord, root);
+
+  if (actual.size === 0) return false;
+
+  if (!actual.has(0)) return false;
+
+  const formula = CHORD_FORMULAS[quality];
+  const needs3 = formula.includes(3);
+  const needs4 = formula.includes(4);
+  if (needs3 && actual.has(4) && !actual.has(3)) return false;
+  if (needs4 && actual.has(3) && !actual.has(4)) return false;
+
+  return true;
+}
+
 function assignFingers(
   playedStrings: { index: number; fret: number }[],
   hasBarre: boolean,
@@ -184,9 +265,8 @@ function assignFingers(
 }
 
 function transposeShape(shape: ChordShape, targetRoot: Root): ChordData {
-  const stringOpenSemitone = shape.rootStringIndex === 0
-    ? SEMITONES["E" as Root]
-    : SEMITONES["A" as Root];
+  const rootString = STRING_NAMES[shape.rootStringIndex];
+  const stringOpenSemitone = STRING_OPEN[rootString];
   const offset = (SEMITONES[targetRoot] - stringOpenSemitone + 12) % 12;
 
   const notes = {} as ChordData["notes"];
@@ -281,6 +361,8 @@ export function generateFingerings(
     });
   }
 
+  if (tension) return result;
+
   const shapes = SHAPES[quality];
   if (!shapes) return result;
 
@@ -296,6 +378,7 @@ export function generateFingerings(
     if (!hasPlayable) continue;
     if (maxFret > 12) continue;
     if (minPlayableFret > 8) continue;
+    if (!validateVoicing(chord, root, quality)) continue;
 
     const isDuplicate = result.some(v => isSameShape(v.data, chord));
     if (isDuplicate) continue;
