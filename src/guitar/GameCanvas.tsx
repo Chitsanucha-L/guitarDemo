@@ -38,8 +38,10 @@ function FixedCamera() {
 
 function GameCanvas({ currentChord, canPlay, onStringPress }: GameCanvasProps) {
   const previousChordRef = useRef<ChordData | null>(null);
+  const chordRef = useRef<ChordData | null>(null);
 
   useEffect(() => {
+    chordRef.current = currentChord;
     if (currentChord) {
       previousChordRef.current = currentChord;
     }
@@ -59,6 +61,7 @@ function GameCanvas({ currentChord, canPlay, onStringPress }: GameCanvasProps) {
           position={[-0.8, 0, 0]}
           rotation={[Math.PI / 2, -Math.PI / 2 + 0.01, 0]}
           highlightChord={currentChord}
+          chordRef={chordRef}
           previousChord={previousChordRef.current}
           canPlay={canPlay}
           onNotePlay={() => {}}
