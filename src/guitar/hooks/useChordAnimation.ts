@@ -468,7 +468,7 @@ export function useChordAnimation(
         }
       }
 
-      const hasBarre = !!highlightChord._barre;
+      //const hasBarre = !!highlightChord._barre;
 
       positions.forEach((pos, index) => {
         if (usedPositions.has(index)) return;
