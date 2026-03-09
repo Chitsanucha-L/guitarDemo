@@ -8,7 +8,7 @@ import { useScaleHighlight } from "./hooks/useScaleHighlight";
 import { useGuitarAudio } from "./hooks/useGuitarAudio";
 import { useGuitarInteraction } from "./hooks/useGuitarInteraction";
 
-export type StrumDirectionFn = (direction: "down" | "up", delayMs?: number) => void;
+export type StrumDirectionFn = (direction: "down" | "up", delayMs?: number, subdivision?: number) => void;
 
 interface GuitarModelProps {
   highlightChord: ChordData | null;

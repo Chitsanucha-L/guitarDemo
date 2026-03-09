@@ -11,6 +11,8 @@ export interface StrumPattern {
   id: string;
   label: string;
   steps: PatternStep[];
+  /** Recommended BPM for this pattern; applied when the pattern is selected */
+  recommendedBpm?: number;
 }
 
 export const SUBDIVISIONS_PER_BAR = 16;
@@ -19,6 +21,7 @@ export const PRESET_PATTERNS: StrumPattern[] = [
   {
     id: "basic-4",
     label: "Basic 4/4",
+    recommendedBpm: 80,
     steps: [
       { stroke: "down", subdivision: 0 },
       { stroke: "down", subdivision: 4 },
@@ -26,52 +29,79 @@ export const PRESET_PATTERNS: StrumPattern[] = [
       { stroke: "down", subdivision: 12 },
     ],
   },
-  // {
-  //   id: "folk",
-  //   label: "Folk",
-  //   steps: [
-  //     { stroke: "down", subdivision: 0 },
-  //     { stroke: "down", subdivision: 4 },
-  //     { stroke: "up",   subdivision: 6 },
-  //     { stroke: "up",   subdivision: 8 },
-  //     { stroke: "down", subdivision: 12 },
-  //     { stroke: "up",   subdivision: 14 },
-  //   ],
-  // },
-  // {
-  //   id: "pop",
-  //   label: "Pop",
-  //   steps: [
-  //     { stroke: "down", subdivision: 0 },
-  //     { stroke: "up",   subdivision: 2 },
-  //     { stroke: "down", subdivision: 8 },
-  //     { stroke: "up",   subdivision: 10 },
-  //   ],
-  // },
-  // {
-  //   id: "island",
-  //   label: "Island",
-  //   steps: [
-  //     { stroke: "down", subdivision: 0 },
-  //     { stroke: "down", subdivision: 2 },
-  //     { stroke: "up",   subdivision: 4 },
-  //     { stroke: "up",   subdivision: 6 },
-  //     { stroke: "down", subdivision: 8 },
-  //     { stroke: "up",   subdivision: 10 },
-  //     { stroke: "down", subdivision: 12 },
-  //     { stroke: "up",   subdivision: 14 },
-  //   ],
-  // },
+  {
+    id: "basic-1",
+    label: "Basic 1/4",
+    recommendedBpm: 110,
+    steps: [
+      { stroke: "down", subdivision: 0 },
+      { stroke: "down", subdivision: 4 },
+      { stroke: "up", subdivision: 7 },
+      { stroke: "up", subdivision: 11 },
+      { stroke: "down", subdivision: 12 },
+    ],
+  },
+  {
+    id: "folk",
+    label: "Folk",
+    recommendedBpm: 65,
+    steps: [
+      { stroke: "down", subdivision: 0 },
+      { stroke: "down", subdivision: 4 },
+      { stroke: "up", subdivision: 7 },
+      { stroke: "up", subdivision: 9 },
+      { stroke: "down", subdivision: 10 },
+      { stroke: "down", subdivision: 12 },
+    ],
+  },
 ];
 
-const HUMANIZE_MS = 12;
-const SWING_AMOUNT = 0.08;
+const JITTER_MS = 8;
+const SWING_AMOUNT = 0.08; // fraction of a 16th-note to delay off-beats
+const VELOCITY_HUMANIZE = 0.1; // ±10% randomness
 
 interface StrummingEngineOptions {
   pattern: StrumPattern;
   bpm: number;
   onStroke: (stroke: Stroke, subdivision: number, velocity: number) => void;
   onBarChange?: () => void;
+}
+
+/**
+ * Base velocity by stroke and position in bar.
+ * Downstrokes are heavier; subdivision 0 is the strongest accent.
+ */
+function getBaseVelocity(stroke: Stroke, subdivision: number): number {
+  const isFirstBeat = subdivision === 0;
+  const isDownbeat = subdivision % 4 === 0; // 0, 4, 8, 12
+
+  if (stroke === "down") {
+    if (isFirstBeat) return 0.95;
+    if (isDownbeat) return 0.88;
+    return 0.82;
+  }
+  // upstroke
+  if (isFirstBeat) return 0.75;
+  if (isDownbeat) return 0.62;
+  return 0.55;
+}
+
+/**
+ * Apply ±10% humanization and clamp to [0, 1].
+ */
+function humanizeVelocity(base: number): number {
+  const factor = 1 + (Math.random() - 0.5) * 2 * VELOCITY_HUMANIZE;
+  return Math.min(1, Math.max(0, base * factor));
+}
+
+/**
+ * Micro-delay in ms for this subdivision: swing (off-beats late) + jitter.
+ */
+function getStrokeDelayMs(subdivision: number, subdivDurationMs: number): number {
+  const isOffBeat = subdivision % 2 === 1;
+  const swingMs = isOffBeat ? subdivDurationMs * SWING_AMOUNT : 0;
+  const jitterMs = (Math.random() - 0.5) * 2 * JITTER_MS;
+  return Math.max(0, swingMs + jitterMs);
 }
 
 export function useStrummingEngine({ pattern, bpm, onStroke, onBarChange }: StrummingEngineOptions) {
@@ -119,35 +149,26 @@ export function useStrummingEngine({ pattern, bpm, onStroke, onBarChange }: Stru
       onBarChangeRef.current?.();
     }
 
-    const rawSubdiv = Math.floor(elapsed / subdivDuration);
-    const swingOffset = rawSubdiv % 2 === 1
-      ? subdivDuration * SWING_AMOUNT
-      : 0;
-
-    const adjustedElapsed = Math.max(0, elapsed - swingOffset);
-    const subdivision = Math.floor(adjustedElapsed / subdivDuration) % SUBDIVISIONS_PER_BAR;
+    // Use strict grid position (no swing in elapsed) so RAF stays in sync
+    const subdivision = Math.floor(elapsed / subdivDuration) % SUBDIVISIONS_PER_BAR;
 
     if (subdivision !== subdivisionRef.current) {
       subdivisionRef.current = subdivision;
 
       const step = stepMapRef.current.get(subdivision);
       if (step) {
-        const jitter = (Math.random() - 0.5) * HUMANIZE_MS;
-        const velocity = step.stroke === "down"
-          ? 0.85 + Math.random() * 0.25
-          : 0.55 + Math.random() * 0.25;
+        const baseVelocity = getBaseVelocity(step.stroke, subdivision);
+        const velocity = humanizeVelocity(baseVelocity);
 
+        const delayMs = getStrokeDelayMs(subdivision, subdivDuration);
         const barId = barIdRef.current;
-        const delay = Math.max(0, jitter);
+        const capturedSubdivision = subdivision;
+
         setTimeout(() => {
-          if (
-            isPlayingRef.current &&
-            barId === barIdRef.current &&
-            subdivisionRef.current === subdivision
-          ) {
-            onStrokeRef.current(step.stroke, subdivision, velocity);
+          if (isPlayingRef.current && barId === barIdRef.current) {
+            onStrokeRef.current(step.stroke, capturedSubdivision, velocity);
           }
-        }, delay);
+        }, delayMs);
       }
       setCurrentBeat(subdivision);
     }

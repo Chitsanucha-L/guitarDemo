@@ -13,7 +13,7 @@ export function useGuitarAudio(
   const volume = 0.3;
 
   const lastPlayed = useRef<{ meshName: string; time: number } | null>(null);
-  const isStrumming = useRef(false);
+  const strumGeneration = useRef(0);
   const noteDisplayTimeout = useRef<number | null>(null);
   const activeSources = useRef<Map<number, { source: AudioBufferSourceNode; gain: GainNode }>>(new Map());
 
@@ -44,7 +44,13 @@ export function useGuitarAudio(
     };
   }, [audioContext, sounds]);
 
-  const playSound = useCallback((meshName: string, stringNum: number, fret: number, skipTimeCheck = false) => {
+  const playSound = useCallback((
+    meshName: string,
+    stringNum: number,
+    fret: number,
+    skipTimeCheck = false,
+    volumeMultiplier = 1,
+  ) => {
     if (audioContext.state === "suspended") audioContext.resume();
 
     // ป้องกันการเล่นซ้ำเร็วเกิน 250ms ทั้ง click mode และ drag mode
@@ -69,7 +75,7 @@ export function useGuitarAudio(
     const src = audioContext.createBufferSource();
     src.buffer = buf;
     const gainNode = audioContext.createGain();
-    gainNode.gain.value = volume;
+    gainNode.gain.value = volume * Math.min(1, Math.max(0, volumeMultiplier));
     src.connect(gainNode);
     gainNode.connect(audioContext.destination);
     src.start();
@@ -97,17 +103,34 @@ export function useGuitarAudio(
     }, 2000);
   }, [audioContext, sounds, onNotePlay]);
 
-  const strumDirection = useCallback(async (direction: "down" | "up", delayMs = 75) => {
-    if (isStrumming.current) return;
-    isStrumming.current = true;
+  const strumDirection = useCallback(async (direction: "down" | "up", delayMs = 75, subdivision?: number) => {
+    // Bump generation — any in-flight strum with an older gen will stop itself
+    const gen = ++strumGeneration.current;
 
     const chord = chordRef?.current ?? highlightChord;
 
+    // Down: bass-to-treble (6→1), Up: treble-to-bass (1→6)
     const order = direction === "down"
       ? [6, 5, 4, 3, 2, 1]
       : [1, 2, 3, 4, 5, 6];
 
+    // Main beats (quarter notes): play ALL 6 strings at full volume
+    const isMainBeat = subdivision !== undefined && subdivision % 4 === 0;
+
+    const primaryStrings: Set<number> = direction === "down"
+      ? new Set([6, 5, 4])
+      : new Set([1, 2, 3]);
+
+    const SECONDARY_PLAY_CHANCE = 0.45;
+    const SECONDARY_VOLUME = 0.35;
+
     for (const stringNum of order) {
+      if (strumGeneration.current !== gen) return;
+
+      const isPrimary = isMainBeat || primaryStrings.has(stringNum);
+
+      if (!isPrimary && Math.random() > SECONDARY_PLAY_CHANCE) continue;
+
       let fret = 0;
       if (chord) {
         const noteName = stringToNote[stringNum];
@@ -118,11 +141,10 @@ export function useGuitarAudio(
       }
 
       const meshName = `String_${stringNum}_${fret}`;
-      playSound(meshName, stringNum, fret, true);
+      const vol = isPrimary ? 1 : SECONDARY_VOLUME;
+      playSound(meshName, stringNum, fret, true, vol);
       await new Promise(resolve => setTimeout(resolve, delayMs));
     }
-
-    isStrumming.current = false;
   }, [playSound, highlightChord, chordRef]);
 
   const strumAllStrings = useCallback(async () => {

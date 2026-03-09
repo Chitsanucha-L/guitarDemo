@@ -38,7 +38,7 @@ export const ALL_QUALITIES: Quality[] = [
 ];
 
 export const ALL_TENSIONS: Tension[] = [
-  "add9", "add11", "add13", "9",
+  "add9", "add11", "9",
 ];
 
 export const QUALITY_LABELS: Record<Quality, string> = {

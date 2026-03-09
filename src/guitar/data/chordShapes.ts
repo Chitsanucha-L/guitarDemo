@@ -124,7 +124,6 @@ const CHORD_FORMULAS: Record<Quality, number[]> = {
 const TENSION_INTERVALS: Record<string, number> = {
   add9:  2,
   add11: 5,
-  add13: 9,
   "9":   2,
 };
 

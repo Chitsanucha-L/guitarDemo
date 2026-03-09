@@ -142,9 +142,9 @@ export default function Guitar3D() {
     strumFnRef.current = fn;
   }, []);
 
-  const handleStroke = useCallback((stroke: Stroke) => {
+  const handleStroke = useCallback((stroke: Stroke, subdivision: number) => {
     if (strumFnRef.current) {
-      strumFnRef.current(stroke === "down" ? "down" : "up", 30);
+      strumFnRef.current(stroke === "down" ? "down" : "up", 30, subdivision);
     }
   }, []);
 

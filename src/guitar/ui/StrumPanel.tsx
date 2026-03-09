@@ -8,7 +8,7 @@ import {
 } from "../hooks/useStrummingEngine";
 
 interface StrumPanelProps {
-  onStroke: (stroke: Stroke) => void;
+  onStroke: (stroke: Stroke, subdivision: number) => void;
   onBarChange?: () => void;
 }
 
@@ -21,10 +21,10 @@ const BEAT_LABELS = [
 
 export default function StrumPanel({ onStroke, onBarChange }: StrumPanelProps) {
   const [pattern, setPattern] = useState<StrumPattern>(PRESET_PATTERNS[0]);
-  const [bpm, setBpm] = useState(50);
+  const [bpm, setBpm] = useState(PRESET_PATTERNS[0].recommendedBpm ?? 65);
 
   const handleStroke = useCallback(
-    (stroke: Stroke, _subdivision: number, _velocity: number) => onStroke(stroke),
+    (stroke: Stroke, subdivision: number, _velocity: number) => onStroke(stroke, subdivision),
     [onStroke],
   );
 
@@ -43,17 +43,14 @@ export default function StrumPanel({ onStroke, onBarChange }: StrumPanelProps) {
   }, [pattern]);
 
   const patternSummary = useMemo(() => {
-    const beats = [0, 4, 8, 12];
-    const offbeats = [2, 6, 10, 14];
-    const slots: { label: string; stroke: string | null }[] = [];
-
-    for (let b = 0; b < 4; b++) {
-      const onBeat = pattern.steps.find(s => s.subdivision === beats[b]);
-      const offBeat = pattern.steps.find(s => s.subdivision === offbeats[b]);
-      slots.push({ label: String(b + 1), stroke: onBeat ? (onBeat.stroke === "down" ? "D" : "U") : null });
-      slots.push({ label: "&", stroke: offBeat ? (offBeat.stroke === "down" ? "D" : "U") : null });
-    }
-    return slots;
+    const labels = ["1", "e", "&", "a", "2", "e", "&", "a", "3", "e", "&", "a", "4", "e", "&", "a"];
+    return labels.map((label, i) => {
+      const step = pattern.steps.find(s => s.subdivision === i);
+      return {
+        label,
+        stroke: step ? (step.stroke === "down" ? "D" : "U") : null,
+      };
+    });
   }, [pattern]);
 
   return (
@@ -64,22 +61,26 @@ export default function StrumPanel({ onStroke, onBarChange }: StrumPanelProps) {
           <button
             key={p.id}
             disabled={isPlaying}
+            title={p.recommendedBpm != null ? `Recommended: ${p.recommendedBpm} BPM` : undefined}
             className={`px-3 py-1.5 text-sm font-bold rounded-md shadow-md transition-all duration-200 ${
               pattern.id === p.id
                 ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white ring-2 ring-violet-300 scale-105"
                 : "bg-gray-700/80 text-gray-300 hover:bg-gray-600"
             } ${isPlaying ? "opacity-60 cursor-not-allowed" : ""}`}
-            onClick={() => setPattern(p)}
+            onClick={() => {
+              setPattern(p);
+              if (p.recommendedBpm != null) setBpm(p.recommendedBpm);
+            }}
           >
             {p.label}
           </button>
         ))}
       </div>
 
-      {/* Simplified pattern summary */}
-      <div className="flex items-center justify-center gap-0.5 py-1">
+      {/* Pattern summary — all 16 subdivisions */}
+      <div className="flex items-center justify-center py-1">
         {patternSummary.map((slot, i) => (
-          <div key={i} className="flex flex-col items-center w-7">
+          <div key={i} className="flex flex-col items-center flex-1 min-w-0">
             <span className={`text-sm font-bold leading-none ${
               slot.stroke
                 ? slot.stroke === "D" ? "text-yellow-400" : "text-cyan-400"
@@ -102,7 +103,7 @@ export default function StrumPanel({ onStroke, onBarChange }: StrumPanelProps) {
       </div>
 
       {/* 16th-note subdivision grid */}
-      <div className="flex items-end gap-[3px]">
+      <div className="flex items-end gap-[2px]">
         {grid.map((slot, i) => {
           const isActive = isPlaying && currentBeat === i;
           const isQuarter = i % 4 === 0;
@@ -110,9 +111,9 @@ export default function StrumPanel({ onStroke, onBarChange }: StrumPanelProps) {
 
           if (!slot) {
             return (
-              <div key={i} className="flex flex-col items-center gap-0.5">
+              <div key={i} className="flex flex-col items-center gap-0.5 flex-1 min-w-0">
                 <div
-                  className={`flex items-center justify-center w-5 h-8 rounded ${
+                  className={`flex items-center justify-center w-full h-8 rounded ${
                     isActive
                       ? "bg-gray-600/80"
                       : isQuarter ? "bg-gray-800/60" : "bg-gray-800/25"
@@ -133,9 +134,9 @@ export default function StrumPanel({ onStroke, onBarChange }: StrumPanelProps) {
 
           const isDown = slot.stroke === "down";
           return (
-            <div key={i} className="flex flex-col items-center gap-0.5">
+            <div key={i} className="flex flex-col items-center gap-0.5 flex-1 min-w-0">
               <div
-                className={`flex flex-col items-center justify-center w-5 h-8 rounded text-[9px] font-bold transition-all duration-75 ${
+                className={`flex flex-col items-center justify-center w-full h-8 rounded text-[9px] font-bold transition-all duration-75 ${
                   isActive
                     ? "bg-yellow-400 text-gray-900 scale-110 shadow-md shadow-yellow-400/40"
                     : "bg-gray-700 text-gray-300"
@@ -160,21 +161,22 @@ export default function StrumPanel({ onStroke, onBarChange }: StrumPanelProps) {
 
       {/* BPM slider */}
       <div className="space-y-1">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <span className="text-gray-500 text-[10px] font-semibold uppercase tracking-wider">
             BPM
           </span>
-          <span className="text-white text-sm font-bold tabular-nums">{bpm}</span>
         </div>
-        <input
-          type="range"
-          min={40}
-          max={120}
-          step={1}
-          value={bpm}
-          onChange={e => setBpm(Number(e.target.value))}
-          className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-violet-500"
-        />
+        <div className="py-2">
+          <input
+            type="range"
+            min={40}
+            max={120}
+            step={1}
+            value={bpm}
+            onChange={e => setBpm(Number(e.target.value))}
+            className="w-full h-3 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-violet-500 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-violet-500 [&::-webkit-slider-thumb]:cursor-grab [&::-webkit-slider-thumb]:active:cursor-grabbing [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-violet-300 [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-violet-500 [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-violet-300 [&::-moz-range-thumb]:cursor-grab"
+          />
+        </div>
         <div className="flex justify-between text-[10px] text-gray-500">
           <span>40</span>
           <span>80</span>
