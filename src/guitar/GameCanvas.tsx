@@ -1,27 +1,22 @@
 import { memo, useRef, useEffect } from "react";
+import type { MutableRefObject } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
-import { Environment, OrbitControls } from "@react-three/drei";
+import { Environment, OrbitControls, OrthographicCamera } from "@react-three/drei";
 import GuitarModel from "./GuitarModel";
+import type { StrumHandle } from "./GuitarModel";
 import type { ChordData } from "./data/types";
-import { OrthographicCamera } from "@react-three/drei";
+import type { PressedPosition } from "./hooks/useChordGame";
 
 interface GameCanvasProps {
   currentChord: ChordData | null;
   canPlay: boolean;
   onStringPress?: (stringNum: number, fret: number) => void;
+  pressedPositions?: PressedPosition[];
+  strumRef?: MutableRefObject<StrumHandle | null>;
 }
 
-/**
- * Isolated Canvas component that prevents re-renders from game state changes.
- * This component is memoized and only updates when chord or interaction props change.
- */
 function FixedCamera() {
   const { size } = useThree();
-
-  /**
-   * worldHeight = สิ่งที่คุณอยากเห็น “สูงเท่าเดิมเสมอ”
-   * ปรับค่านี้ครั้งเดียว → ทุกจอเหมือนกัน
-   */
   const worldHeight = 1.25;
 
   return (
@@ -35,8 +30,7 @@ function FixedCamera() {
   );
 }
 
-
-function GameCanvas({ currentChord, canPlay, onStringPress }: GameCanvasProps) {
+function GameCanvas({ currentChord, canPlay, onStringPress, pressedPositions = [], strumRef }: GameCanvasProps) {
   const previousChordRef = useRef<ChordData | null>(null);
   const chordRef = useRef<ChordData | null>(null);
 
@@ -47,10 +41,11 @@ function GameCanvas({ currentChord, canPlay, onStringPress }: GameCanvasProps) {
     }
   }, [currentChord]);
 
+  const isGameMode = pressedPositions.length > 0 || strumRef !== undefined;
+
   return (
     <div className="absolute inset-0 w-full h-full">
       <Canvas shadows>
-        {/* ✅ FIXED ORTHOGRAPHIC CAMERA */}
         <FixedCamera />
 
         <Environment preset="apartment" />
@@ -60,30 +55,34 @@ function GameCanvas({ currentChord, canPlay, onStringPress }: GameCanvasProps) {
         <GuitarModel
           position={[-0.8, 0, 0]}
           rotation={[Math.PI / 2, -Math.PI / 2 + 0.01, 0]}
-          highlightChord={currentChord}
+          highlightChord={isGameMode ? null : currentChord}
           chordRef={chordRef}
-          previousChord={previousChordRef.current}
+          previousChord={isGameMode ? null : previousChordRef.current}
           canPlay={canPlay}
-          onNotePlay={() => {}}
+          onNotePlay={() => { }}
           onStringPress={onStringPress}
+          pressedPositions={pressedPositions}
+          gameMode={isGameMode}
+          strumRef={strumRef}
         />
 
         <OrbitControls
-          enabled={false}
-          enableZoom={false}
-          enablePan={false}
-          enableRotate={false}
+          enabled={true}       // เปิดการทำงาน
+          enableZoom={true}   // ปิดการซูม (ปรับเป็น true ได้ถ้าต้องการ)
+          enablePan={true}    // ปิดการเลื่อนซ้าย-ขวา
+          enableRotate={true}  // เปิดให้หมุนได้
         />
       </Canvas>
     </div>
   );
 }
 
-// Memoize to prevent unnecessary re-renders
 export default memo(GameCanvas, (prev, next) => {
   return (
     prev.currentChord === next.currentChord &&
     prev.canPlay === next.canPlay &&
-    prev.onStringPress === next.onStringPress
+    prev.onStringPress === next.onStringPress &&
+    prev.pressedPositions === next.pressedPositions &&
+    prev.strumRef === next.strumRef
   );
 });

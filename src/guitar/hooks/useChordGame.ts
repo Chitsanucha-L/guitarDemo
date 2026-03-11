@@ -4,7 +4,7 @@ import { GAME_CHORDS } from "../data/chordShapes";
 
 export type GameStatus = "idle" | "playing" | "correct" | "wrong" | "gameover";
 
-interface PressedPosition {
+export interface PressedPosition {
   string: string; // "E6" | "A" | "D" | "G" | "B" | "e1"
   fret: number;
 }
@@ -19,7 +19,6 @@ export function useChordGame() {
   const timerRef = useRef<number | null>(null);
   const feedbackTimeoutRef = useRef<number | null>(null);
 
-  // Timer logic
   useEffect(() => {
     if (gameStatus === "playing") {
       timerRef.current = window.setInterval(() => {
@@ -45,22 +44,19 @@ export function useChordGame() {
     };
   }, [gameStatus]);
 
-  // Select random chord
   const selectRandomChord = useCallback(() => {
     const pick = GAME_CHORDS[Math.floor(Math.random() * GAME_CHORDS.length)];
     setCurrentChord({ name: pick.name, data: pick.data });
     setPressedPositions([]);
   }, []);
 
-  // Start game
   const startGame = useCallback(() => {
     setScore(0);
-    setTimeLeft(10000);
+    setTimeLeft(30);
     setGameStatus("playing");
     selectRandomChord();
   }, [selectRandomChord]);
 
-  // Reset game
   const resetGame = useCallback(() => {
     setScore(0);
     setTimeLeft(30);
@@ -77,80 +73,65 @@ export function useChordGame() {
     }
   }, []);
 
-  // Register press (called from guitar interaction)
+  // Toggle press: same string+fret removes it; different fret replaces; new string adds.
+  // Only fret > 0 positions are accepted — open strings are automatic.
   const registerPress = useCallback((stringName: string, fret: number) => {
-    if (gameStatus !== "playing") return;
+    if (gameStatus !== "playing" || fret <= 0) return;
 
     setPressedPositions((prev) => {
-      // Remove existing press on this string
+      const existing = prev.find((p) => p.string === stringName && p.fret === fret);
+      if (existing) {
+        return prev.filter((p) => !(p.string === stringName && p.fret === fret));
+      }
       const filtered = prev.filter((p) => p.string !== stringName);
-      // Add new press
       return [...filtered, { string: stringName, fret }];
     });
   }, [gameStatus]);
 
-  // Validate chord
+  // Validate pressed positions against target chord.
+  //  - fret > 0 : player MUST have pressed exactly that fret
+  //  - fret = 0 : open string — player must NOT have pressed anything
+  //  - fret < 0 : muted string — player must NOT have pressed anything
   const validateChord = useCallback(() => {
     if (!currentChord || gameStatus !== "playing") return;
 
     const targetNotes = currentChord.data.notes;
-    
-    // Check if all required positions are pressed
     let isCorrect = true;
-    const requiredStrings = Object.keys(targetNotes);
 
-    // Check each required string
-    for (const stringName of requiredStrings) {
-      const targetFret = targetNotes[stringName as keyof typeof targetNotes].fret;
+    for (const [stringName, noteData] of Object.entries(targetNotes)) {
+      const targetFret = noteData.fret;
       const pressed = pressedPositions.find((p) => p.string === stringName);
 
-      if (!pressed || pressed.fret !== targetFret) {
-        isCorrect = false;
-        break;
+      if (targetFret > 0) {
+        // Fretted — player must have pressed this exact fret
+        if (!pressed || pressed.fret !== targetFret) { isCorrect = false; break; }
+      } else {
+        // Open (0) or muted (-1) — player must NOT have pressed this string
+        if (pressed) { isCorrect = false; break; }
       }
     }
 
-    // Check for extra presses (wrong strings)
-    const extraPresses = pressedPositions.filter(
-      (p) => !requiredStrings.includes(p.string)
-    );
-    if (extraPresses.length > 0) {
-      isCorrect = false;
-    }
-
-    // Apply result
     if (isCorrect) {
       setGameStatus("correct");
       setScore((prev) => prev + 1);
       
-      // Clear feedback timeout if exists
-      if (feedbackTimeoutRef.current) {
-        clearTimeout(feedbackTimeoutRef.current);
-      }
-
-      // Next chord after 1 second
+      if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
       feedbackTimeoutRef.current = window.setTimeout(() => {
         setGameStatus("playing");
         selectRandomChord();
-      }, 1000);
+      }, 1500);
     } else {
       setGameStatus("wrong");
-      setTimeLeft((prev) => Math.max(0, prev - 2)); // Reduce 2 seconds
+      setTimeLeft((prev) => Math.max(0, prev - 2));
       
-      // Clear feedback timeout if exists
-      if (feedbackTimeoutRef.current) {
-        clearTimeout(feedbackTimeoutRef.current);
-      }
-
-      // Clear pressed positions and continue after 1 second
+      if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
       feedbackTimeoutRef.current = window.setTimeout(() => {
         setPressedPositions([]);
         setGameStatus("playing");
-      }, 1000);
+      }, 1500);
     }
   }, [currentChord, gameStatus, pressedPositions, selectRandomChord]);
 
-  // Clear pressed positions (for manual reset)
   const clearPresses = useCallback(() => {
     setPressedPositions([]);
   }, []);

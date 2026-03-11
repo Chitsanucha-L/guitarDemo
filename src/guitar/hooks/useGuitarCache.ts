@@ -11,8 +11,44 @@ export function useGuitarCache(scene: THREE.Group | THREE.Scene) {
 
   useEffect(() => {
     const oldHitboxes = scene.getObjectByName("StringHitboxes");
-    if (oldHitboxes) return;
 
+    if (oldHitboxes) {
+      // Hitboxes already exist (React Strict Mode re-mount / HMR).
+      // The THREE.js scene persists but React refs were reset to empty.
+      // Rebuild all lookup maps from the existing scene objects.
+      stringFretMap.current = {};
+      stringMeshMap.current = {} as Record<Note, THREE.Object3D>;
+      fretMeshMap.current = {} as Record<number, THREE.Object3D>;
+      const meshes: THREE.Mesh[] = [];
+
+      scene.traverse((child: THREE.Object3D) => {
+        if (child instanceof THREE.Mesh) {
+          const match = child.name.match(/^String_(\d+)_(\d+)$/);
+          if (match) {
+            const stringNum = parseInt(match[1]);
+            const fret = parseInt(match[2]);
+            if (!stringFretMap.current[stringNum]) stringFretMap.current[stringNum] = {};
+            stringFretMap.current[stringNum][fret] = child;
+            if (fret === 0) {
+              const noteKey = stringToNote[stringNum];
+              if (noteKey) stringMeshMap.current[noteKey] = child;
+            }
+          }
+        }
+        if (child.name.match(/^Fret\d+$/)) {
+          const fretNum = parseInt(child.name.replace("Fret", ""));
+          if (!isNaN(fretNum)) fretMeshMap.current[fretNum] = child;
+        }
+      });
+
+      oldHitboxes.traverse((child) => {
+        if (child instanceof THREE.Mesh) meshes.push(child);
+      });
+      stringMeshes.current = meshes;
+      return;
+    }
+
+    // First mount — create hitboxes and build all lookup maps
     const meshes: THREE.Mesh[] = [];
     const hitboxGroup = new THREE.Group();
     hitboxGroup.name = "StringHitboxes";
@@ -36,13 +72,11 @@ export function useGuitarCache(scene: THREE.Group | THREE.Scene) {
           (child as any).userData.meshName = child.name;
           (child as any).userData.note = computedNote;
 
-          // Build 2D lookup: stringFretMap[stringNum][fret] → mesh
           if (!stringFretMap.current[stringNum]) {
             stringFretMap.current[stringNum] = {};
           }
           stringFretMap.current[stringNum][fret] = child;
 
-          // Cache open-string (fret 0) meshes for chord marker positioning
           if (fret === 0) {
             const noteKey = stringToNote[stringNum];
             if (noteKey) {

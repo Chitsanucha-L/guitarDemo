@@ -1,33 +1,75 @@
 import { Link } from "react-router-dom";
-import { useCallback } from "react";
+import { useCallback, useRef, useState } from "react";
 import GameCanvas from "../guitar/GameCanvas";
 import GameHUD from "../guitar/ui/GameHUD";
 import GameFeedback from "../guitar/ui/GameFeedback";
 import { useChordGame } from "../guitar/hooks/useChordGame";
 import { stringToNote } from "../guitar/data/constants";
+import type { Note } from "../guitar/data/types";
+import type { StrumHandle } from "../guitar/GuitarModel";
+
+const STRING_ORDER: Note[] = ["E6", "A", "D", "G", "B", "e1"];
+const STRING_NAME_TO_NUM: Record<string, number> = {
+  E6: 6, A: 5, D: 4, G: 3, B: 2, e1: 1,
+};
 
 export default function GamePage() {
   const {
     currentChord,
     score,
     timeLeft,
+    pressedPositions,
     gameStatus,
     startGame,
     resetGame,
     registerPress,
     validateChord,
+    clearPresses,
   } = useChordGame();
 
-  // Memoized handler to prevent Canvas re-renders
+  const strumRef = useRef<StrumHandle | null>(null);
+  const [isChecking, setIsChecking] = useState(false);
+
+  // Keep a ref to the latest validateChord so the async check flow
+  // always calls the most recent version (avoids stale closure).
+  const validateRef = useRef(validateChord);
+  validateRef.current = validateChord;
+
   const handleStringPress = useCallback(
     (stringNum: number, fret: number) => {
       const stringName = stringToNote[stringNum];
-      if (stringName && gameStatus === "playing") {
+      if (stringName && gameStatus === "playing" && !isChecking) {
         registerPress(stringName, fret);
       }
     },
-    [gameStatus, registerPress]
+    [gameStatus, registerPress, isChecking],
   );
+
+  const handleCheck = useCallback(async () => {
+    if (gameStatus !== "playing" || isChecking || !currentChord) return;
+    setIsChecking(true);
+
+    // Build strum from what the PLAYER pressed (their highlighted positions).
+    // Unpressed strings play as open (fret 0).
+    const strumPositions: { stringNum: number; fret: number }[] = [];
+    for (const name of STRING_ORDER) {
+      const sNum = STRING_NAME_TO_NUM[name];
+      const pressed = pressedPositions.find((p) => p.string === name);
+      strumPositions.push({ stringNum: sNum, fret: pressed ? pressed.fret : 0 });
+    }
+
+    // Play the strum from strings 6→1
+    if (strumRef.current && strumPositions.length > 0) {
+      await strumRef.current.strumPositions(strumPositions);
+      await new Promise((r) => setTimeout(r, 300));
+    }
+
+    // Validate using the latest closure
+    validateRef.current();
+    setIsChecking(false);
+  }, [gameStatus, isChecking, currentChord, pressedPositions]);
+
+  const pressCount = pressedPositions.length;
 
   return (
     <div className="w-screen h-screen relative">
@@ -40,20 +82,20 @@ export default function GamePage() {
         </div>
       </nav>
 
-      {/* Main Content - Canvas + UI Overlays */}
+      {/* Main Content */}
       <div className="absolute top-15 left-0 right-0 bottom-0 overflow-hidden bg-[#1a1a1a]">
         
-        {/* 3D Canvas - Always Mounted */}
+        {/* 3D Canvas */}
         <GameCanvas
           currentChord={currentChord?.data || null}
-          canPlay={gameStatus === "playing"}
+          canPlay={gameStatus === "playing" && !isChecking}
           onStringPress={handleStringPress}
+          pressedPositions={pressedPositions}
+          strumRef={strumRef}
         />
 
-        {/* UI Overlays - Absolutely Positioned */}
-        
-        {/* Game HUD */}
-        {gameStatus === "playing" && currentChord && (
+        {/* Game HUD — stays visible during feedback so the player sees the chord / score */}
+        {(gameStatus === "playing" || gameStatus === "correct" || gameStatus === "wrong") && currentChord && (
           <GameHUD 
             chordName={currentChord.name}
             score={score}
@@ -70,9 +112,11 @@ export default function GamePage() {
             <div className="bg-gray-800/95 p-12 rounded-2xl shadow-2xl border-2 border-yellow-500/50 text-center max-w-lg pointer-events-auto">
               <h2 className="text-5xl font-bold text-yellow-400 mb-6">Chord Training Game</h2>
               <p className="text-gray-300 text-lg mb-8 leading-relaxed">
-                Press the correct chord positions on the guitar.<br />
-                Correct answers: <span className="text-green-400 font-bold">+1 point</span><br />
-                Wrong answers: <span className="text-red-400 font-bold">-2 seconds</span><br />
+                Tap the fretted positions on the guitar to build the chord.<br />
+                Open strings are played automatically — you only press frets!<br />
+                Tap a fret again to remove it. Press <span className="text-cyan-400 font-bold">CHECK</span> when ready.<br />
+                Correct: <span className="text-green-400 font-bold">+1 point</span>{" "}
+                Wrong: <span className="text-red-400 font-bold">-2 seconds</span><br />
                 <span className="text-sm text-gray-400 mt-4 block">Time limit: 30 seconds</span>
               </p>
               <button
@@ -112,14 +156,27 @@ export default function GamePage() {
           </div>
         )}
 
-        {/* Validate Button (only during playing) */}
+        {/* Bottom action bar (only during playing) */}
         {gameStatus === "playing" && (
-          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-40 pointer-events-auto">
+          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-40 pointer-events-auto flex items-center gap-4">
+            {/* Press counter + clear */}
+            {pressCount > 0 && (
+              <button
+                onClick={clearPresses}
+                disabled={isChecking}
+                className="bg-gray-700 hover:bg-gray-600 disabled:opacity-40 text-white font-bold text-lg px-6 py-4 rounded-xl shadow-lg transition-all duration-200 border border-gray-500"
+              >
+                CLEAR ({pressCount})
+              </button>
+            )}
+
+            {/* Check button */}
             <button
-              onClick={validateChord}
-              className="bg-green-600 hover:bg-green-500 text-white font-bold text-2xl px-16 py-4 rounded-xl shadow-2xl transition-all duration-200 transform hover:scale-105 border-2 border-green-400"
+              onClick={handleCheck}
+              disabled={isChecking || pressCount === 0}
+              className="bg-green-600 hover:bg-green-500 disabled:opacity-40 disabled:hover:bg-green-600 text-white font-bold text-2xl px-16 py-4 rounded-xl shadow-2xl transition-all duration-200 transform hover:scale-105 border-2 border-green-400"
             >
-              CHECK CHORD
+              {isChecking ? "LISTENING..." : "CHECK CHORD"}
             </button>
           </div>
         )}
