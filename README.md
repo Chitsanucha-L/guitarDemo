@@ -1,81 +1,79 @@
 # Guitar Trainer 3D
 
-แอป **ฝึกกีตาร์บนเว็บ** — ฟิงเกอร์บอร์ด 3D เสียงสาย–เฟรตจริง โหมดเกมทายคอร์ด และ **Song Mode** (เนื้อ + คอร์ด + เมโทรนอม)
-
-*English: Web app to learn guitar chords on a 3D fretboard with sampled audio, a chord quiz game, and a beginner song player.*
+A **web-based guitar learning app** with a 3D fretboard, per-string/fret sampled audio, a **chord quiz game**, and **Song Mode** (lyrics + chords + metronome) for beginners.
 
 ---
 
-## สารบัญ
+## Table of contents
 
-1. [ภาพรวม](#ภาพรวม)
-2. [ความสามารถ](#ความสามารถ)
-3. [สแต็กเทคโนโลยี](#สแต็กเทคโนโลยี)
-4. [ความต้องการของระบบ](#ความต้องการของระบบ)
-5. [ติดตั้งและรัน](#ติดตั้งและรัน)
-6. [เส้นทาง (Routes)](#เส้นทาง-routes)
-7. [โครงสร้างโฟลเดอร์](#โครงสร้างโฟลเดอร์)
-8. [สินทรัพย์และข้อมูล](#สินทรัพย์และข้อมูล)
+1. [Overview](#overview)
+2. [Features](#features)
+3. [Tech stack](#tech-stack)
+4. [Requirements](#requirements)
+5. [Install and run](#install-and-run)
+6. [Routes](#routes)
+7. [Project structure](#project-structure)
+8. [Assets and data](#assets-and-data)
 9. [i18n](#i18n)
-10. [สคริปต์ npm](#สคริปต์-npm)
-11. [โน้ตสำหรับผู้พัฒนา](#โน้ตสำหรับผู้พัฒนา)
+10. [npm scripts](#npm-scripts)
+11. [Developer notes](#developer-notes)
 
 ---
 
-## ภาพรวม
+## Overview
 
-โปรเจกต์นี้เหมาะเป็น **Senior project / portfolio** ที่ผสม:
+This repo works well as a **senior project or portfolio** piece. It combines:
 
-- **React + TypeScript** สำหรับ UI และ state
-- **React Three Fiber + Three.js** สำหรับกีตาร์ 3D
-- **Web Audio** + ไฟล์ MP3 ต่อจุดกดสาย
-- **React Router** แยกโหมดใช้งาน
-- **i18next** สองภาษา (ไทย / อังกฤษ)
+- **React + TypeScript** for UI and state
+- **React Three Fiber + Three.js** for the 3D guitar
+- **Web Audio API** + MP3 samples per pluck
+- **React Router** for separate app modes
+- **i18next** for English and Thai UI strings
 
 ---
 
-## ความสามารถ
+## Features
 
-### หน้าหลัก `/` (Chord Builder)
+### Home `/` (Chord Builder)
 
-| รายการ | รายละเอียด |
-|--------|------------|
-| กีตาร์ 3D | โมเดล GLB แสดงจุดกดตาม `ChordData` |
-| เลือกคอร์ด | Root, Quality, Tension → สร้าง voicing จาก `chordShapes.ts` |
-| Play mode | คลิกสาย/เฟรต → เล่นไฟล์ `String_{n}_{fret}.mp3` |
-| Strum / Progression / Scale | แผงควบคุมเพิ่มเติมใน `Guitar3D.tsx` |
+| Item | Description |
+|------|-------------|
+| 3D guitar | GLB model; finger dots follow `ChordData` |
+| Chord picker | Root, quality, tension → voicings from `chordShapes.ts` |
+| Play mode | Click string/fret → plays `String_{n}_{fret}.mp3` |
+| Strum / progression / scale | Extra panels in `Guitar3D.tsx` |
 
 ### Game Mode `/game`
 
-| รายการ | รายละเอียด |
-|--------|------------|
-| คอร์ดในเกม | C, G, D, A, E, F, Am, Em, Dm, Bm (`GAME_CHORDS`) |
-| Practice | คำใบ้บนฟิงเกอร์บอร์ด ไม่จับเวลาแบบท้าทาย |
-| Challenge | จำกัดเวลา คะแนน สถิติเก็บใน `localStorage` |
-| การเล่น | แตะเฟรตสร้างท่า; **ลากข้ามสาย** = barre |
-| ตรวจคอร์ด | ปุ่ม CHECK → strum + เปรียบเทียบกับคอร์ดเป้าหมาย |
+| Item | Description |
+|------|-------------|
+| Chord set | C, G, D, A, E, F, Am, Em, Dm, Bm (`GAME_CHORDS`) |
+| Practice | On-fretboard hints; no harsh time pressure |
+| Challenge | Time limit, score, stats in `localStorage` |
+| Input | Tap frets to build shape; **drag across strings** for barre |
+| Check | CHECK button → strum audio + compare to target chord |
 
 ### Song Mode `/songs` · `/songs/:songId`
 
-| รายการ | รายละเอียด |
-|--------|------------|
-| รายการเพลง | เช่น Stand By Me, Let It Be, Knockin' on Heaven's Door |
-| ผู้เล่น | คอร์ด + เนื้อต่อช่วงจังหวะ (`beats`), BPM |
-| Auto Play | เปลี่ยนคอร์ดตาม tempo (จองเวลาล่วงหน้าให้ตรงจังหวะ) |
-| Step by Step | กดข้ามทีละคอร์ดเอง |
-| เสียง | Strum ตามรูปคอร์ด + เมโทรนอม (เปิด/ปิดได้) |
+| Item | Description |
+|------|-------------|
+| Song list | e.g. Stand By Me, Let It Be, Knockin' on Heaven's Door |
+| Player | Chord + lyric slices with `beats` and BPM |
+| Auto Play | Chord changes on the beat (pre-scheduled timeline) |
+| Step by Step | Manual next chord |
+| Audio | Strum follows current chord shape; optional metronome |
 
-### อื่น ๆ
+### Other
 
-- สลับภาษา **EN / TH** (เก็บใน `localStorage`)
-- แจ้งเตือนเมื่อเปิดบนมือถือแนวตั้ง (แนะนำแนวนอน)
+- **EN / TH** language toggle (stored in `localStorage`)
+- Portrait warning on small screens (landscape recommended)
 
 ---
 
-## สแต็กเทคโนโลยี
+## Tech stack
 
-| หมวด | รายการ |
-|------|--------|
+| Area | Details |
+|------|---------|
 | Runtime | React 19, React DOM |
 | Routing | react-router-dom 6 |
 | 3D | three, @react-three/fiber, @react-three/drei |
@@ -85,15 +83,15 @@
 
 ---
 
-## ความต้องการของระบบ
+## Requirements
 
-- **Node.js** (แนะนำ LTS เช่น 20+)
-- เบราว์เซอร์รองรับ **WebGL** และ **Web Audio API**
-- โฟลเดอร์ **`public/sounds/`** ควรมี MP3 ครบชุด (ดูด้านล่าง) — ถ้าไม่ครบแอปยังรันได้แต่บางโน้ตไม่มีเสียง
+- **Node.js** (LTS 20+ recommended)
+- A browser with **WebGL** and **Web Audio API**
+- **`public/sounds/`** should contain the full MP3 set (see below). The app still runs if some files are missing, but those notes will be silent.
 
 ---
 
-## ติดตั้งและรัน
+## Install and run
 
 ```bash
 git clone <repo-url>
@@ -102,40 +100,40 @@ npm install
 npm run dev
 ```
 
-เปิดเบราว์เซอร์ที่ URL ที่ Vite แสดง (ปกติ `http://localhost:5173`)
+Open the URL Vite prints (usually `http://localhost:5173`).
 
 ```bash
 npm run build    # tsc -b + vite build
-npm run preview  # ดู production build ในเครื่อง
+npm run preview  # serve production build locally
 npm run lint     # ESLint
 ```
 
 ---
 
-## เส้นทาง (Routes)
+## Routes
 
-| Path | คอมโพเนนต์ | คำอธิบาย |
-|------|------------|----------|
+| Path | Component | Description |
+|------|-----------|-------------|
 | `/` | `HomePage` | Chord builder + `Guitar3D` |
-| `/game` | `GamePage` | เกมทายคอร์ด |
-| `/songs` | `SongListPage` | เลือกเพลง |
-| `/songs/:songId` | `SongPlayerPage` | เล่นตามเพลง (เช่น `stand-by-me`) |
+| `/game` | `GamePage` | Chord training game |
+| `/songs` | `SongListPage` | Pick a song |
+| `/songs/:songId` | `SongPlayerPage` | Play along (e.g. `stand-by-me`) |
 
 ---
 
-## โครงสร้างโฟลเดอร์
+## Project structure
 
 ```
 guitar-3d/
 ├── public/
 │   ├── models/
-│   │   └── guitar.glb              # โมเดล 3D (mesh ตามชื่อ String_{1..6}_{fret})
+│   │   └── guitar.glb              # 3D model (meshes named String_{1..6}_{fret})
 │   └── sounds/
 │       └── String_{1-6}_{0-20}.mp3
 ├── src/
 │   ├── App.tsx                     # BrowserRouter + Routes
 │   ├── main.tsx
-│   ├── index.css                   # Tailwind + font + animation
+│   ├── index.css                   # Tailwind, fonts, animations
 │   ├── i18n/
 │   │   ├── index.ts
 │   │   ├── en.json
@@ -146,18 +144,18 @@ guitar-3d/
 │   │   ├── SongListPage.tsx
 │   │   └── SongPlayerPage.tsx
 │   └── guitar/
-│       ├── Guitar3D.tsx            # หน้าหลัก — UI + Canvas บ้าน
-│       ├── GuitarModel.tsx         # GLB, audio, interaction, strumRef / onStrumReady
-│       ├── GameCanvas.tsx          # Canvas เกม / Song (กล้อง orthographic)
+│       ├── Guitar3D.tsx            # Home UI + guitar canvas
+│       ├── GuitarModel.tsx         # GLB, audio, pointer, strumRef / onStrumReady
+│       ├── GameCanvas.tsx          # Game / Song canvas (orthographic camera)
 │       ├── data/
 │       │   ├── chordShapes.ts      # OVERRIDES, GAME_CHORDS, generateFingering
-│       │   ├── songs.ts            # ข้อมูลเพลง Song Mode
+│       │   ├── songs.ts            # Song Mode data
 │       │   ├── types.ts            # ChordData, Note, …
 │       │   └── …
 │       ├── hooks/
-│       │   ├── useGuitarAudio.ts   # โหลดเสียง + playSound + strumDirection
-│       │   ├── useChordGame.ts     # state เกม
-│       │   ├── useSongPlayer.ts    # timeline เพลง + pre-schedule timeouts
+│       │   ├── useGuitarAudio.ts   # Samples, playSound, strumDirection
+│       │   ├── useChordGame.ts     # Game state
+│       │   ├── useSongPlayer.ts    # Song timeline, pre-scheduled timeouts
 │       │   ├── useMetronome.ts
 │       │   ├── usePlayerPressMarkers.ts
 │       │   ├── useGuitarInteraction.ts
@@ -169,58 +167,58 @@ guitar-3d/
 
 ---
 
-## สินทรัพย์และข้อมูล
+## Assets and data
 
-### โมเดล 3D
+### 3D model
 
-- ไฟล์: **`public/models/guitar.glb`**
-- โค้ดอ้างอิง mesh ด้วยชื่อ **`String_{stringNum}_{fret}`**
-  - `stringNum`: 1 = สายบาง (e) … 6 = สายหนา (E)
+- File: **`public/models/guitar.glb`**
+- Code looks up meshes by name **`String_{stringNum}_{fret}`**
+  - `stringNum`: 1 = high e … 6 = low E
 
-### เสียง
+### Audio
 
-- โหลดจาก **`/sounds/String_{n}_{fret}.mp3`** (n = 1…6, fret = 0…20)
-- ใช้ใน `useGuitarAudio` และการ strum ตอน CHECK / Song Mode
+- Loaded from **`/sounds/String_{n}_{fret}.mp3`** (n = 1…6, fret = 0…20)
+- Used in `useGuitarAudio` and for strums (CHECK / Song Mode)
 
-### คอร์ด
+### Chords
 
-- นิยามหลัก: **`src/guitar/data/chordShapes.ts`**
-- เกมใช้รายการ **`GAME_CHORDS`**
+- Definitions: **`src/guitar/data/chordShapes.ts`**
+- Game list: **`GAME_CHORDS`**
 
-### เพลง
+### Songs
 
 - **`src/guitar/data/songs.ts`**
-- โครงสร้างต่อท่อน: `{ chord, lyrics, beats }` — `beats` × (1 beat = 60/BPM วินาที)
+- Each line: `{ chord, lyrics, beats }` — duration = `beats × (60 / BPM)` seconds
 
 ---
 
 ## i18n
 
-- ตั้งค่าใน **`src/i18n/index.ts`**
-- คีย์แปลอยู่ใน **`en.json`** / **`th.json`**
-- ภาษาที่เลือกเก็บใน **`localStorage`** คีย์ `lang`
+- Config: **`src/i18n/index.ts`**
+- Strings: **`en.json`**, **`th.json`**
+- Active language stored in **`localStorage`** under key `lang`
 
 ---
 
-## สคริปต์ npm
+## npm scripts
 
-| คำสั่ง | ความหมาย |
-|--------|----------|
+| Command | Description |
+|---------|-------------|
 | `npm run dev` | Vite dev server + HMR |
-| `npm run build` | TypeScript build + Vite production bundle |
-| `npm run preview` | Serve โฟลเดอร์ `dist` |
-| `npm run lint` | รัน ESLint |
+| `npm run build` | TypeScript + Vite production build |
+| `npm run preview` | Serve `dist` |
+| `npm run lint` | ESLint |
 
 ---
 
-## โน้ตสำหรับผู้พัฒนา
+## Developer notes
 
-1. **GameCanvas** — ถ้ามี `strumRef` หรือ `pressedPositions` จะถือว่าโหมดเกม: ไม่โชว์ highlight คอร์ดสำเร็จรูป แต่โชว์จุดที่ผู้เล่นกด + feedback
-2. **Song Mode** — ใช้ **`onStrumReady`** จาก `GuitarModel` เพื่อเรียก **`strumDirection("down", delayMs)`** โดย `delayMs` สเกลตาม BPM
-3. **Barre** — การวาดแถบ barre และจุดกด: **`usePlayerPressMarkers.ts`**
-4. **AudioContext** — หลายเบราว์เซอร์ต้องมีการกด/แตะจากผู้ใช้ก่อน เสียงถึงจะเล่นได้
-5. **License** — ใน `package.json` ตั้ง `private: true`; กำหนดสิทธิ์ใช้งาน/ลิขสิทธิ์เพลงตามนโยบายของคุณเอง
+1. **GameCanvas** — With `strumRef` or non-empty `pressedPositions`, the canvas is in “game mode”: no full chord highlight; shows player dots + feedback markers instead.
+2. **Song Mode** — Uses **`onStrumReady`** from `GuitarModel` to call **`strumDirection("down", delayMs)`**; `delayMs` scales with BPM.
+3. **Barre rendering** — See **`usePlayerPressMarkers.ts`**.
+4. **AudioContext** — Many browsers require a user gesture before audio plays.
+5. **License** — `package.json` has `private: true`; add your own license and respect song copyright if you ship publicly.
 
 ---
 
-หากต้องการขยายฟีเจอร์ แนะนำเริ่มจาก **`src/guitar/data/songs.ts`** (เพลงใหม่) และ **`chordShapes.ts`** (คอร์ดใหม่) แล้วค่อยผูก UI ใน `SongListPage` / `GamePage` ตามต้องการ
+To extend the app, start with **`src/guitar/data/songs.ts`** (new songs) and **`chordShapes.ts`** (new chords), then wire UI in `SongListPage` / `GamePage` as needed.
