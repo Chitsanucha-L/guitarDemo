@@ -1,43 +1,80 @@
 import { useTranslation } from "react-i18next";
+import type { GameMode } from "../hooks/useChordGame";
 
 interface GameHUDProps {
   chordName: string | null;
   score: number;
   timeLeft: number;
+  showTimer?: boolean;
+  gameMode?: GameMode;
+  onQuit?: () => void;
 }
 
-export default function GameHUD({ chordName, score, timeLeft }: GameHUDProps) {
+export default function GameHUD({
+  chordName,
+  score,
+  timeLeft,
+  showTimer = true,
+  gameMode = "challenge",
+  onQuit,
+}: GameHUDProps) {
   const { t } = useTranslation();
   const timeColor = timeLeft <= 5 ? "text-red-500" : timeLeft <= 10 ? "text-yellow-500" : "text-green-500";
+  const isPractice = gameMode === "practice";
 
   return (
-    <div className="absolute top-0 left-0 w-full h-32 pointer-events-none z-50">
-      {/* Score - Top Left */}
-      <div className="absolute top-14 sm:top-20 left-3 sm:left-8">
-        <div className="bg-black/70 backdrop-blur-sm rounded-lg px-3 sm:px-6 py-2 sm:py-3 border-2 border-blue-500/50">
-          <div className="text-[10px] sm:text-sm text-gray-400 font-medium">{t("game.score")}</div>
-          <div className="text-2xl sm:text-4xl font-bold text-white">{score}</div>
+    <div className="absolute top-0 left-0 w-full min-h-[8rem] pointer-events-none z-50">
+      {/* Score — Top Left */}
+      <div className="absolute top-14 sm:top-20 left-3 sm:left-6">
+        <div className="bg-gray-900/60 backdrop-blur-md rounded-xl px-3 sm:px-5 py-2 sm:py-3 border border-blue-500/30 shadow-lg shadow-blue-500/5">
+          <div className="text-[10px] sm:text-xs text-gray-500 font-medium uppercase tracking-wider">{t("game.score")}</div>
+          <div className="text-2xl sm:text-4xl font-bold text-white tabular-nums">{score}</div>
         </div>
       </div>
 
-      {/* Chord Name - Top Center */}
-      <div className="absolute top-14 sm:top-20 left-1/2 transform -translate-x-1/2">
-        <div className="bg-black/80 backdrop-blur-md rounded-xl px-6 sm:px-12 py-2 sm:py-4 border-3 border-yellow-500/60 shadow-2xl">
-          <div className="text-[10px] sm:text-sm text-gray-400 font-medium text-center mb-0.5 sm:mb-1">{t("game.playThisChord")}</div>
-          <div className="text-3xl sm:text-6xl font-bold text-yellow-400 tracking-wider drop-shadow-lg">
-            {chordName || "---"}
+      {/* Chord Name — Top Center */}
+      <div className="absolute top-12 sm:top-16 left-1/2 transform -translate-x-1/2">
+        <div className="relative">
+          <div className="absolute -inset-1 bg-yellow-500/20 rounded-2xl blur-lg" />
+          <div className="relative bg-gray-900/80 backdrop-blur-md rounded-2xl px-8 sm:px-14 py-3 sm:py-5 border-2 border-yellow-500/40 shadow-2xl shadow-yellow-500/10">
+            <div className="text-[10px] sm:text-xs text-gray-500 font-medium text-center uppercase tracking-widest mb-0.5 sm:mb-1">{t("game.playThisChord")}</div>
+            <div className="text-4xl sm:text-7xl font-black text-yellow-400 tracking-wider drop-shadow-lg text-center">
+              {chordName || "---"}
+            </div>
+            <div className="flex justify-center mt-1.5 sm:mt-2">
+              <span
+                className={`text-[9px] sm:text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
+                  isPractice
+                    ? "bg-purple-600/60 text-purple-200 border border-purple-400/30"
+                    : "bg-orange-600/60 text-orange-200 border border-orange-400/30"
+                }`}
+              >
+                {isPractice ? t("mode.practice") : t("mode.challenge")}
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Timer - Top Right */}
-      <div className="absolute top-14 sm:top-20 right-3 sm:right-8">
-        <div className="bg-black/70 backdrop-blur-sm rounded-lg px-3 sm:px-6 py-2 sm:py-3 border-2 border-red-500/50">
-          <div className="text-[10px] sm:text-sm text-gray-400 font-medium">{t("game.time")}</div>
-          <div className={`text-2xl sm:text-4xl font-bold ${timeColor} transition-colors duration-300`}>
-            {timeLeft}s
+      {/* Timer + Quit — Top Right (Quit always below Timer so they never overlap) */}
+      <div className="absolute top-14 sm:top-20 right-3 sm:right-6 flex flex-col items-end gap-2 sm:gap-2.5">
+        {showTimer && (
+          <div className="bg-gray-900/60 backdrop-blur-md rounded-xl px-3 sm:px-5 py-2 sm:py-3 border border-red-500/30 shadow-lg shadow-red-500/5 shrink-0">
+            <div className="text-[10px] sm:text-xs text-gray-500 font-medium uppercase tracking-wider">{t("game.time")}</div>
+            <div className={`text-2xl sm:text-4xl font-bold ${timeColor} transition-colors duration-300 tabular-nums`}>
+              {timeLeft}s
+            </div>
           </div>
-        </div>
+        )}
+        {onQuit && (
+          <button
+            type="button"
+            onClick={onQuit}
+            className="pointer-events-auto shrink-0 bg-gray-900/60 backdrop-blur-md hover:bg-red-600/80 text-gray-300 hover:text-white font-bold text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg shadow-lg transition-all duration-200 border border-gray-700/50 hover:border-red-400/50"
+          >
+            ✕ {t("game2.quit")}
+          </button>
+        )}
       </div>
     </div>
   );

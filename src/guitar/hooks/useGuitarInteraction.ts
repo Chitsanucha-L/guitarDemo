@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useCallback } from "react";
+import { useEffect, useMemo, useCallback, useRef } from "react";
 import * as THREE from "three";
 import type { ChordData } from "../data/types";
 import { stringToNote } from "../data/constants";
@@ -10,13 +10,16 @@ export function useGuitarInteraction(
   playSound: (meshName: string, stringNum: number, fret: number, skipTimeCheck?: boolean) => void,
   strumAllStrings: () => void,
   onStringPress?: (stringNum: number, fret: number) => void,
+  onBarrePress?: (strings: { stringNum: number; fret: number }[]) => void,
   gameMode: boolean = false,
 ) {
   const isDragging = useRef(false);
   const raycaster = useMemo(() => new THREE.Raycaster(), []);
   const currentHitbox = useRef<string | null>(null);
 
-  // Spacebar strum — disabled in game mode
+  const barreStartRef = useRef<{ stringNum: number; fret: number } | null>(null);
+  const barreStringsRef = useRef<Set<number>>(new Set());
+
   useEffect(() => {
     if (gameMode) return;
 
@@ -49,7 +52,6 @@ export function useGuitarInteraction(
 
     const userData = e.object.userData;
 
-    // Normal mode: only fret > 0
     if (userData.meshName && userData.stringNum && userData.fret !== undefined && userData.fret > 0) {
       playSound(userData.meshName, userData.stringNum, userData.fret);
       if (onStringPress) {
@@ -62,7 +64,6 @@ export function useGuitarInteraction(
     if (!canPlay) return;
 
     if (gameMode) {
-      // Game mode: raycast against hitboxes (larger targets) for reliable detection.
       raycaster.setFromCamera(e.pointer, e.camera);
       const hits = raycaster.intersectObjects(stringMeshes.current);
       if (hits.length === 0) return;
@@ -74,14 +75,20 @@ export function useGuitarInteraction(
           userData.stringNum,
           userData.fret,
         );
-        if (userData.fret > 0 && onStringPress) {
-          onStringPress(userData.stringNum, userData.fret);
+
+        if (userData.fret > 0) {
+          barreStartRef.current = { stringNum: userData.stringNum, fret: userData.fret };
+          barreStringsRef.current = new Set([userData.stringNum]);
+          isDragging.current = true;
+
+          if (onStringPress) {
+            onStringPress(userData.stringNum, userData.fret);
+          }
         }
       }
       return;
     }
 
-    // Normal mode: drag strumming on open strings
     if (!e.object?.userData) return;
     const userData = e.object.userData;
     isDragging.current = true;
@@ -99,7 +106,30 @@ export function useGuitarInteraction(
   }, [canPlay, getFretForString, playSound, onStringPress, gameMode, raycaster, stringMeshes]);
 
   const handlePointerMove = useCallback((e: any) => {
-    if (gameMode || !canPlay || !isDragging.current) return;
+    if (!canPlay || !isDragging.current) return;
+
+    if (gameMode) {
+      if (!barreStartRef.current) return;
+
+      raycaster.setFromCamera(e.pointer, e.camera);
+      const hits = raycaster.intersectObjects(stringMeshes.current);
+      if (hits.length === 0) return;
+
+      const userData = hits[0].object.userData;
+      if (
+        userData.fret === barreStartRef.current.fret &&
+        userData.stringNum !== undefined &&
+        !barreStringsRef.current.has(userData.stringNum)
+      ) {
+        barreStringsRef.current.add(userData.stringNum);
+        playSound(
+          `String_${userData.stringNum}_${userData.fret}`,
+          userData.stringNum,
+          userData.fret,
+        );
+      }
+      return;
+    }
 
     raycaster.setFromCamera(e.pointer, e.camera);
     const intersects = raycaster.intersectObjects(stringMeshes.current);
@@ -125,9 +155,19 @@ export function useGuitarInteraction(
   }, [canPlay, getFretForString, playSound, raycaster, stringMeshes, onStringPress, gameMode]);
 
   const handlePointerUp = useCallback(() => {
+    if (gameMode && barreStartRef.current && barreStringsRef.current.size >= 2 && onBarrePress) {
+      const fret = barreStartRef.current.fret;
+      const strings = Array.from(barreStringsRef.current)
+        .sort((a, b) => b - a)
+        .map((sn) => ({ stringNum: sn, fret }));
+      onBarrePress(strings);
+    }
+
     isDragging.current = false;
     currentHitbox.current = null;
-  }, []);
+    barreStartRef.current = null;
+    barreStringsRef.current = new Set();
+  }, [gameMode, onBarrePress]);
 
   return {
     handleClick,

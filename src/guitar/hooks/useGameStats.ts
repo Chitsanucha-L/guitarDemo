@@ -1,8 +1,9 @@
 import { useState, useCallback } from "react";
+import type { GameMode } from "./useChordGame";
 
-const STORAGE_KEY = "guitar-game-stats";
+const STORAGE_KEY = "guitar-game-stats-v2";
 
-export interface GameStats {
+export interface ModeStats {
   bestScore: number;
   totalGames: number;
   totalCorrect: number;
@@ -10,7 +11,12 @@ export interface GameStats {
   totalAttempts: number;
 }
 
-const DEFAULT_STATS: GameStats = {
+export interface AllStats {
+  practice: ModeStats;
+  challenge: ModeStats;
+}
+
+const DEFAULT_MODE: ModeStats = {
   bestScore: 0,
   totalGames: 0,
   totalCorrect: 0,
@@ -18,46 +24,58 @@ const DEFAULT_STATS: GameStats = {
   totalAttempts: 0,
 };
 
-function loadStats(): GameStats {
+const DEFAULT_ALL: AllStats = {
+  practice: { ...DEFAULT_MODE },
+  challenge: { ...DEFAULT_MODE },
+};
+
+function loadStats(): AllStats {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { ...DEFAULT_STATS };
-    return { ...DEFAULT_STATS, ...JSON.parse(raw) };
+    if (!raw) return { practice: { ...DEFAULT_MODE }, challenge: { ...DEFAULT_MODE } };
+    const parsed = JSON.parse(raw);
+    return {
+      practice: { ...DEFAULT_MODE, ...parsed.practice },
+      challenge: { ...DEFAULT_MODE, ...parsed.challenge },
+    };
   } catch {
-    return { ...DEFAULT_STATS };
+    return { practice: { ...DEFAULT_MODE }, challenge: { ...DEFAULT_MODE } };
   }
 }
 
-function saveStats(stats: GameStats) {
+function saveStats(stats: AllStats) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(stats));
 }
 
 export function useGameStats() {
-  const [stats, setStats] = useState<GameStats>(loadStats);
+  const [allStats, setAllStats] = useState<AllStats>(loadStats);
 
-  const recordGame = useCallback((score: number, correct: number, wrong: number) => {
-    setStats((prev) => {
-      const next: GameStats = {
-        bestScore: Math.max(prev.bestScore, score),
-        totalGames: prev.totalGames + 1,
-        totalCorrect: prev.totalCorrect + correct,
-        totalWrong: prev.totalWrong + wrong,
-        totalAttempts: prev.totalAttempts + correct + wrong,
+  const recordGame = useCallback((mode: GameMode, score: number, correct: number, wrong: number) => {
+    setAllStats((prev) => {
+      const prevMode = prev[mode];
+      const nextMode: ModeStats = {
+        bestScore: Math.max(prevMode.bestScore, score),
+        totalGames: prevMode.totalGames + 1,
+        totalCorrect: prevMode.totalCorrect + correct,
+        totalWrong: prevMode.totalWrong + wrong,
+        totalAttempts: prevMode.totalAttempts + correct + wrong,
       };
+      const next: AllStats = { ...prev, [mode]: nextMode };
       saveStats(next);
       return next;
     });
   }, []);
 
   const resetStats = useCallback(() => {
-    const fresh = { ...DEFAULT_STATS };
+    const fresh: AllStats = { ...DEFAULT_ALL, practice: { ...DEFAULT_MODE }, challenge: { ...DEFAULT_MODE } };
     saveStats(fresh);
-    setStats(fresh);
+    setAllStats(fresh);
   }, []);
 
-  const accuracy = stats.totalAttempts > 0
-    ? Math.round((stats.totalCorrect / stats.totalAttempts) * 100)
-    : 0;
+  const getAccuracy = useCallback((mode: GameMode) => {
+    const s = allStats[mode];
+    return s.totalAttempts > 0 ? Math.round((s.totalCorrect / s.totalAttempts) * 100) : 0;
+  }, [allStats]);
 
-  return { stats, accuracy, recordGame, resetStats };
+  return { allStats, recordGame, resetStats, getAccuracy };
 }

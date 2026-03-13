@@ -106,9 +106,26 @@
     "accuracy": "Accuracy",
     "totalCorrect": "Total Correct",
     "totalWrong": "Total Wrong",
-    "resetStats": "Reset Stats",
-    "resetConfirm": "Are you sure? This will erase all saved progress.",
     "thisGame": "This Game",
     "newBest": "New Best!"
+  },
+  "game2": {
+    "quit": "Quit",
+    "quitTitle": "Quit Game?",
+    "quitMessage": "End the current game and return to the start screen?",
+    "confirmQuit": "Yes, Quit",
+    "cancel": "Cancel"
+  },
+  "mode": {
+    "practice": "Practice",
+    "challenge": "Challenge",
+    "practiceDesc": "Learn step by step — see which frets are right or wrong",
+    "challengeDesc": "No hints — score points under time pressure",
+    "tryAgain": "TRY AGAIN",
+    "next": "NEXT",
+    "practiceCorrect": "Perfect! All positions correct.",
+    "practiceWrong": "Some frets are incorrect.",
+    "missingPositions": "Missing {{count}} position(s)",
+    "barreHint": "Drag across strings to create a barre"
   }
 }

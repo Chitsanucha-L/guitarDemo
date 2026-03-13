@@ -18,6 +18,7 @@ const OVERRIDES: Record<string, ChordData> = {
   Am: { notes: { E6: { fret: 0 }, A: { fret: 0 }, D: { fret: 2, finger: 2 }, G: { fret: 2, finger: 3 }, B: { fret: 1, finger: 1 }, e1: { fret: 0 } } },
   Em: { notes: { E6: { fret: 0 }, A: { fret: 2, finger: 2 }, D: { fret: 2, finger: 3 }, G: { fret: 0 }, B: { fret: 0 }, e1: { fret: 0 } } },
   Dm: { notes: { E6: { fret: -1 }, A: { fret: -1 }, D: { fret: 0 }, G: { fret: 2, finger: 2 }, B: { fret: 3, finger: 4 }, e1: { fret: 1, finger: 1 } } },
+  Bm: { notes: { E6: { fret: -1 }, A: { fret: 2, finger: 1 }, D: { fret: 4, finger: 3 }, G: { fret: 4, finger: 4 }, B: { fret: 3, finger: 2 }, e1: { fret: 2, finger: 1 } }, _barre: { fret: 2, finger: 1, fromString: "A", toString: "e1" } },
 
   // ---- 7 ----
   C7:  { notes: { E6: { fret: -1 }, A: { fret: 3, finger: 3 }, D: { fret: 2, finger: 2 }, G: { fret: 3, finger: 4 }, B: { fret: 1, finger: 1 }, e1: { fret: 0 } } },
@@ -441,4 +442,5 @@ export const GAME_CHORDS: { name: string; data: ChordData }[] = [
   { name: "Am", data: OVERRIDES.Am },
   { name: "Em", data: OVERRIDES.Em },
   { name: "Dm", data: OVERRIDES.Dm },
+  { name: "Bm", data: OVERRIDES.Bm },
 ];

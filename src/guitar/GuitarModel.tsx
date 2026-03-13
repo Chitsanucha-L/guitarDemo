@@ -2,13 +2,14 @@ import { useEffect } from "react";
 import type { MutableRefObject } from "react";
 import { useGLTF } from "@react-three/drei";
 import type { ChordData } from "./data/types";
-import type { PressedPosition } from "./hooks/useChordGame";
+import type { PressedPosition, PressedBarre, FeedbackMarker } from "./hooks/useChordGame";
 import { useGuitarCache } from "./hooks/useGuitarCache";
 import { useChordAnimation } from "./hooks/useChordAnimation";
 import { useScaleHighlight } from "./hooks/useScaleHighlight";
 import { useGuitarAudio } from "./hooks/useGuitarAudio";
 import { useGuitarInteraction } from "./hooks/useGuitarInteraction";
 import { usePlayerPressMarkers } from "./hooks/usePlayerPressMarkers";
+import { useFeedbackMarkers } from "./hooks/useFeedbackMarkers";
 
 export type StrumDirectionFn = (direction: "down" | "up", delayMs?: number, subdivision?: number) => void;
 
@@ -23,6 +24,7 @@ interface GuitarModelProps {
   canPlay: boolean;
   onNotePlay: (note: string) => void;
   onStringPress?: (stringNum: number, fret: number) => void;
+  onBarrePress?: (strings: { stringNum: number; fret: number }[]) => void;
   onStrumReady?: (strumFn: StrumDirectionFn) => void;
   scaleNotes?: number[] | null;
   rootSemitone?: number | null;
@@ -31,6 +33,8 @@ interface GuitarModelProps {
   rotation?: [number, number, number];
   scale?: number;
   pressedPositions?: PressedPosition[];
+  pressedBarre?: PressedBarre | null;
+  feedbackMarkers?: FeedbackMarker[];
   gameMode?: boolean;
   strumRef?: MutableRefObject<StrumHandle | null>;
 }
@@ -42,6 +46,7 @@ export default function GuitarModel({
   canPlay,
   onNotePlay,
   onStringPress,
+  onBarrePress,
   onStrumReady,
   scaleNotes = null,
   rootSemitone = null,
@@ -50,6 +55,8 @@ export default function GuitarModel({
   rotation = [0, 0.005, 0],
   scale = 1,
   pressedPositions = [],
+  pressedBarre = null,
+  feedbackMarkers = [],
   gameMode = false,
   strumRef,
 }: GuitarModelProps) {
@@ -87,12 +94,14 @@ export default function GuitarModel({
     playSound,
     strumAllStrings,
     onStringPress,
+    onBarrePress,
     gameMode,
   );
 
   useChordAnimation(scene, highlightChord, previousChord, stringFretMap);
   useScaleHighlight(scene, scaleNotes, rootSemitone, stringFretMap, scaleFretRange);
-  usePlayerPressMarkers(scene, pressedPositions);
+  usePlayerPressMarkers(scene, pressedPositions, pressedBarre);
+  useFeedbackMarkers(scene, feedbackMarkers);
 
   return (
     <group 

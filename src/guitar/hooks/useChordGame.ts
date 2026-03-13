@@ -3,10 +3,22 @@ import type { ChordData } from "../data/types";
 import { GAME_CHORDS } from "../data/chordShapes";
 
 export type GameStatus = "idle" | "playing" | "correct" | "wrong" | "gameover";
+export type GameMode = "practice" | "challenge";
 
 export interface PressedPosition {
-  string: string; // "E6" | "A" | "D" | "G" | "B" | "e1"
+  string: string;
   fret: number;
+}
+
+export interface FeedbackMarker {
+  string: string;
+  fret: number;
+  type: "correct" | "wrong";
+}
+
+export interface PressedBarre {
+  fret: number;
+  strings: string[];
 }
 
 export function useChordGame() {
@@ -17,12 +29,16 @@ export function useChordGame() {
   const [gameStatus, setGameStatus] = useState<GameStatus>("idle");
   const [correctCount, setCorrectCount] = useState(0);
   const [wrongCount, setWrongCount] = useState(0);
+  const [gameMode, setGameMode] = useState<GameMode>("practice");
+  const [feedbackMarkers, setFeedbackMarkers] = useState<FeedbackMarker[]>([]);
+  const [missingCount, setMissingCount] = useState(0);
+  const [pressedBarre, setPressedBarre] = useState<PressedBarre | null>(null);
   
   const timerRef = useRef<number | null>(null);
   const feedbackTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (gameStatus === "playing") {
+    if (gameStatus === "playing" && gameMode === "challenge") {
       timerRef.current = window.setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
@@ -44,19 +60,26 @@ export function useChordGame() {
         clearInterval(timerRef.current);
       }
     };
-  }, [gameStatus]);
+  }, [gameStatus, gameMode]);
 
   const selectRandomChord = useCallback(() => {
     const pick = GAME_CHORDS[Math.floor(Math.random() * GAME_CHORDS.length)];
     setCurrentChord({ name: pick.name, data: pick.data });
     setPressedPositions([]);
+    setFeedbackMarkers([]);
+    setMissingCount(0);
+    setPressedBarre(null);
   }, []);
 
-  const startGame = useCallback(() => {
+  const startGame = useCallback((mode: GameMode) => {
+    setGameMode(mode);
     setScore(0);
     setTimeLeft(30);
     setCorrectCount(0);
     setWrongCount(0);
+    setFeedbackMarkers([]);
+    setMissingCount(0);
+    setPressedBarre(null);
     setGameStatus("playing");
     selectRandomChord();
   }, [selectRandomChord]);
@@ -68,6 +91,9 @@ export function useChordGame() {
     setWrongCount(0);
     setPressedPositions([]);
     setCurrentChord(null);
+    setFeedbackMarkers([]);
+    setMissingCount(0);
+    setPressedBarre(null);
     setGameStatus("idle");
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -79,10 +105,19 @@ export function useChordGame() {
     }
   }, []);
 
-  // Toggle press: same string+fret removes it; different fret replaces; new string adds.
-  // Only fret > 0 positions are accepted — open strings are automatic.
   const registerPress = useCallback((stringName: string, fret: number) => {
     if (gameStatus !== "playing" || fret <= 0) return;
+
+    setFeedbackMarkers([]);
+    setMissingCount(0);
+
+    // If this tap is on a string that was part of the barre, remove the barre
+    setPressedBarre((prev) => {
+      if (prev && prev.fret === fret && prev.strings.includes(stringName)) {
+        return null;
+      }
+      return prev;
+    });
 
     setPressedPositions((prev) => {
       const existing = prev.find((p) => p.string === stringName && p.fret === fret);
@@ -94,54 +129,120 @@ export function useChordGame() {
     });
   }, [gameStatus]);
 
-  // Validate pressed positions against target chord.
-  //  - fret > 0 : player MUST have pressed exactly that fret
-  //  - fret = 0 : open string — player must NOT have pressed anything
-  //  - fret < 0 : muted string — player must NOT have pressed anything
-  const validateChord = useCallback(() => {
-    if (!currentChord || gameStatus !== "playing") return;
+  const registerBarre = useCallback((strings: string[], fret: number) => {
+    if (gameStatus !== "playing" || fret <= 0) return;
+
+    setFeedbackMarkers([]);
+    setMissingCount(0);
+    setPressedBarre({ fret, strings });
+
+    setPressedPositions((prev) => {
+      let next = prev.filter((p) => !strings.includes(p.string));
+      for (const s of strings) {
+        next = [...next, { string: s, fret }];
+      }
+      return next;
+    });
+  }, [gameStatus]);
+
+  const buildFeedback = useCallback((): { isCorrect: boolean; markers: FeedbackMarker[]; missing: number } => {
+    if (!currentChord) return { isCorrect: true, markers: [], missing: 0 };
 
     const targetNotes = currentChord.data.notes;
+    const markers: FeedbackMarker[] = [];
     let isCorrect = true;
+    let missing = 0;
 
     for (const [stringName, noteData] of Object.entries(targetNotes)) {
       const targetFret = noteData.fret;
       const pressed = pressedPositions.find((p) => p.string === stringName);
 
       if (targetFret > 0) {
-        // Fretted — player must have pressed this exact fret
-        if (!pressed || pressed.fret !== targetFret) { isCorrect = false; break; }
+        if (pressed && pressed.fret === targetFret) {
+          markers.push({ string: stringName, fret: targetFret, type: "correct" });
+        } else if (pressed) {
+          isCorrect = false;
+          markers.push({ string: stringName, fret: pressed.fret, type: "wrong" });
+        } else {
+          isCorrect = false;
+          missing++;
+        }
       } else {
-        // Open (0) or muted (-1) — player must NOT have pressed this string
-        if (pressed) { isCorrect = false; break; }
+        if (pressed) {
+          isCorrect = false;
+          markers.push({ string: stringName, fret: pressed.fret, type: "wrong" });
+        }
       }
     }
 
-    if (isCorrect) {
-      setGameStatus("correct");
-      setScore((prev) => prev + 1);
-      setCorrectCount((prev) => prev + 1);
-      
-      if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
-      feedbackTimeoutRef.current = window.setTimeout(() => {
-        setGameStatus("playing");
-        selectRandomChord();
-      }, 1500);
+    return { isCorrect, markers, missing };
+  }, [currentChord, pressedPositions]);
+
+  const validateChord = useCallback(() => {
+    if (!currentChord || gameStatus !== "playing") return;
+
+    const { isCorrect, markers, missing } = buildFeedback();
+
+    if (gameMode === "practice") {
+      setFeedbackMarkers(markers);
+      setMissingCount(missing);
+
+      if (isCorrect) {
+        setGameStatus("correct");
+        setScore((prev) => prev + 1);
+        setCorrectCount((prev) => prev + 1);
+      } else {
+        setGameStatus("wrong");
+        setWrongCount((prev) => prev + 1);
+      }
     } else {
-      setGameStatus("wrong");
-      setWrongCount((prev) => prev + 1);
-      setTimeLeft((prev) => Math.max(0, prev - 2));
-      
-      if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
-      feedbackTimeoutRef.current = window.setTimeout(() => {
-        setPressedPositions([]);
-        setGameStatus("playing");
-      }, 1500);
+      if (isCorrect) {
+        setGameStatus("correct");
+        setScore((prev) => prev + 1);
+        setCorrectCount((prev) => prev + 1);
+        
+        if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
+        feedbackTimeoutRef.current = window.setTimeout(() => {
+          setGameStatus("playing");
+          selectRandomChord();
+        }, 1500);
+      } else {
+        setGameStatus("wrong");
+        setWrongCount((prev) => prev + 1);
+        setTimeLeft((prev) => Math.max(0, prev - 2));
+        
+        if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
+        feedbackTimeoutRef.current = window.setTimeout(() => {
+          setPressedPositions([]);
+          setPressedBarre(null);
+          setGameStatus("playing");
+          selectRandomChord();
+        }, 1500);
+      }
     }
-  }, [currentChord, gameStatus, pressedPositions, selectRandomChord]);
+  }, [currentChord, gameStatus, gameMode, buildFeedback, selectRandomChord]);
+
+  const practiceNext = useCallback(() => {
+    setFeedbackMarkers([]);
+    setMissingCount(0);
+    setPressedBarre(null);
+    setGameStatus("playing");
+    selectRandomChord();
+  }, [selectRandomChord]);
+
+  const practiceRetry = useCallback(() => {
+    setFeedbackMarkers([]);
+    setMissingCount(0);
+    setPressedPositions([]);
+    setPressedBarre(null);
+    setGameStatus("playing");
+  }, []);
 
   const clearPresses = useCallback(() => {
     setPressedPositions([]);
+    setFeedbackMarkers([]);
+    setMissingCount(0);
+    setPressedBarre(null);
   }, []);
 
   return {
@@ -149,14 +250,21 @@ export function useChordGame() {
     score,
     timeLeft,
     pressedPositions,
+    pressedBarre,
     gameStatus,
     correctCount,
     wrongCount,
+    gameMode,
+    feedbackMarkers,
+    missingCount,
     startGame,
     resetGame,
     selectRandomChord,
     registerPress,
+    registerBarre,
     validateChord,
     clearPresses,
+    practiceNext,
+    practiceRetry,
   };
 }

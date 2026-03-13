@@ -1,22 +1,30 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { GameStatus } from "../hooks/useChordGame";
+import type { GameStatus, GameMode } from "../hooks/useChordGame";
 
 interface GameFeedbackProps {
   gameStatus: GameStatus;
+  gameMode?: GameMode;
+  missingCount?: number;
 }
 
-export default function GameFeedback({ gameStatus }: GameFeedbackProps) {
+export default function GameFeedback({ gameStatus, gameMode = "challenge", missingCount = 0 }: GameFeedbackProps) {
   const { t } = useTranslation();
   const [show, setShow] = useState(false);
+
+  const isPractice = gameMode === "practice";
 
   useEffect(() => {
     if (gameStatus === "correct" || gameStatus === "wrong") {
       setShow(true);
-      const timer = setTimeout(() => setShow(false), 800);
-      return () => clearTimeout(timer);
+      if (!isPractice) {
+        const timer = setTimeout(() => setShow(false), 800);
+        return () => clearTimeout(timer);
+      }
+    } else {
+      setShow(false);
     }
-  }, [gameStatus]);
+  }, [gameStatus, isPractice]);
 
   if (!show || (gameStatus !== "correct" && gameStatus !== "wrong")) {
     return null;
@@ -25,39 +33,39 @@ export default function GameFeedback({ gameStatus }: GameFeedbackProps) {
   const isCorrect = gameStatus === "correct";
 
   return (
-    <>
-      {/* Fullscreen overlay with glow/flash effect */}
+    <div
+      className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-50"
+    >
       <div
-        className={`fixed inset-0 pointer-events-none z-40 transition-opacity duration-300 ${
-          isCorrect ? "bg-green-500/20" : "bg-red-500/20"
-        } ${show ? "opacity-100" : "opacity-0"}`}
-      />
-
-      {/* Centered feedback message */}
-      <div
-        className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-50"
+        className={`transition-all duration-300 ${
+          show ? "scale-100 opacity-100" : "scale-50 opacity-0"
+        }`}
       >
         <div
-          className={`transition-all duration-300 ${
-            show ? "scale-100 opacity-100" : "scale-50 opacity-0"
-          } ${isCorrect ? "animate-bounce" : "animate-shake"}`}
+          className={`px-6 sm:px-12 py-4 sm:py-6 rounded-2xl border-2 ${
+            isCorrect
+              ? "bg-gray-900/90 border-green-500/50 shadow-green-500/20"
+              : "bg-gray-900/90 border-red-500/50 shadow-red-500/20"
+          } shadow-2xl backdrop-blur-md max-w-sm text-center`}
         >
-          <div
-            className={`px-8 sm:px-16 py-4 sm:py-8 rounded-2xl border-4 ${
+          <div className={`text-3xl sm:text-5xl font-black drop-shadow-lg ${
+            isCorrect ? "text-green-400" : "text-red-400"
+          }`}>
+            {isCorrect ? `✓ ${t("game.correct")}` : `✗ ${t("game.wrong")}`}
+          </div>
+          <div className="text-sm sm:text-base text-gray-400 mt-2">
+            {isPractice ? (
               isCorrect
-                ? "bg-green-600/90 border-green-300 shadow-green-500/50"
-                : "bg-red-600/90 border-red-300 shadow-red-500/50"
-            } shadow-2xl backdrop-blur-md`}
-          >
-            <div className="text-3xl sm:text-6xl font-black text-white text-center drop-shadow-lg">
-              {isCorrect ? `✓ ${t("game.correct")}` : `✗ ${t("game.wrong")}`}
-            </div>
-            {!isCorrect && (
-              <div className="text-base sm:text-xl text-white/90 text-center mt-1 sm:mt-2">{t("game.penalty")}</div>
+                ? t("mode.practiceCorrect")
+                : missingCount > 0
+                  ? t("mode.missingPositions", { count: missingCount })
+                  : t("mode.practiceWrong")
+            ) : (
+              !isCorrect && t("game.penalty")
             )}
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
