@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import {
   useStrummingEngine,
   PRESET_PATTERNS,
@@ -20,6 +21,7 @@ const BEAT_LABELS = [
 ];
 
 export default function StrumPanel({ onStroke, onBarChange }: StrumPanelProps) {
+  const { t } = useTranslation();
   const [pattern, setPattern] = useState<StrumPattern>(PRESET_PATTERNS[0]);
   const [bpm, setBpm] = useState(PRESET_PATTERNS[0].recommendedBpm ?? 65);
 
@@ -61,7 +63,7 @@ export default function StrumPanel({ onStroke, onBarChange }: StrumPanelProps) {
           <button
             key={p.id}
             disabled={isPlaying}
-            title={p.recommendedBpm != null ? `Recommended: ${p.recommendedBpm} BPM` : undefined}
+            title={p.recommendedBpm != null ? t("strum.recommended", { bpm: p.recommendedBpm }) : undefined}
             className={`px-3 py-1.5 text-sm font-bold rounded-md shadow-md transition-all duration-200 ${
               pattern.id === p.id
                 ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white ring-2 ring-violet-300 scale-105"
@@ -163,7 +165,7 @@ export default function StrumPanel({ onStroke, onBarChange }: StrumPanelProps) {
       <div className="space-y-1">
         <div className="flex items-center justify-between gap-2">
           <span className="text-gray-500 text-[10px] font-semibold uppercase tracking-wider">
-            BPM
+            {t("strum.bpm")}
           </span>
         </div>
         <div className="py-2">
@@ -193,7 +195,7 @@ export default function StrumPanel({ onStroke, onBarChange }: StrumPanelProps) {
             : "bg-green-600 hover:bg-green-500 text-white"
         }`}
       >
-        {isPlaying ? "⏹ Stop" : "▶ Play"}
+        {isPlaying ? `⏹ ${t("strum.stop")}` : `▶ ${t("strum.play")}`}
       </button>
     </div>
   );

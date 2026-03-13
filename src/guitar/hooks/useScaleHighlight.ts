@@ -4,10 +4,10 @@ import type { Note } from "../data/types";
 import { stringToNote } from "../data/constants";
 import { isScaleNote } from "../data/scales";
 
-const ROOT_COLOR = "#facc15";
-const SCALE_COLOR = "#38bdf8";
-const ROOT_RADIUS = 0.016;
-const SCALE_RADIUS = 0.013;
+const ROOT_COLOR = "rgb(255, 116, 52)";
+const SCALE_COLOR = "rgb(0, 179, 255)";
+const ROOT_RADIUS = 0.022;
+const SCALE_RADIUS = 0.019;
 const MARKER_GROUP_NAME = "ScaleMarkers";
 
 const CHROMATIC = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
@@ -18,15 +18,15 @@ const STRING_OPEN_SEMI: Record<Note, number> = {
 
 function makeTextSprite(text: string, color: string, size: number): THREE.Sprite {
   const canvas = document.createElement("canvas");
-  canvas.width = 64;
-  canvas.height = 64;
+  canvas.width = 128;
+  canvas.height = 128;
   const ctx = canvas.getContext("2d")!;
-  ctx.clearRect(0, 0, 64, 64);
-  ctx.font = "bold 36px Arial";
+  ctx.clearRect(0, 0, 128, 128);
+  ctx.font = "bold 72px Arial";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = color;
-  ctx.fillText(text, 32, 32);
+  ctx.fillText(text, 64, 64);
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.needsUpdate = true;
@@ -58,7 +58,7 @@ export function useScaleHighlight(
       const noteName = stringToNote[stringNum];
       if (!noteName) continue;
 
-      for (let fret = minFret; fret <= maxFret; fret++) {
+      for (let fret = Math.max(minFret, 1); fret <= maxFret; fret++) {
         if (!isScaleNote(noteName, fret, scaleNotes)) continue;
 
         const mesh = stringFretMap.current[stringNum]?.[fret];
@@ -72,7 +72,7 @@ export function useScaleHighlight(
         const isRoot = semitone === rootSemitone;
         const color = isRoot ? ROOT_COLOR : SCALE_COLOR;
         const radius = isRoot ? ROOT_RADIUS : SCALE_RADIUS;
-        const opacity = isRoot ? 0.95 : 0.75;
+        const opacity = isRoot ? 0.95 : 0.8;
 
         const dot = new THREE.Mesh(
           new THREE.CircleGeometry(radius, 32),
@@ -89,7 +89,7 @@ export function useScaleHighlight(
 
         const label = CHROMATIC[semitone];
         const textColor = isRoot ? "#000000" : "#ffffff";
-        const sprite = makeTextSprite(label, textColor, 0.018);
+        const sprite = makeTextSprite(label, textColor, 0.032);
         sprite.position.set(local.x, local.y + 0.004, local.z);
         group.add(sprite);
       }

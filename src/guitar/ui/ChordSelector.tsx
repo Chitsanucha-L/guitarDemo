@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ALL_ROOTS,
   ALL_QUALITIES,
@@ -77,6 +78,7 @@ const QUALITY_COLORS: Record<Quality, { active: string; idle: string }> = {
 };
 
 export default function ChordSelector({ selectedChordName, onSelect, onClear, onRootChange }: ChordSelectorProps) {
+  const { t } = useTranslation();
   const [selection, setSelection] = useState<ChordSelection>({
     root: "C",
     quality: "major",
@@ -153,16 +155,16 @@ export default function ChordSelector({ selectedChordName, onSelect, onClear, on
         <div className="flex items-center gap-2 mb-1.5">
           <span className="text-[10px] font-bold text-indigo-400 bg-indigo-400/10 px-1.5 py-0.5 rounded">1</span>
           <span className="text-gray-400 text-xs font-semibold uppercase tracking-wider">
-            Root Note
+            {t("chord.rootNote")}
           </span>
         </div>
-        <div className="grid grid-cols-6 gap-1.5">
+        <div className="grid grid-cols-6 gap-1 sm:gap-1.5">
           {ALL_ROOTS.map(root => {
             const isActive = selectedChordName !== null && selection.root === root;
             return (
               <button
                 key={root}
-                className={`px-2 py-1.5 text-sm font-bold rounded-md shadow-md transition-all duration-200 ${
+                className={`px-1.5 sm:px-2 py-1 sm:py-1.5 text-xs sm:text-sm font-bold rounded-md shadow-md transition-all duration-200 ${
                   isActive
                     ? "bg-blue-600 text-white ring-2 ring-blue-300 scale-105"
                     : "bg-gray-700/80 text-gray-300 hover:bg-gray-600"
@@ -181,10 +183,10 @@ export default function ChordSelector({ selectedChordName, onSelect, onClear, on
         <div className="flex items-center gap-2 mb-1.5">
           <span className="text-[10px] font-bold text-indigo-400 bg-indigo-400/10 px-1.5 py-0.5 rounded">2</span>
           <span className="text-gray-400 text-xs font-semibold uppercase tracking-wider">
-            Chord Type
+            {t("chord.chordType")}
           </span>
         </div>
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-1 sm:gap-1.5">
           {ALL_QUALITIES.map(quality => {
             const isActive = selectedChordName !== null && selection.quality === quality;
             const colors = QUALITY_COLORS[quality];
@@ -192,7 +194,7 @@ export default function ChordSelector({ selectedChordName, onSelect, onClear, on
             return (
               <button
                 key={quality}
-                className={`px-3 py-1.5 text-sm font-bold rounded-md shadow-md transition-all duration-200 ${
+                className={`px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm font-bold rounded-md shadow-md transition-all duration-200 ${
                   isActive
                     ? `text-white scale-105 ${colors.active}`
                     : `text-gray-200 ${colors.idle}`
@@ -211,9 +213,9 @@ export default function ChordSelector({ selectedChordName, onSelect, onClear, on
         <div className="flex items-center justify-between mb-1.5">
           <div className="flex items-center gap-2">
             <span className="text-gray-500 text-xs font-semibold uppercase tracking-wider">
-              Tension
+              {t("chord.tension")}
             </span>
-            <span className="text-[10px] text-gray-600 italic">optional</span>
+            <span className="text-[10px] text-gray-600 italic">{t("chord.optional")}</span>
           </div>
           <button
             disabled={!tensionsAvailable}
@@ -226,7 +228,7 @@ export default function ChordSelector({ selectedChordName, onSelect, onClear, on
             }`}
             onClick={() => tensionsAvailable && setShowTensions(prev => !prev)}
           >
-            {showTensions ? "Hide" : "+ Add"}
+            {showTensions ? t("chord.hide") : t("chord.add")}
           </button>
         </div>
 
@@ -266,7 +268,7 @@ export default function ChordSelector({ selectedChordName, onSelect, onClear, on
               {buildChordName(selection)}
               {!hasFingeringData && (
                 <span className="ml-1.5 text-[10px] font-normal text-gray-500">
-                  (no fingering)
+                  {t("chord.noFingering")}
                 </span>
               )}
             </div>
@@ -274,13 +276,13 @@ export default function ChordSelector({ selectedChordName, onSelect, onClear, on
               className="text-red-400 text-xs font-medium transition px-2 py-1 rounded hover:bg-gray-800/50"
               onClick={handleClear}
             >
-              Reset
+              {t("chord.reset")}
             </button>
           </div>
 
           <div className="flex items-center gap-1.5">
             <span className="text-gray-500 text-[10px] font-semibold uppercase tracking-wider">
-              Notes
+              {t("chord.notes")}
             </span>
             {chordTones.map((note, i) => (
               <span
@@ -298,7 +300,7 @@ export default function ChordSelector({ selectedChordName, onSelect, onClear, on
       {selectedChordName && voicings.length > 1 && (
         <div>
           <div className="text-gray-500 text-[10px] font-semibold uppercase tracking-wider mb-1">
-            Voicing
+            {t("chord.voicing")}
           </div>
           <div className="flex flex-wrap gap-1.5">
             {voicings.map(v => {

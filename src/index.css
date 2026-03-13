@@ -14,3 +14,13 @@ body {
 .animate-shake {
   animation: shake 0.5s ease-in-out;
 }
+
+/* Portrait warning — only visible on mobile-sized screens in portrait */
+.portrait-overlay {
+  display: none;
+}
+@media (orientation: portrait) and (max-width: 768px) {
+  .portrait-overlay {
+    display: flex;
+  }
+}

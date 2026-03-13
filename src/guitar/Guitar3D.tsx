@@ -1,6 +1,9 @@
 import { useState, useRef, useCallback, useEffect, Suspense } from "react";
-import { Canvas } from "@react-three/fiber";
+import * as THREE from "three";
+import { Canvas, useThree, useFrame } from "@react-three/fiber";
 import { Environment, OrbitControls, useProgress } from "@react-three/drei";
+import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
+import { useTranslation } from "react-i18next";
 import type { ChordData } from "./data/types";
 import type { ChordVoicing } from "./data/chordLibrary";
 import { resolveChordByName } from "./data/chordLibrary";
@@ -21,8 +24,76 @@ import type { Stroke } from "./hooks/useStrummingEngine";
 
 type PanelId = "chord" | "strum" | "progression" | "scale";
 
+const DEFAULT_POSITION = new THREE.Vector3(0.3, 6, 0.01);
+const DEFAULT_TARGET = new THREE.Vector3(0, 0, 0);
+const DEFAULT_SPHERICAL = new THREE.Spherical().setFromVector3(
+  new THREE.Vector3().subVectors(DEFAULT_POSITION, DEFAULT_TARGET),
+);
+const LERP_SPEED = 3.5;
+
+function CameraController({ isPlayMode }: { isPlayMode: boolean }) {
+  const controlsRef = useRef<OrbitControlsImpl>(null!);
+  const { camera } = useThree();
+  const animating = useRef(false);
+  const wasPlayMode = useRef(isPlayMode);
+
+  useEffect(() => {
+    if (isPlayMode && !wasPlayMode.current) {
+      animating.current = true;
+    }
+    wasPlayMode.current = isPlayMode;
+  }, [isPlayMode]);
+
+  useFrame((_, delta) => {
+    if (!animating.current || !controlsRef.current) return;
+
+    const controls = controlsRef.current;
+    const t = Math.min(LERP_SPEED * delta, 1);
+
+    // Lerp the orbit target
+    controls.target.lerp(DEFAULT_TARGET, t);
+
+    // Animate in spherical coordinates so the camera orbits smoothly
+    const offset = new THREE.Vector3().subVectors(camera.position, controls.target);
+    const current = new THREE.Spherical().setFromVector3(offset);
+
+    // Shortest-path for the horizontal angle (avoids spinning the long way)
+    let dTheta = DEFAULT_SPHERICAL.theta - current.theta;
+    if (dTheta > Math.PI) dTheta -= 2 * Math.PI;
+    if (dTheta < -Math.PI) dTheta += 2 * Math.PI;
+
+    current.radius += (DEFAULT_SPHERICAL.radius - current.radius) * t;
+    current.phi += (DEFAULT_SPHERICAL.phi - current.phi) * t;
+    current.theta += dTheta * t;
+
+    camera.position.copy(controls.target).add(
+      new THREE.Vector3().setFromSpherical(current),
+    );
+    controls.update();
+
+    // Snap when close enough
+    const posDist = camera.position.distanceTo(DEFAULT_POSITION);
+    const tgtDist = controls.target.distanceTo(DEFAULT_TARGET);
+    if (posDist < 0.01 && tgtDist < 0.01) {
+      camera.position.copy(DEFAULT_POSITION);
+      controls.target.copy(DEFAULT_TARGET);
+      controls.update();
+      animating.current = false;
+    }
+  });
+
+  return (
+    <OrbitControls
+      ref={controlsRef}
+      enableDamping
+      enableRotate={!isPlayMode}
+    />
+  );
+}
+
 function LoadingScreen() {
   const { progress, active } = useProgress();
+  const { t } = useTranslation();
 
   if (!active) return null;
 
@@ -36,7 +107,7 @@ function LoadingScreen() {
           />
         </div>
         <div className="text-center">
-          <p className="text-white text-lg font-semibold">Loading Guitar Model</p>
+          <p className="text-white text-lg font-semibold">{t("loading.title")}</p>
           <p className="text-gray-400 text-sm mt-1">{progress.toFixed(0)}%</p>
         </div>
         <div className="w-64 h-2 bg-gray-700 rounded-full overflow-hidden">
@@ -80,6 +151,7 @@ function SectionHeader({
 }
 
 export default function Guitar3D() {
+  const { t } = useTranslation();
   const { active: isLoading } = useProgress();
   const [highlightChord, setHighlightChord] = useState<ChordData | null>(null);
   const [selectedChordName, setSelectedChordName] = useState<string | null>(null);
@@ -89,7 +161,7 @@ export default function Guitar3D() {
   const chordRef = useRef<ChordData | null>(null);
   const strumFnRef = useRef<StrumDirectionFn | null>(null);
 
-  const [openPanel, setOpenPanel] = useState<PanelId>("chord");
+  const [openPanels, setOpenPanels] = useState<Set<PanelId>>(new Set(["chord"]));
 
   useEffect(() => {
     chordRef.current = highlightChord;
@@ -104,7 +176,12 @@ export default function Guitar3D() {
   const progression = useChordProgression(activeProgression?.chords ?? ["C"]);
 
   const togglePanel = useCallback((id: PanelId) => {
-    setOpenPanel(id);
+    setOpenPanels((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   }, []);
 
   const applyChord = useCallback((name: string) => {
@@ -183,9 +260,9 @@ export default function Guitar3D() {
     <div className="w-full max-w-screen h-screen relative overflow-hidden bg-[#1a1a1a]">
 
       {/* Left sidebar */}
-      <div className={`absolute top-18 left-4 z-50 pointer-events-none ${isLoading ? "opacity-0" : "opacity-100 transition-opacity duration-500"}`}>
+      <div className={`absolute top-12 sm:top-18 left-2 sm:left-4 z-50 pointer-events-none ${isLoading ? "opacity-0" : "opacity-100 transition-opacity duration-500"}`}>
         <div
-          className={`w-80 max-h-[calc(100vh-5rem)] overflow-y-auto pr-1 space-y-2 ${
+          className={`w-56 sm:w-80 max-h-[calc(100vh-4rem)] sm:max-h-[calc(100vh-5rem)] overflow-y-auto pr-1 space-y-2 pb-10 ${
             isLoading ? "pointer-events-none" : "pointer-events-auto"
           }`}
           style={{ scrollbarWidth: "thin", scrollbarColor: "#4b5563 transparent" }}
@@ -198,93 +275,85 @@ export default function Guitar3D() {
 
           {/* ── CHORD BUILDER ── */}
           <div className="mt-1">
-            <p className="text-[10px] uppercase tracking-widest text-gray-500 font-semibold px-1 mb-1.5">Chord Builder</p>
+            <p className="text-[10px] uppercase tracking-widest text-gray-500 font-semibold px-1 mb-1.5">{t("sections.chordBuilder")}</p>
             <div className="bg-gray-900/80 rounded-xl backdrop-blur-sm overflow-hidden">
               <SectionHeader
-                label="Chord Builder"
+                label={t("sections.chordBuilder")}
                 icon="🎸"
-                isOpen={openPanel === "chord"}
+                isOpen={openPanels.has("chord")}
                 onToggle={() => togglePanel("chord")}
               />
-              {openPanel === "chord" && (
-                <div className="px-3 pb-3 pt-1">
-                  <ChordSelector
-                    selectedChordName={selectedChordName}
-                    onSelect={handleChordSelect}
-                    onClear={handleClearChord}
-                    onRootChange={handleRootChange}
-                  />
-                </div>
-              )}
+              <div className="px-3 pb-3 pt-1" style={{ display: openPanels.has("chord") ? undefined : "none" }}>
+                <ChordSelector
+                  selectedChordName={selectedChordName}
+                  onSelect={handleChordSelect}
+                  onClear={handleClearChord}
+                  onRootChange={handleRootChange}
+                />
+              </div>
             </div>
           </div>
 
           {/* ── PLAY ── */}
-          <div className="mt-4 border-t border-gray-700/40 pt-3">
-            <p className="text-[10px] uppercase tracking-widest text-gray-500 font-semibold px-1 mb-1.5">Play</p>
+          <div className="mt-4 border-t border-t-2 border-gray-700/40 pt-3">
+            <p className="text-[10px] uppercase tracking-widest text-gray-500 font-semibold px-1 mb-1.5">{t("sections.play")}</p>
             <div className="space-y-2">
               <div className="bg-gray-900/80 rounded-xl backdrop-blur-sm overflow-hidden">
                 <SectionHeader
-                  label="Strumming"
+                  label={t("sections.strumming")}
                   icon="🎵"
-                  isOpen={openPanel === "strum"}
+                  isOpen={openPanels.has("strum")}
                   onToggle={() => togglePanel("strum")}
                 />
-                {openPanel === "strum" && (
-                  <div className="px-3 pb-3 pt-1">
-                    <StrumPanel onStroke={handleStroke} onBarChange={handleBarChange} />
-                  </div>
-                )}
+                <div className="px-3 pb-3 pt-1" style={{ display: openPanels.has("strum") ? undefined : "none" }}>
+                  <StrumPanel onStroke={handleStroke} onBarChange={handleBarChange} />
+                </div>
               </div>
 
               <div className="bg-gray-900/80 rounded-xl backdrop-blur-sm overflow-hidden">
                 <SectionHeader
-                  label="Progression"
+                  label={t("sections.progression")}
                   icon="🔄"
-                  isOpen={openPanel === "progression"}
+                  isOpen={openPanels.has("progression")}
                   onToggle={() => togglePanel("progression")}
                 />
-                {openPanel === "progression" && (
-                  <div className="px-3 pb-3 pt-1">
-                    <ProgressionPanel
-                      active={!!activeProgression}
-                      currentIndex={progression.index}
-                      onSelect={handleProgressionSelect}
-                    />
-                  </div>
-                )}
+                <div className="px-3 pb-3 pt-1" style={{ display: openPanels.has("progression") ? undefined : "none" }}>
+                  <ProgressionPanel
+                    active={!!activeProgression}
+                    currentIndex={progression.index}
+                    onSelect={handleProgressionSelect}
+                  />
+                </div>
               </div>
             </div>
           </div>
 
           {/* ── THEORY ── */}
-          <div className="mt-4 border-t border-gray-700/40 pt-3">
-            <p className="text-[10px] uppercase tracking-widest text-gray-500 font-semibold px-1 mb-1.5">Theory</p>
+          <div className="mt-4 border-t border-t-2 border-gray-700/40 pt-3">
+            <p className="text-[10px] uppercase tracking-widest text-gray-500 font-semibold px-1 mb-1.5">{t("sections.theory")}</p>
             <div className="bg-gray-900/80 rounded-xl backdrop-blur-sm overflow-hidden">
               <SectionHeader
-                label="Scale"
+                label={t("sections.scale")}
                 icon="🎹"
-                isOpen={openPanel === "scale"}
+                isOpen={openPanels.has("scale")}
                 onToggle={() => togglePanel("scale")}
               />
-              {openPanel === "scale" && (
-                <div className="px-3 pb-3 pt-1">
-                  <ScaleSelector root={chordRoot} onScaleChange={handleScaleChange} />
-                </div>
-              )}
+              <div className="px-3 pb-3 pt-1" style={{ display: openPanels.has("scale") ? undefined : "none" }}>
+                <ScaleSelector root={chordRoot} scaleNotes={scaleNotes} onScaleChange={handleScaleChange} />
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Top center — Now Playing */}
-      <div className={`absolute top-18 left-1/2 -translate-x-1/2 z-50 ${isLoading ? "opacity-0" : "opacity-100 transition-opacity duration-500"}`}>
+      <div className={`absolute top-12 sm:top-18 left-1/2 -translate-x-1/2 z-50 ${isLoading ? "opacity-0" : "opacity-100 transition-opacity duration-500"}`}>
         <CurrentNoteDisplay currentNote={currentNote} chordName={selectedChordName} />
       </div>
 
       {/* Right side — Chord Diagram */}
       {highlightChord && selectedChordName && (
-        <div className={`absolute top-18 right-5 z-50 ${isLoading ? "opacity-0" : "opacity-100 transition-opacity duration-500"}`}>
+        <div className={`absolute top-12 sm:top-18 right-2 sm:right-5 z-50 ${isLoading ? "opacity-0" : "opacity-100 transition-opacity duration-500"}`}>
           <ChordDiagram chordName={selectedChordName} chordData={highlightChord} />
         </div>
       )}
@@ -314,7 +383,7 @@ export default function Guitar3D() {
         </Suspense>
         <ambientLight intensity={0.6} />
         <directionalLight position={[5, 10, 5]} intensity={1} castShadow />
-        <OrbitControls enableDamping enableRotate={!isHoldingPick} />
+        <CameraController isPlayMode={isHoldingPick} />
       </Canvas>
     </div>
   );

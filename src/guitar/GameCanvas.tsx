@@ -67,10 +67,10 @@ function GameCanvas({ currentChord, canPlay, onStringPress, pressedPositions = [
         />
 
         <OrbitControls
-          enabled={true}       // เปิดการทำงาน
-          enableZoom={true}   // ปิดการซูม (ปรับเป็น true ได้ถ้าต้องการ)
-          enablePan={true}    // ปิดการเลื่อนซ้าย-ขวา
-          enableRotate={true}  // เปิดให้หมุนได้
+          enabled={false}       // เปิดการทำงาน
+          enableZoom={false}   // ปิดการซูม (ปรับเป็น true ได้ถ้าต้องการ)
+          enablePan={false}    // ปิดการเลื่อนซ้าย-ขวา
+          enableRotate={false}  // เปิดให้หมุนได้
         />
       </Canvas>
     </div>

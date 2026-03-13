@@ -15,6 +15,8 @@ export function useChordGame() {
   const [timeLeft, setTimeLeft] = useState(30);
   const [pressedPositions, setPressedPositions] = useState<PressedPosition[]>([]);
   const [gameStatus, setGameStatus] = useState<GameStatus>("idle");
+  const [correctCount, setCorrectCount] = useState(0);
+  const [wrongCount, setWrongCount] = useState(0);
   
   const timerRef = useRef<number | null>(null);
   const feedbackTimeoutRef = useRef<number | null>(null);
@@ -53,6 +55,8 @@ export function useChordGame() {
   const startGame = useCallback(() => {
     setScore(0);
     setTimeLeft(30);
+    setCorrectCount(0);
+    setWrongCount(0);
     setGameStatus("playing");
     selectRandomChord();
   }, [selectRandomChord]);
@@ -60,6 +64,8 @@ export function useChordGame() {
   const resetGame = useCallback(() => {
     setScore(0);
     setTimeLeft(30);
+    setCorrectCount(0);
+    setWrongCount(0);
     setPressedPositions([]);
     setCurrentChord(null);
     setGameStatus("idle");
@@ -114,6 +120,7 @@ export function useChordGame() {
     if (isCorrect) {
       setGameStatus("correct");
       setScore((prev) => prev + 1);
+      setCorrectCount((prev) => prev + 1);
       
       if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
       feedbackTimeoutRef.current = window.setTimeout(() => {
@@ -122,6 +129,7 @@ export function useChordGame() {
       }, 1500);
     } else {
       setGameStatus("wrong");
+      setWrongCount((prev) => prev + 1);
       setTimeLeft((prev) => Math.max(0, prev - 2));
       
       if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
@@ -142,6 +150,8 @@ export function useChordGame() {
     timeLeft,
     pressedPositions,
     gameStatus,
+    correctCount,
+    wrongCount,
     startGame,
     resetGame,
     selectRandomChord,

@@ -1,13 +1,14 @@
+import { useTranslation } from "react-i18next";
 import type { ChordData, Finger } from "../data/types";
-import { fingerColors, fingerNames } from "../data/constants";
+import { fingerColors } from "../data/constants";
 
-const STRING_LABELS: Record<string, string> = {
-  E6: "สาย 6 (E)",
-  A: "สาย 5 (A)",
-  D: "สาย 4 (D)",
-  G: "สาย 3 (G)",
-  B: "สาย 2 (B)",
-  e1: "สาย 1 (E)",
+const STRING_KEYS: Record<string, string> = {
+  E6: "finger.string6",
+  A: "finger.string5",
+  D: "finger.string4",
+  G: "finger.string3",
+  B: "finger.string2",
+  e1: "finger.string1",
 };
 
 interface FingerLegendProps {
@@ -15,6 +16,8 @@ interface FingerLegendProps {
 }
 
 export default function FingerLegend({ highlightChord }: FingerLegendProps) {
+  const { t } = useTranslation();
+
   if (!highlightChord) return null;
 
   const barre = highlightChord._barre;
@@ -29,23 +32,24 @@ export default function FingerLegend({ highlightChord }: FingerLegendProps) {
     if (!grouped.has(finger)) {
       grouped.set(finger, { notes: [], fret });
     }
-    grouped.get(finger)!.notes.push(STRING_LABELS[note] ?? note);
+    const label = STRING_KEYS[note] ? t(STRING_KEYS[note]) : note;
+    grouped.get(finger)!.notes.push(label);
   });
 
   const sortedFingers = [...grouped.entries()].sort(([a], [b]) => a - b);
 
   return (
-    <div className="absolute bottom-5 right-5 z-50 bg-black/60 text-white text-sm p-3 rounded-lg pointer-events-auto space-y-1.5">
+    <div className="absolute bottom-3 sm:bottom-5 right-3 sm:right-5 z-50 bg-black/60 text-white text-xs sm:text-sm p-2 sm:p-3 rounded-lg pointer-events-auto space-y-1 sm:space-y-1.5 max-w-[50vw]">
       {barre && (
         <div className="flex items-center gap-2">
           <span className="w-3 h-3 rounded-full" style={{ background: fingerColors[barre.finger] }} />
-          <span>{fingerNames[barre.finger]} → บาร์เร่ เฟรต {barre.fret}</span>
+          <span>{t(`finger.${barre.finger}`)} → {t("finger.barreFret", { fret: barre.fret })}</span>
         </div>
       )}
       {sortedFingers.map(([finger, { notes, fret }]) => (
         <div key={finger} className="flex items-center gap-2">
           <span className="w-3 h-3 rounded-full" style={{ background: fingerColors[finger] }} />
-          <span>{fingerNames[finger]} → {notes.join(", ")} เฟรต {fret}</span>
+          <span>{t(`finger.${finger}`)} → {notes.join(", ")} {t("finger.fret", { fret })}</span>
         </div>
       ))}
     </div>

@@ -1,0 +1,114 @@
+{
+  "nav": {
+    "title": "Guitar Trainer",
+    "home": "หน้าหลัก",
+    "gameMode": "โหมดเกม"
+  },
+  "loading": {
+    "title": "กำลังโหลดโมเดลกีตาร์",
+    "percent": "{{progress}}%"
+  },
+  "sections": {
+    "chordBuilder": "สร้างคอร์ด",
+    "play": "เล่น",
+    "strumming": "การตีคอร์ด",
+    "progression": "ลำดับคอร์ด",
+    "theory": "ทฤษฎี",
+    "scale": "สเกล"
+  },
+  "pick": {
+    "playMode": "โหมดเล่น",
+    "viewMode": "โหมดดู",
+    "disableTitle": "คลิกเพื่อปิดโหมดเล่น",
+    "enableTitle": "เปิดโหมดเล่นเพื่อคลิกสาย"
+  },
+  "chord": {
+    "rootNote": "โน้ตหลัก",
+    "chordType": "ประเภทคอร์ด",
+    "tension": "เทนชัน",
+    "optional": "ไม่บังคับ",
+    "hide": "ซ่อน",
+    "add": "+ เพิ่ม",
+    "noFingering": "(ไม่มีตำแหน่งนิ้ว)",
+    "reset": "รีเซ็ต",
+    "notes": "โน้ต",
+    "voicing": "วอยซิ่ง"
+  },
+  "nowPlaying": {
+    "title": "กำลังเล่น",
+    "note": "โน้ต"
+  },
+  "strum": {
+    "bpm": "BPM",
+    "recommended": "แนะนำ: {{bpm}} BPM",
+    "stop": "หยุด",
+    "play": "เล่น"
+  },
+  "progression": {
+    "clear": "ล้าง"
+  },
+  "scale": {
+    "clear": "ล้าง",
+    "position": "ตำแหน่ง",
+    "root": "รูท",
+    "scaleNote": "โน้ตสเกล"
+  },
+  "finger": {
+    "1": "นิ้วชี้",
+    "2": "นิ้วกลาง",
+    "3": "นิ้วนาง",
+    "4": "นิ้วก้อย",
+    "string6": "สาย 6 (E)",
+    "string5": "สาย 5 (A)",
+    "string4": "สาย 4 (D)",
+    "string3": "สาย 3 (G)",
+    "string2": "สาย 2 (B)",
+    "string1": "สาย 1 (E)",
+    "barreFret": "บาร์เร่ เฟรต {{fret}}",
+    "fret": "เฟรต {{fret}}"
+  },
+  "game": {
+    "title": "Guitar Trainer - โหมดเกม",
+    "startTitle": "เกมฝึกคอร์ด",
+    "instruction1": "แตะตำแหน่งเฟรตบนกีตาร์เพื่อสร้างคอร์ด",
+    "instruction2": "สายเปิดจะเล่นอัตโนมัติ — คุณแค่กดเฟรตเท่านั้น!",
+    "instruction3": "แตะเฟรตอีกครั้งเพื่อลบ กด",
+    "instruction3check": "ตรวจสอบ",
+    "instruction3end": "เมื่อพร้อม",
+    "correctLabel": "ถูก:",
+    "correctPoints": "+1 คะแนน",
+    "wrongLabel": "ผิด:",
+    "wrongPenalty": "-2 วินาที",
+    "timeLimit": "จำกัดเวลา: 30 วินาที",
+    "startGame": "เริ่มเกม",
+    "gameOver": "จบเกม",
+    "finalScore": "คะแนนรวม",
+    "playAgain": "เล่นอีกครั้ง",
+    "exit": "ออก",
+    "clear": "ล้าง",
+    "listening": "กำลังฟัง...",
+    "checkChord": "ตรวจสอบคอร์ด",
+    "score": "คะแนน",
+    "playThisChord": "เล่นคอร์ดนี้",
+    "time": "เวลา",
+    "correct": "ถูกต้อง!",
+    "wrong": "ผิด!",
+    "penalty": "-2 วินาที"
+  },
+  "portrait": {
+    "title": "กรุณาหมุนอุปกรณ์ของคุณ",
+    "message": "แอปนี้ใช้งานได้ดีที่สุดในโหมดแนวนอน กรุณาหมุนโทรศัพท์ในแนวนอน"
+  },
+  "stats": {
+    "title": "สถิติของคุณ",
+    "bestScore": "คะแนนสูงสุด",
+    "totalGames": "จำนวนเกม",
+    "accuracy": "ความแม่นยำ",
+    "totalCorrect": "ตอบถูกทั้งหมด",
+    "totalWrong": "ตอบผิดทั้งหมด",
+    "resetStats": "รีเซ็ตสถิติ",
+    "resetConfirm": "คุณแน่ใจหรือไม่? การดำเนินการนี้จะลบข้อมูลความก้าวหน้าทั้งหมด",
+    "thisGame": "เกมนี้",
+    "newBest": "สถิติใหม่!"
+  }
+}

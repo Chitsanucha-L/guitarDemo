@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { PROGRESSIONS, type ChordProgression } from "../data/chordProgressions";
 
 interface ProgressionPanelProps {
@@ -12,6 +13,7 @@ export default function ProgressionPanel({
   currentIndex,
   onSelect,
 }: ProgressionPanelProps) {
+  const { t } = useTranslation();
   const [selected, setSelected] = useState<ChordProgression | null>(null);
 
   function handleSelect(prog: ChordProgression) {
@@ -39,7 +41,7 @@ export default function ProgressionPanel({
             onClick={handleClear}
             className="text-gray-500 hover:text-red-400 text-xs font-medium transition px-2 py-0.5 rounded hover:bg-gray-800/50"
           >
-            Clear
+            {t("progression.clear")}
           </button>
         </div>
       )}

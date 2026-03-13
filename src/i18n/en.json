@@ -1,0 +1,114 @@
+{
+  "nav": {
+    "title": "Guitar Trainer",
+    "home": "Home",
+    "gameMode": "Game Mode"
+  },
+  "loading": {
+    "title": "Loading Guitar Model",
+    "percent": "{{progress}}%"
+  },
+  "sections": {
+    "chordBuilder": "Chord Builder",
+    "play": "Play",
+    "strumming": "Strumming",
+    "progression": "Progression",
+    "theory": "Theory",
+    "scale": "Scale"
+  },
+  "pick": {
+    "playMode": "Play Mode",
+    "viewMode": "View Mode",
+    "disableTitle": "Click to disable play mode",
+    "enableTitle": "Enable play mode to click strings"
+  },
+  "chord": {
+    "rootNote": "Root Note",
+    "chordType": "Chord Type",
+    "tension": "Tension",
+    "optional": "optional",
+    "hide": "Hide",
+    "add": "+ Add",
+    "noFingering": "(no fingering)",
+    "reset": "Reset",
+    "notes": "Notes",
+    "voicing": "Voicing"
+  },
+  "nowPlaying": {
+    "title": "Now Playing",
+    "note": "Note"
+  },
+  "strum": {
+    "bpm": "BPM",
+    "recommended": "Recommended: {{bpm}} BPM",
+    "stop": "Stop",
+    "play": "Play"
+  },
+  "progression": {
+    "clear": "Clear"
+  },
+  "scale": {
+    "clear": "Clear",
+    "position": "Position",
+    "root": "Root",
+    "scaleNote": "Scale Note"
+  },
+  "finger": {
+    "1": "Index finger",
+    "2": "Middle finger",
+    "3": "Ring finger",
+    "4": "Pinky finger",
+    "string6": "String 6 (E)",
+    "string5": "String 5 (A)",
+    "string4": "String 4 (D)",
+    "string3": "String 3 (G)",
+    "string2": "String 2 (B)",
+    "string1": "String 1 (E)",
+    "barreFret": "Barre fret {{fret}}",
+    "fret": "fret {{fret}}"
+  },
+  "game": {
+    "title": "Guitar Trainer - Game Mode",
+    "startTitle": "Chord Training Game",
+    "instruction1": "Tap the fretted positions on the guitar to build the chord.",
+    "instruction2": "Open strings are played automatically — you only press frets!",
+    "instruction3": "Tap a fret again to remove it. Press",
+    "instruction3check": "CHECK",
+    "instruction3end": "when ready.",
+    "correctLabel": "Correct:",
+    "correctPoints": "+1 point",
+    "wrongLabel": "Wrong:",
+    "wrongPenalty": "-2 seconds",
+    "timeLimit": "Time limit: 30 seconds",
+    "startGame": "START GAME",
+    "gameOver": "GAME OVER",
+    "finalScore": "Final Score",
+    "playAgain": "Play Again",
+    "exit": "Exit",
+    "clear": "CLEAR",
+    "listening": "LISTENING...",
+    "checkChord": "CHECK CHORD",
+    "score": "SCORE",
+    "playThisChord": "PLAY THIS CHORD",
+    "time": "TIME",
+    "correct": "CORRECT!",
+    "wrong": "WRONG!",
+    "penalty": "-2 seconds"
+  },
+  "portrait": {
+    "title": "Please Rotate Your Device",
+    "message": "This app works best in landscape mode. Please rotate your phone horizontally."
+  },
+  "stats": {
+    "title": "Your Stats",
+    "bestScore": "Best Score",
+    "totalGames": "Games Played",
+    "accuracy": "Accuracy",
+    "totalCorrect": "Total Correct",
+    "totalWrong": "Total Wrong",
+    "resetStats": "Reset Stats",
+    "resetConfirm": "Are you sure? This will erase all saved progress.",
+    "thisGame": "This Game",
+    "newBest": "New Best!"
+  }
+}

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { GameStatus } from "../hooks/useChordGame";
 
 interface GameFeedbackProps {
@@ -6,6 +7,7 @@ interface GameFeedbackProps {
 }
 
 export default function GameFeedback({ gameStatus }: GameFeedbackProps) {
+  const { t } = useTranslation();
   const [show, setShow] = useState(false);
 
   useEffect(() => {
@@ -41,17 +43,17 @@ export default function GameFeedback({ gameStatus }: GameFeedbackProps) {
           } ${isCorrect ? "animate-bounce" : "animate-shake"}`}
         >
           <div
-            className={`px-16 py-8 rounded-2xl border-4 ${
+            className={`px-8 sm:px-16 py-4 sm:py-8 rounded-2xl border-4 ${
               isCorrect
                 ? "bg-green-600/90 border-green-300 shadow-green-500/50"
                 : "bg-red-600/90 border-red-300 shadow-red-500/50"
             } shadow-2xl backdrop-blur-md`}
           >
-            <div className="text-6xl font-black text-white text-center drop-shadow-lg">
-              {isCorrect ? "✓ CORRECT!" : "✗ WRONG!"}
+            <div className="text-3xl sm:text-6xl font-black text-white text-center drop-shadow-lg">
+              {isCorrect ? `✓ ${t("game.correct")}` : `✗ ${t("game.wrong")}`}
             </div>
             {!isCorrect && (
-              <div className="text-xl text-white/90 text-center mt-2">-2 seconds</div>
+              <div className="text-base sm:text-xl text-white/90 text-center mt-1 sm:mt-2">{t("game.penalty")}</div>
             )}
           </div>
         </div>
