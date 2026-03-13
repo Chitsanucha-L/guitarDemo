@@ -3,7 +3,7 @@ import type { MutableRefObject } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
 import { Environment, OrbitControls, OrthographicCamera } from "@react-three/drei";
 import GuitarModel from "./GuitarModel";
-import type { StrumHandle } from "./GuitarModel";
+import type { StrumHandle, StrumDirectionFn } from "./GuitarModel";
 import type { ChordData } from "./data/types";
 import type { PressedPosition, PressedBarre, FeedbackMarker } from "./hooks/useChordGame";
 
@@ -16,6 +16,7 @@ interface GameCanvasProps {
   pressedBarre?: PressedBarre | null;
   feedbackMarkers?: FeedbackMarker[];
   strumRef?: MutableRefObject<StrumHandle | null>;
+  onStrumReady?: (strumFn: StrumDirectionFn) => void;
 }
 
 function FixedCamera() {
@@ -33,7 +34,7 @@ function FixedCamera() {
   );
 }
 
-function GameCanvas({ currentChord, canPlay, onStringPress, onBarrePress, pressedPositions = [], pressedBarre = null, feedbackMarkers = [], strumRef }: GameCanvasProps) {
+function GameCanvas({ currentChord, canPlay, onStringPress, onBarrePress, pressedPositions = [], pressedBarre = null, feedbackMarkers = [], strumRef, onStrumReady }: GameCanvasProps) {
   const previousChordRef = useRef<ChordData | null>(null);
   const chordRef = useRef<ChordData | null>(null);
 
@@ -65,6 +66,7 @@ function GameCanvas({ currentChord, canPlay, onStringPress, onBarrePress, presse
           onNotePlay={() => { }}
           onStringPress={onStringPress}
           onBarrePress={onBarrePress}
+          onStrumReady={onStrumReady}
           pressedPositions={pressedPositions}
           pressedBarre={pressedBarre}
           feedbackMarkers={feedbackMarkers}
@@ -92,6 +94,7 @@ export default memo(GameCanvas, (prev, next) => {
     prev.pressedPositions === next.pressedPositions &&
     prev.pressedBarre === next.pressedBarre &&
     prev.feedbackMarkers === next.feedbackMarkers &&
-    prev.strumRef === next.strumRef
+    prev.strumRef === next.strumRef &&
+    prev.onStrumReady === next.onStrumReady
   );
 });

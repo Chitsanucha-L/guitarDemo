@@ -14,6 +14,7 @@ export default function HomePage() {
         <div className="flex items-center gap-2 sm:gap-4 shrink-0">
           <Link to="/" className="text-sm sm:text-base text-yellow-400">{t("nav.home")}</Link>
           <Link to="/game" className="text-sm sm:text-base hover:text-yellow-400">{t("nav.gameMode")}</Link>
+          <Link to="/songs" className="text-sm sm:text-base hover:text-yellow-400">{t("nav.songMode")}</Link>
           <LanguageSwitcher />
         </div>
       </nav>

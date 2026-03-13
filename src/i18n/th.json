@@ -2,7 +2,8 @@
   "nav": {
     "title": "Guitar Trainer",
     "home": "หน้าหลัก",
-    "gameMode": "โหมดเกม"
+    "gameMode": "โหมดเกม",
+    "songMode": "โหมดเพลง"
   },
   "loading": {
     "title": "กำลังโหลดโมเดลกีตาร์",
@@ -127,5 +128,20 @@
     "practiceWrong": "บางเฟรตไม่ถูกต้อง",
     "missingPositions": "ขาดอีก {{count}} ตำแหน่ง",
     "barreHint": "ลากข้ามสายเพื่อสร้างบาร์เร่"
+  },
+  "song": {
+    "title": "โหมดเพลง",
+    "subtitle": "เลือกเพลงสำหรับมือใหม่แล้วฝึกเปลี่ยนคอร์ดบนฟิงเกอร์บอร์ด",
+    "beginner": "มือใหม่",
+    "key": "คีย์",
+    "changes": "เปลี่ยนคอร์ด",
+    "notFound": "ไม่พบเพลง",
+    "backToList": "กลับไปรายการเพลง",
+    "tempo": "BPM",
+    "watchMode": "เล่นอัตโนมัติ",
+    "practiceMode": "ทีละขั้น",
+    "restart": "เริ่มใหม่",
+    "finished": "จบเพลงแล้ว!",
+    "metronome": "เมโทรนอม"
   }
 }

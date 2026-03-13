@@ -2,7 +2,8 @@
   "nav": {
     "title": "Guitar Trainer",
     "home": "Home",
-    "gameMode": "Game Mode"
+    "gameMode": "Game Mode",
+    "songMode": "Song Mode"
   },
   "loading": {
     "title": "Loading Guitar Model",
@@ -127,5 +128,20 @@
     "practiceWrong": "Some frets are incorrect.",
     "missingPositions": "Missing {{count}} position(s)",
     "barreHint": "Drag across strings to create a barre"
+  },
+  "song": {
+    "title": "Song Mode",
+    "subtitle": "Pick a beginner song and practice chord changes on the fretboard",
+    "beginner": "Beginner",
+    "key": "Key",
+    "changes": "changes",
+    "notFound": "Song not found",
+    "backToList": "Back to Songs",
+    "tempo": "BPM",
+    "watchMode": "Auto Play",
+    "practiceMode": "Step by Step",
+    "restart": "Restart",
+    "finished": "Song Complete!",
+    "metronome": "Metronome"
   }
 }
