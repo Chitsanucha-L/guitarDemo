@@ -1,5 +1,5 @@
 import type { ChordData } from "./types";
-import type { Root, Quality, Tension } from "../types/chord";
+import type { Root, Quality } from "../types/chord";
 import { ALL_ROOTS, ALL_QUALITIES, ALL_TENSIONS } from "../types/chord";
 import { OVERRIDES, generateFingering, hasOverride } from "./chordShapes";
 
