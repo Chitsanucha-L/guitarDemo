@@ -5,7 +5,7 @@ import type { Root, Quality } from "../types/chord";
 // Handcrafted open-position chords (preferred over transposition for these)
 // ---------------------------------------------------------------------------
 
-const OVERRIDES: Record<string, ChordData> = {
+export const OVERRIDES: Record<string, ChordData> = {
   // ---- Major (open) ----
   C:  { notes: { E6: { fret: -1 }, A: { fret: 3, finger: 3 }, D: { fret: 2, finger: 2 }, G: { fret: 0 }, B: { fret: 1, finger: 1 }, e1: { fret: 0 } } },
   G:  { notes: { E6: { fret: 3, finger: 2 }, A: { fret: 2, finger: 1 }, D: { fret: 0 }, G: { fret: 0 }, B: { fret: 0 }, e1: { fret: 3, finger: 3 } } },

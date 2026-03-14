@@ -6,7 +6,7 @@ import GameHUD from "../guitar/ui/GameHUD";
 import GameFeedback from "../guitar/ui/GameFeedback";
 import LanguageSwitcher from "../guitar/ui/LanguageSwitcher";
 import { useChordGame } from "../guitar/hooks/useChordGame";
-import type { GameMode } from "../guitar/hooks/useChordGame";
+import type { GameMode, GameDifficulty } from "../guitar/hooks/useChordGame";
 import { useGameStats } from "../guitar/hooks/useGameStats";
 import { stringToNote } from "../guitar/data/constants";
 import type { Note } from "../guitar/data/types";
@@ -29,6 +29,7 @@ export default function GamePage() {
     correctCount,
     wrongCount,
     gameMode,
+    gameDifficulty,
     feedbackMarkers,
     missingCount,
     startGame,
@@ -39,6 +40,8 @@ export default function GamePage() {
     clearPresses,
     practiceNext,
     practiceRetry,
+    clearedCount,
+    poolSize,
   } = useChordGame();
 
   const { allStats, recordGame, getAccuracy } = useGameStats();
@@ -47,22 +50,23 @@ export default function GamePage() {
   const [isChecking, setIsChecking] = useState(false);
   const [showQuitModal, setShowQuitModal] = useState(false);
   const [selectedMode, setSelectedMode] = useState<GameMode>("practice");
+  const [selectedDifficulty, setSelectedDifficulty] = useState<GameDifficulty>("medium");
   const recordedRef = useRef(false);
 
   useEffect(() => {
-    if (gameStatus === "gameover" && !recordedRef.current) {
+    if ((gameStatus === "gameover" || gameStatus === "won") && !recordedRef.current) {
       recordedRef.current = true;
-      recordGame(gameMode, score, correctCount, wrongCount);
+      recordGame(gameMode, gameDifficulty, score, correctCount, wrongCount);
     }
     if (gameStatus === "idle" || gameStatus === "playing") {
       recordedRef.current = false;
     }
-  }, [gameStatus, gameMode, score, correctCount, wrongCount, recordGame]);
+  }, [gameStatus, gameMode, gameDifficulty, score, correctCount, wrongCount, recordGame]);
 
-  const modeStats = allStats[selectedMode];
-  const modeAccuracy = getAccuracy(selectedMode);
-  const activeStats = allStats[gameMode];
-  const activeAccuracy = getAccuracy(gameMode);
+  const modeStats = allStats[selectedMode][selectedDifficulty];
+  const modeAccuracy = getAccuracy(selectedMode, selectedDifficulty);
+  const activeStats = allStats[gameMode][gameDifficulty];
+  const activeAccuracy = getAccuracy(gameMode, gameDifficulty);
 
   const validateRef = useRef(validateChord);
   validateRef.current = validateChord;
@@ -149,6 +153,9 @@ export default function GamePage() {
             timeLeft={timeLeft}
             showTimer={!isPractice}
             gameMode={gameMode}
+            difficultyLabel={t(`difficulty.${gameDifficulty}`)}
+            clearedCount={clearedCount}
+            poolSize={poolSize}
             onQuit={() => setShowQuitModal(true)}
           />
         )}
@@ -159,8 +166,30 @@ export default function GamePage() {
         {/* Start Screen */}
         {gameStatus === "idle" && (
           <div className="absolute inset-0 flex items-center justify-center z-50 bg-black/60 backdrop-blur-sm pointer-events-none">
-            <div className="bg-gray-900/95 backdrop-blur-md p-6 sm:p-12 rounded-2xl shadow-2xl border border-gray-700/50 text-center max-w-lg mx-4 pointer-events-auto">
+            <div className="bg-gray-900/95 backdrop-blur-md p-6 sm:p-12 rounded-2xl shadow-2xl border border-gray-700/50 text-center max-w-2xl mx-4 pointer-events-auto max-h-[90vh] overflow-y-auto">
               <h2 className="text-2xl sm:text-5xl font-bold text-yellow-400 mb-3 sm:mb-6">{t("game.startTitle")}</h2>
+
+              {/* Difficulty */}
+              <div className="mb-4 sm:mb-6 text-left">
+                <div className="text-gray-400 text-xs sm:text-sm font-semibold uppercase tracking-wider mb-2">{t("difficulty.title")}</div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {(["easy", "medium", "hard", "veryHard"] as const).map((d) => (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => setSelectedDifficulty(d)}
+                      className={`rounded-xl border px-2 py-2 sm:py-3 text-left transition-all ${
+                        selectedDifficulty === d
+                          ? "bg-cyan-600/40 border-cyan-400/60 text-white"
+                          : "bg-gray-800/50 border-gray-600/50 text-gray-400 hover:text-gray-200"
+                      }`}
+                    >
+                      <div className="text-xs sm:text-sm font-bold">{t(`difficulty.${d}`)}</div>
+                      <div className="text-[10px] sm:text-[11px] text-gray-500 mt-0.5 leading-tight">{t(`difficulty.${d}Desc`)}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
               
               {/* Mode Toggle */}
               <div className="mb-4 sm:mb-6">
@@ -195,7 +224,9 @@ export default function GamePage() {
                 {t("game.instruction1")}<br />
                 {t("game.instruction2")}<br />
                 {t("game.instruction3")} <span className="text-cyan-400 font-bold">{t("game.instruction3check")}</span> {t("game.instruction3end")}<br />
-                <span className="text-gray-500 text-[10px] sm:text-xs mt-1 block">{t("mode.barreHint")}</span>
+                <span className="text-gray-500 text-[10px] sm:text-xs mt-1 block">
+                  {selectedDifficulty === "easy" ? t("difficulty.barreEasy") : t("mode.barreHint")}
+                </span>
                 {selectedMode === "challenge" && (
                   <>
                     <br />
@@ -225,11 +256,50 @@ export default function GamePage() {
               )}
 
               <button
-                onClick={() => startGame(selectedMode)}
+                onClick={() => startGame(selectedMode, selectedDifficulty)}
                 className="bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-bold text-lg sm:text-2xl px-8 sm:px-12 py-3 sm:py-4 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg shadow-yellow-500/20"
               >
                 {t("game.startGame")}
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Win — cleared full pool (every chord correct once) */}
+        {gameStatus === "won" && (
+          <div className="absolute inset-0 flex items-center justify-center z-50 bg-black/70 backdrop-blur-md pointer-events-none">
+            <div className="bg-gray-900/95 backdrop-blur-md p-6 sm:p-12 rounded-2xl shadow-2xl border border-green-500/40 text-center max-w-lg mx-4 pointer-events-auto">
+              <h2 className="text-3xl sm:text-5xl font-bold text-green-400 mb-2 sm:mb-4">{t("game.youWin")}</h2>
+              <p className="text-gray-300 text-sm sm:text-lg mb-4 sm:mb-6">{t("game.youWinDesc", { count: poolSize })}</p>
+              <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4 sm:mb-6">
+                <div className="bg-gray-800/60 rounded-xl p-2 sm:p-3 border border-gray-700/30">
+                  <div className="text-[10px] sm:text-xs text-gray-500 uppercase">{t("stats.totalCorrect")}</div>
+                  <div className="text-xl sm:text-2xl font-bold text-green-400">{correctCount}</div>
+                </div>
+                <div className="bg-gray-800/60 rounded-xl p-2 sm:p-3 border border-gray-700/30">
+                  <div className="text-[10px] sm:text-xs text-gray-500 uppercase">{t("stats.totalWrong")}</div>
+                  <div className="text-xl sm:text-2xl font-bold text-red-400">{wrongCount}</div>
+                </div>
+                <div className="bg-gray-800/60 rounded-xl p-2 sm:p-3 border border-gray-700/30">
+                  <div className="text-[10px] sm:text-xs text-gray-500 uppercase">{t("game.finalScore")}</div>
+                  <div className="text-xl sm:text-2xl font-bold text-yellow-400">{score}</div>
+                </div>
+              </div>
+              <div className="flex justify-center gap-3 sm:gap-4">
+                <button
+                  type="button"
+                  onClick={resetGame}
+                  className="bg-green-600 hover:bg-green-500 text-white font-bold text-base sm:text-xl px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg shadow-green-500/20"
+                >
+                  {t("game.playAgain")}
+                </button>
+                <Link
+                  to="/"
+                  className="inline-block bg-gray-700 hover:bg-gray-600 text-white font-bold text-base sm:text-xl px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl transition-all duration-200 transform hover:scale-105"
+                >
+                  {t("game.exit")}
+                </Link>
+              </div>
             </div>
           </div>
         )}
@@ -383,7 +453,7 @@ export default function GamePage() {
                     setShowQuitModal(false);
                     if (isPractice && (correctCount > 0 || wrongCount > 0) && !recordedRef.current) {
                       recordedRef.current = true;
-                      recordGame(gameMode, score, correctCount, wrongCount);
+                      recordGame(gameMode, gameDifficulty, score, correctCount, wrongCount);
                     }
                     resetGame();
                   }}

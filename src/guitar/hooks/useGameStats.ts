@@ -1,7 +1,8 @@
 import { useState, useCallback } from "react";
 import type { GameMode } from "./useChordGame";
+import type { GameDifficulty } from "./useChordGame";
 
-const STORAGE_KEY = "guitar-game-stats-v2";
+const STORAGE_KEY = "guitar-game-stats-v3";
 
 export interface ModeStats {
   bestScore: number;
@@ -9,11 +10,6 @@ export interface ModeStats {
   totalCorrect: number;
   totalWrong: number;
   totalAttempts: number;
-}
-
-export interface AllStats {
-  practice: ModeStats;
-  challenge: ModeStats;
 }
 
 const DEFAULT_MODE: ModeStats = {
@@ -24,22 +20,49 @@ const DEFAULT_MODE: ModeStats = {
   totalAttempts: 0,
 };
 
+const DIFFICULTIES: GameDifficulty[] = ["easy", "medium", "hard", "veryHard"];
+
+function emptyDifficultyRecord(): Record<GameDifficulty, ModeStats> {
+  return {
+    easy: { ...DEFAULT_MODE },
+    medium: { ...DEFAULT_MODE },
+    hard: { ...DEFAULT_MODE },
+    veryHard: { ...DEFAULT_MODE },
+  };
+}
+
+export interface AllStats {
+  practice: Record<GameDifficulty, ModeStats>;
+  challenge: Record<GameDifficulty, ModeStats>;
+}
+
 const DEFAULT_ALL: AllStats = {
-  practice: { ...DEFAULT_MODE },
-  challenge: { ...DEFAULT_MODE },
+  practice: emptyDifficultyRecord(),
+  challenge: emptyDifficultyRecord(),
 };
 
 function loadStats(): AllStats {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { practice: { ...DEFAULT_MODE }, challenge: { ...DEFAULT_MODE } };
-    const parsed = JSON.parse(raw);
-    return {
-      practice: { ...DEFAULT_MODE, ...parsed.practice },
-      challenge: { ...DEFAULT_MODE, ...parsed.challenge },
+    if (!raw) return JSON.parse(JSON.stringify(DEFAULT_ALL)) as AllStats;
+    const parsed = JSON.parse(raw) as Partial<AllStats>;
+    const next: AllStats = {
+      practice: emptyDifficultyRecord(),
+      challenge: emptyDifficultyRecord(),
     };
+    for (const mode of ["practice", "challenge"] as const) {
+      const bucket = parsed[mode];
+      if (bucket && typeof bucket === "object") {
+        for (const d of DIFFICULTIES) {
+          if (bucket[d]) {
+            next[mode][d] = { ...DEFAULT_MODE, ...bucket[d] };
+          }
+        }
+      }
+    }
+    return next;
   } catch {
-    return { practice: { ...DEFAULT_MODE }, challenge: { ...DEFAULT_MODE } };
+    return JSON.parse(JSON.stringify(DEFAULT_ALL)) as AllStats;
   }
 }
 
@@ -50,30 +73,36 @@ function saveStats(stats: AllStats) {
 export function useGameStats() {
   const [allStats, setAllStats] = useState<AllStats>(loadStats);
 
-  const recordGame = useCallback((mode: GameMode, score: number, correct: number, wrong: number) => {
-    setAllStats((prev) => {
-      const prevMode = prev[mode];
-      const nextMode: ModeStats = {
-        bestScore: Math.max(prevMode.bestScore, score),
-        totalGames: prevMode.totalGames + 1,
-        totalCorrect: prevMode.totalCorrect + correct,
-        totalWrong: prevMode.totalWrong + wrong,
-        totalAttempts: prevMode.totalAttempts + correct + wrong,
-      };
-      const next: AllStats = { ...prev, [mode]: nextMode };
-      saveStats(next);
-      return next;
-    });
-  }, []);
+  const recordGame = useCallback(
+    (mode: GameMode, difficulty: GameDifficulty, score: number, correct: number, wrong: number) => {
+      setAllStats((prev) => {
+        const prevMode = prev[mode][difficulty];
+        const nextMode: ModeStats = {
+          bestScore: Math.max(prevMode.bestScore, score),
+          totalGames: prevMode.totalGames + 1,
+          totalCorrect: prevMode.totalCorrect + correct,
+          totalWrong: prevMode.totalWrong + wrong,
+          totalAttempts: prevMode.totalAttempts + correct + wrong,
+        };
+        const next: AllStats = {
+          ...prev,
+          [mode]: { ...prev[mode], [difficulty]: nextMode },
+        };
+        saveStats(next);
+        return next;
+      });
+    },
+    [],
+  );
 
   const resetStats = useCallback(() => {
-    const fresh: AllStats = { ...DEFAULT_ALL, practice: { ...DEFAULT_MODE }, challenge: { ...DEFAULT_MODE } };
+    const fresh = JSON.parse(JSON.stringify(DEFAULT_ALL)) as AllStats;
     saveStats(fresh);
     setAllStats(fresh);
   }, []);
 
-  const getAccuracy = useCallback((mode: GameMode) => {
-    const s = allStats[mode];
+  const getAccuracy = useCallback((mode: GameMode, difficulty: GameDifficulty) => {
+    const s = allStats[mode][difficulty];
     return s.totalAttempts > 0 ? Math.round((s.totalCorrect / s.totalAttempts) * 100) : 0;
   }, [allStats]);
 

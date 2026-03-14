@@ -80,7 +80,7 @@
     "correctPoints": "+1 point",
     "wrongLabel": "Wrong:",
     "wrongPenalty": "-2 seconds",
-    "timeLimit": "Time limit: 30 seconds",
+    "timeLimit": "Time limit: 1 minute",
     "startGame": "START GAME",
     "gameOver": "GAME OVER",
     "finalScore": "Final Score",
@@ -94,7 +94,10 @@
     "time": "TIME",
     "correct": "CORRECT!",
     "wrong": "WRONG!",
-    "penalty": "-2 seconds"
+    "penalty": "-2 seconds",
+    "youWin": "YOU CLEARED THE SET!",
+    "youWinDesc": "You got every chord in the pool right ({{count}} unique).",
+    "chordsCleared": "cleared"
   },
   "portrait": {
     "title": "Please Rotate Your Device",
@@ -120,7 +123,7 @@
   "mode": {
     "practice": "Practice",
     "challenge": "Challenge",
-    "practiceDesc": "Learn step by step — see which frets are right or wrong",
+    "practiceDesc": "Clear the pool to win: full pass without repeats, then retry passes for wrong chords only (same game). New game resets the deck.",
     "challengeDesc": "No hints — score points under time pressure",
     "tryAgain": "TRY AGAIN",
     "next": "NEXT",
@@ -128,6 +131,18 @@
     "practiceWrong": "Some frets are incorrect.",
     "missingPositions": "Missing {{count}} position(s)",
     "barreHint": "Drag across strings to create a barre"
+  },
+  "difficulty": {
+    "title": "Difficulty",
+    "easy": "Easy",
+    "easyDesc": "Open major & minor only (C G D A E, Am Em Dm)",
+    "medium": "Medium",
+    "mediumDesc": "Easy + F, Bm + C# D# F# G# A# B (maj/min barre)",
+    "hard": "Hard",
+    "hardDesc": "All roots × qualities (7, maj7, sus, dim, aug, …)",
+    "veryHard": "Very hard",
+    "veryHardDesc": "Hard + tension chords (add9, 9, …)",
+    "barreEasy": "No barre chords on Easy — open shapes only."
   },
   "song": {
     "title": "Song Mode",

@@ -7,6 +7,10 @@ interface GameHUDProps {
   timeLeft: number;
   showTimer?: boolean;
   gameMode?: GameMode;
+  difficultyLabel?: string;
+  /** Unique chords cleared this game / pool size */
+  clearedCount?: number;
+  poolSize?: number;
   onQuit?: () => void;
 }
 
@@ -16,10 +20,14 @@ export default function GameHUD({
   timeLeft,
   showTimer = true,
   gameMode = "challenge",
+  difficultyLabel,
+  clearedCount = 0,
+  poolSize = 0,
   onQuit,
 }: GameHUDProps) {
   const { t } = useTranslation();
-  const timeColor = timeLeft <= 5 ? "text-red-500" : timeLeft <= 10 ? "text-yellow-500" : "text-green-500";
+  const timeColor =
+    timeLeft <= 10 ? "text-red-500" : timeLeft <= 20 ? "text-yellow-500" : "text-green-500";
   const isPractice = gameMode === "practice";
 
   return (
@@ -29,6 +37,11 @@ export default function GameHUD({
         <div className="bg-gray-900/60 backdrop-blur-md rounded-xl px-3 sm:px-5 py-2 sm:py-3 border border-blue-500/30 shadow-lg shadow-blue-500/5">
           <div className="text-[10px] sm:text-xs text-gray-500 font-medium uppercase tracking-wider">{t("game.score")}</div>
           <div className="text-2xl sm:text-4xl font-bold text-white tabular-nums">{score}</div>
+          {poolSize > 0 && (
+            <div className="text-[10px] sm:text-xs text-cyan-400/90 mt-1 tabular-nums">
+              {clearedCount}/{poolSize} {t("game.chordsCleared")}
+            </div>
+          )}
         </div>
       </div>
 
@@ -41,7 +54,7 @@ export default function GameHUD({
             <div className="text-4xl sm:text-7xl font-black text-yellow-400 tracking-wider drop-shadow-lg text-center">
               {chordName || "---"}
             </div>
-            <div className="flex justify-center mt-1.5 sm:mt-2">
+            <div className="flex justify-center flex-wrap gap-1 mt-1.5 sm:mt-2">
               <span
                 className={`text-[9px] sm:text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
                   isPractice
@@ -51,6 +64,11 @@ export default function GameHUD({
               >
                 {isPractice ? t("mode.practice") : t("mode.challenge")}
               </span>
+              {difficultyLabel && (
+                <span className="text-[9px] sm:text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-cyan-600/50 text-cyan-100 border border-cyan-400/30">
+                  {difficultyLabel}
+                </span>
+              )}
             </div>
           </div>
         </div>

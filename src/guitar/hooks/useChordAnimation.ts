@@ -472,36 +472,15 @@ export function useChordAnimation(
 
       positions.forEach((pos, index) => {
         if (usedPositions.has(index)) return;
+        if (pos.fret === 0) return;
 
-        const isOpen = pos.fret === 0;
+        if (!pos.finger) return;
 
-        if (!isOpen && !pos.finger) return;
-
-        const color = isOpen ? "#ffffff" : fingerColors[pos.finger!];
-        const radius = isOpen ? 0.015 : 0.02;
-
-        // if (!isOpen && !hasBarre) {
-        //   const glowRadius = radius * 1.6;
-        //   const glow = new THREE.Mesh(
-        //     new THREE.CircleGeometry(glowRadius, 32),
-        //     new THREE.MeshBasicMaterial({
-        //       color,
-        //       side: THREE.DoubleSide,
-        //       transparent: true,
-        //       opacity: isTransition ? 0 : 0.25,
-        //     })
-        //   );
-        //   glow.position.set(pos.local.x, pos.local.y + 0.0035, pos.local.z);
-        //   glow.rotation.x = -Math.PI / 2;
-        //   (glow as any).userData = { targetOpacity: 0.25 };
-        //   if (isTransition) glow.scale.set(0.9, 0.9, 0.9);
-        //   markerGroup.add(glow);
-        // }
+        const color = fingerColors[pos.finger!];
+        const radius = 0.02;
 
         const marker = new THREE.Mesh(
-          isOpen
-            ? new THREE.RingGeometry(radius * 0.55, radius, 32)
-            : new THREE.CircleGeometry(radius, 32),
+          new THREE.CircleGeometry(radius, 32),
           new THREE.MeshBasicMaterial({
             color,
             side: THREE.DoubleSide,
@@ -522,9 +501,7 @@ export function useChordAnimation(
           marker.scale.set(0.9, 0.9, 0.9);
         }
 
-        if (!isOpen) {
-          (marker as any).userData.fingerIndex = pos.finger;
-        }
+        (marker as any).userData.fingerIndex = pos.finger;
 
         markerGroup.add(marker);
       });

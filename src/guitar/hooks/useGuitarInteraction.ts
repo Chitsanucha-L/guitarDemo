@@ -20,6 +20,13 @@ export function useGuitarInteraction(
   const barreStartRef = useRef<{ stringNum: number; fret: number } | null>(null);
   const barreStringsRef = useRef<Set<number>>(new Set());
 
+  /** Play mode: only primary (left) mouse button; touch still allowed. */
+  const isPrimaryPointer = useCallback((e: { nativeEvent?: PointerEvent; button?: number; pointerType?: string }) => {
+    if (e.pointerType === "touch") return true;
+    const btn = e.nativeEvent?.button ?? e.button ?? 0;
+    return btn === 0;
+  }, []);
+
   useEffect(() => {
     if (gameMode) return;
 
@@ -48,6 +55,7 @@ export function useGuitarInteraction(
 
   const handleClick = useCallback((e: any) => {
     if (!canPlay || gameMode) return;
+    if (!isPrimaryPointer(e)) return;
     if (!e.object?.userData) return;
 
     const userData = e.object.userData;
@@ -58,10 +66,11 @@ export function useGuitarInteraction(
         onStringPress(userData.stringNum, userData.fret);
       }
     }
-  }, [canPlay, playSound, onStringPress, gameMode]);
+  }, [canPlay, playSound, onStringPress, gameMode, isPrimaryPointer]);
 
   const handlePointerDown = useCallback((e: any) => {
     if (!canPlay) return;
+    if (!isPrimaryPointer(e)) return;
 
     if (gameMode) {
       raycaster.setFromCamera(e.pointer, e.camera);
@@ -103,10 +112,11 @@ export function useGuitarInteraction(
         onStringPress(userData.stringNum, actualFret);
       }
     }
-  }, [canPlay, getFretForString, playSound, onStringPress, gameMode, raycaster, stringMeshes]);
+  }, [canPlay, getFretForString, playSound, onStringPress, gameMode, raycaster, stringMeshes, isPrimaryPointer]);
 
   const handlePointerMove = useCallback((e: any) => {
     if (!canPlay || !isDragging.current) return;
+    /* Drag only starts on primary down; on move, button is often -1 — ignore button here */
 
     if (gameMode) {
       if (!barreStartRef.current) return;

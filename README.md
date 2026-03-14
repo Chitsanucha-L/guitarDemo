@@ -47,9 +47,10 @@ This repo works well as a **senior project or portfolio** piece. It combines:
 
 | Item | Description |
 |------|-------------|
-| Chord set | C, G, D, A, E, F, Am, Em, Dm, Bm (`GAME_CHORDS`) |
-| Practice | On-fretboard hints; no harsh time pressure |
-| Challenge | Time limit, score, stats in `localStorage` |
+| Difficulty | **Easy** — open major/minor only. **Medium** — Easy + F, Bm + **C#, D#, F#, G#, A#, B** major/minor (barre). **Hard** — all roots × qualities. **Very hard** — + tensions. |
+| Chord pool | Driven by `src/guitar/data/gameDifficulty.ts` |
+| Practice | **Win** = every pool chord correct once. **Within one game:** pass 1 = each chord once (no repeats); later passes = only chords still wrong, again no repeats per pass. **New game** = full pool reshuffled. |
+| Challenge | Same deck rules + 1 min timer; stats in `localStorage` |
 | Input | Tap frets to build shape; **drag across strings** for barre |
 | Check | CHECK button → strum audio + compare to target chord |
 
