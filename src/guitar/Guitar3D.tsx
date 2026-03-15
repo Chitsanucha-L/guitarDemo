@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect, Suspense } from "react";
 import * as THREE from "three";
 import { Canvas, useThree, useFrame } from "@react-three/fiber";
-import { Environment, OrbitControls, useProgress } from "@react-three/drei";
+import { Environment, OrbitControls } from "@react-three/drei";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { useTranslation } from "react-i18next";
 import type { ChordData } from "./data/types";
@@ -18,7 +18,6 @@ import StrumPanel from "./ui/StrumPanel";
 import ScaleSelector from "./ui/ScaleSelector";
 import ProgressionPanel from "./ui/ProgressionPanel";
 import { useChordProgression } from "./hooks/useChordProgression";
-import { useAudioPreload } from "./hooks/useAudioPreload";
 import type { ChordProgression } from "./data/chordProgressions";
 import type { Root } from "./types/chord";
 import type { Stroke } from "./hooks/useStrummingEngine";
@@ -92,49 +91,6 @@ function CameraController({ isPlayMode }: { isPlayMode: boolean }) {
   );
 }
 
-function LoadingScreen({
-  modelProgress,
-  modelActive,
-  audioReady,
-  audioProgress,
-}: {
-  modelProgress: number;
-  modelActive: boolean;
-  audioReady: boolean;
-  audioProgress: number;
-}) {
-  const { t } = useTranslation();
-  const loading = modelActive || !audioReady;
-  const combinedProgress = modelActive
-    ? modelProgress * 0.5
-    : 50 + audioProgress * 0.5;
-
-  if (!loading) return null;
-
-  return (
-    <div className="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-[#1a1a1a]">
-      <div className="flex flex-col items-center gap-6">
-        <div className="relative h-16 w-16">
-          <div className="absolute inset-0 rounded-full border-4 border-gray-700" />
-          <div
-            className="absolute inset-0 rounded-full border-4 border-t-yellow-400 animate-spin"
-          />
-        </div>
-        <div className="text-center">
-          <p className="text-white text-lg font-semibold">{t("loading.title")}</p>
-          <p className="text-gray-400 text-sm mt-1">{Math.round(combinedProgress)}%</p>
-        </div>
-        <div className="w-64 h-2 bg-gray-700 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-yellow-400 rounded-full transition-all duration-300 ease-out"
-            style={{ width: `${combinedProgress}%` }}
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function SectionHeader({
   label,
   icon,
@@ -166,9 +122,6 @@ function SectionHeader({
 
 export default function Guitar3D() {
   const { t } = useTranslation();
-  const { progress: modelProgress, active: modelActive } = useProgress();
-  const { ready: audioReady, progress: audioProgress } = useAudioPreload();
-  const isLoading = modelActive || !audioReady;
   const [highlightChord, setHighlightChord] = useState<ChordData | null>(null);
   const [selectedChordName, setSelectedChordName] = useState<string | null>(null);
   const [isHoldingPick, setIsHoldingPick] = useState(false);
@@ -276,11 +229,9 @@ export default function Guitar3D() {
     <div className="w-full max-w-screen h-screen relative overflow-hidden bg-[#1a1a1a]">
 
       {/* Left sidebar */}
-      <div className={`absolute top-12 sm:top-18 left-2 sm:left-4 z-50 pointer-events-none ${isLoading ? "opacity-0" : "opacity-100 transition-opacity duration-500"}`}>
+      <div className="absolute top-12 sm:top-18 left-2 sm:left-4 z-50 pointer-events-auto">
         <div
-          className={`w-56 sm:w-80 max-h-[calc(100vh-4rem)] sm:max-h-[calc(100vh-5rem)] overflow-y-auto pr-1 space-y-2 pb-10 ${
-            isLoading ? "pointer-events-none" : "pointer-events-auto"
-          }`}
+          className="w-56 sm:w-80 max-h-[calc(100vh-4rem)] sm:max-h-[calc(100vh-5rem)] overflow-y-auto pr-1 space-y-2 pb-10"
           style={{ scrollbarWidth: "thin", scrollbarColor: "#4b5563 transparent" }}
         >
           {/* Pick toggle — always visible */}
@@ -363,28 +314,21 @@ export default function Guitar3D() {
       </div>
 
       {/* Top center — Now Playing */}
-      <div className={`absolute top-12 sm:top-18 left-1/2 -translate-x-1/2 z-50 ${isLoading ? "opacity-0" : "opacity-100 transition-opacity duration-500"}`}>
+      <div className="absolute top-12 sm:top-18 left-1/2 -translate-x-1/2 z-50">
         <CurrentNoteDisplay currentNote={currentNote} chordName={selectedChordName} />
       </div>
 
       {/* Right side — Chord Diagram */}
       {highlightChord && selectedChordName && (
-        <div className={`absolute top-12 sm:top-18 right-2 sm:right-5 z-50 ${isLoading ? "opacity-0" : "opacity-100 transition-opacity duration-500"}`}>
+        <div className="absolute top-12 sm:top-18 right-2 sm:right-5 z-50">
           <ChordDiagram chordName={selectedChordName} chordData={highlightChord} />
         </div>
       )}
 
       {/* Finger legend */}
-      <div className={isLoading ? "opacity-0 pointer-events-none" : "opacity-100 transition-opacity duration-500"}>
+      <div>
         <FingerLegend highlightChord={highlightChord} />
       </div>
-
-      <LoadingScreen
-        modelProgress={modelProgress}
-        modelActive={modelActive}
-        audioReady={audioReady}
-        audioProgress={audioProgress}
-      />
 
       <Canvas shadows camera={{ position: [0.3, 6, 0.01], fov: 30 }} gl={{ preserveDrawingBuffer: true }} className="pointer-events-auto">
         <Suspense fallback={null}>
