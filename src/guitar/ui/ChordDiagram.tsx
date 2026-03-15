@@ -26,8 +26,8 @@ export default function ChordDiagram({ chordName, chordData }: ChordDiagramProps
   const minFret = playableFrets.length > 0 ? Math.min(...playableFrets) : 0;
   const maxFret = playableFrets.length > 0 ? Math.max(...playableFrets) : 0;
 
-  const startFret = maxFret <= 4 ? 1 : minFret;
-  const visibleFrets = 4;
+  const visibleFrets = 5;
+  const startFret = maxFret <= visibleFrets ? 1 : minFret;
 
   const gridBottom = NUT_Y + visibleFrets * FRET_H;
   const svgW = SX + 5 * GAP + SX;

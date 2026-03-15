@@ -293,11 +293,17 @@ export default function ChordSelector({ selectedChordName, onSelect, onClear, on
               </span>
             ))}
           </div>
+
+          {voicings.length === 0 && (
+            <div className="text-amber-400/90 text-xs font-medium bg-amber-500/10 border border-amber-500/30 rounded-lg px-2.5 py-1.5">
+              {t("chord.noVoicingData")}
+            </div>
+          )}
         </div>
       )}
 
-      {/* Voicing selector */}
-      {selectedChordName && voicings.length > 1 && (
+      {/* Voicing selector — show even when only one voicing so user sees what it is */}
+      {selectedChordName && voicings.length >= 1 && (
         <div>
           <div className="text-gray-500 text-[10px] font-semibold uppercase tracking-wider mb-1">
             {t("chord.voicing")}

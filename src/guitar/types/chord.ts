@@ -20,8 +20,9 @@ export type Quality =
 export type Tension =
   | "add9"
   | "add11"
-  | "add13"
-  | "9";
+  | "9"
+  | "11"
+  | "6/9";
 
 export interface ChordSelection {
   root: Root;
@@ -38,7 +39,7 @@ export const ALL_QUALITIES: Quality[] = [
 ];
 
 export const ALL_TENSIONS: Tension[] = [
-  "add9", "add11", "9",
+  "add9", "add11", "9", "11", "6/9",
 ];
 
 export const QUALITY_LABELS: Record<Quality, string> = {
@@ -105,13 +106,6 @@ const QUALITY_INTERVALS: Record<Quality, number[]> = {
   sus4:   [0, 5, 7],
 };
 
-const TENSION_INTERVALS: Record<Tension, number> = {
-  add9: 2,
-  add11: 5,
-  add13: 9,
-  "9": 2,
-};
-
 export function buildChordNotes(
   root: Root,
   quality: Quality,
@@ -120,11 +114,19 @@ export function buildChordNotes(
   const rootIndex = CHROMATIC.indexOf(root);
   const intervals = [...QUALITY_INTERVALS[quality]];
 
-  if (tension) {
-    const interval = TENSION_INTERVALS[tension];
-    if (!intervals.includes(interval)) {
-      intervals.push(interval);
-    }
+  if (tension === "add9" || tension === "add11") {
+    const interval = tension === "add9" ? 2 : 5;
+    if (!intervals.includes(interval)) intervals.push(interval);
+  } else if (tension === "9") {
+    if (!intervals.includes(2)) intervals.push(2);
+    if (!intervals.includes(10) && !intervals.includes(11)) intervals.push(10);
+  } else if (tension === "11") {
+    if (!intervals.includes(5)) intervals.push(5);
+    if (!intervals.includes(2)) intervals.push(2);
+    if (!intervals.includes(10) && !intervals.includes(11)) intervals.push(10);
+  } else if (tension === "6/9") {
+    if (!intervals.includes(9)) intervals.push(9);
+    if (!intervals.includes(2)) intervals.push(2);
   }
 
   intervals.sort((a, b) => a - b);

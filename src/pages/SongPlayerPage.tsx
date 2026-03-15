@@ -41,10 +41,12 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
     currentChordName,
     beatProgress,
     isFinished,
+    isCountingIn,
+    countInBeats,
     totalChords,
-    chordSeq,
     beatMs,
     playOriginMs,
+    strumFnRef,
     next,
     prev,
     togglePlay,
@@ -53,34 +55,44 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
   } = useSongPlayer(song);
 
   // --- Audio: strum on chord change ---
-  const strumFnRef = useRef<StrumDirectionFn | null>(null);
-
-  const handleStrumReady = useCallback((fn: StrumDirectionFn) => {
-    strumFnRef.current = fn;
-  }, []);
-
-  /** ความเร็วดีดแต่ละสาย ~ สัดส่วนกับ 1 beat — ยิ่ง BPM สูง delay ยิ่งสั้น */
-  const strumDelayMs = Math.round(
-    Math.min(72, Math.max(18, (beatMs * 0.32) / 5)),
+  // ★ Wire the 3D guitar's strum function directly into useSongPlayer's ref.
+  // No more useEffect → no React re-render delay → strum fires from setTimeout.
+  const handleStrumReady = useCallback(
+    (fn: StrumDirectionFn) => {
+      strumFnRef.current = fn;
+    },
+    [strumFnRef],
   );
 
-  useEffect(() => {
-    if (chordSeq === 0 || !currentChordData) return;
-    let a = 0;
-    let b = 0;
-    a = requestAnimationFrame(() => {
-      b = requestAnimationFrame(() => {
-        strumFnRef.current?.("down", strumDelayMs);
-      });
-    });
-    return () => {
-      cancelAnimationFrame(a);
-      cancelAnimationFrame(b);
-    };
-  }, [chordSeq, currentChordData, strumDelayMs]);
+  // ★ REMOVED: the old useEffect that fired strum via chordSeq.
+  // Strum is now called directly from useSongPlayer's setTimeout callbacks.
 
   const [metronomeOn, setMetronomeOn] = useState(true);
-  useMetronome(song.tempo, isPlaying && metronomeOn, playOriginMs);
+  useMetronome(song.tempo, isPlaying && metronomeOn, playOriginMs, isCountingIn ? countInBeats : 0);
+
+  // Count-in display: 4 → 3 → 2 → 1
+  const countInMs = countInBeats * beatMs;
+  const [countInNumber, setCountInNumber] = useState<number | null>(null);
+  useEffect(() => {
+    if (!isCountingIn || playOriginMs === null) {
+      setCountInNumber(null);
+      return;
+    }
+    let rafId: number;
+    const tick = () => {
+      const elapsed = performance.now() - playOriginMs!;
+      if (elapsed >= countInMs) {
+        setCountInNumber(null);
+        return;
+      }
+      const beatIndex = Math.floor(elapsed / beatMs);
+      const n = beatIndex < countInBeats ? countInBeats - beatIndex : null;
+      setCountInNumber(n);
+      rafId = requestAnimationFrame(tick);
+    };
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [isCountingIn, playOriginMs, beatMs, countInBeats, countInMs]);
 
   // --- Auto-scroll lyrics ---
   useEffect(() => {
@@ -143,22 +155,38 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
           {/* Chord card — center */}
           <div className="absolute top-12 sm:top-16 left-1/2 -translate-x-1/2">
             <div className="relative">
-              <div className="absolute -inset-1 bg-yellow-500/20 rounded-2xl blur-lg" />
-              <div className="relative bg-gray-900/80 backdrop-blur-md rounded-2xl px-6 sm:px-12 py-2.5 sm:py-4 border-2 border-yellow-500/40">
-                <div className="text-[10px] sm:text-xs text-gray-500 text-center uppercase tracking-wider">
-                  {song.title}
-                </div>
-                <div className="text-3xl sm:text-6xl font-black text-yellow-400 text-center tabular-nums">
-                  {currentChordName || "—"}
-                </div>
-                {/* Beat progress */}
-                <div className="mt-1.5 sm:mt-2 w-full h-1 bg-gray-700/50 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-yellow-400/80 rounded-full transition-none"
-                    style={{ width: `${beatProgress * 100}%` }}
-                  />
-                </div>
-              </div>
+              {countInNumber !== null ? (
+                <>
+                  <div className="absolute -inset-1 bg-blue-500/20 rounded-2xl blur-lg" />
+                  <div className="relative bg-gray-900/90 backdrop-blur-md rounded-2xl px-6 sm:px-12 py-2.5 sm:py-4 border-2 border-blue-500/50">
+                    <div className="text-[10px] sm:text-xs text-white/90 text-center uppercase tracking-wider">
+                      COUNT IN
+                    </div>
+                    <div className="text-3xl sm:text-6xl font-black text-blue-400 text-center tabular-nums">
+                      {countInNumber}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="absolute -inset-1 bg-yellow-500/20 rounded-2xl blur-lg" />
+                  <div className="relative bg-gray-900/80 backdrop-blur-md rounded-2xl px-6 sm:px-12 py-2.5 sm:py-4 border-2 border-yellow-500/40">
+                    <div className="text-[10px] sm:text-xs text-gray-500 text-center uppercase tracking-wider">
+                      {song.title}
+                    </div>
+                    <div className="text-3xl sm:text-6xl font-black text-yellow-400 text-center tabular-nums">
+                      {currentChordName || "—"}
+                    </div>
+                    {/* Beat progress */}
+                    <div className="mt-1.5 sm:mt-2 w-full h-1 bg-gray-700/50 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-yellow-400/80 rounded-full transition-none"
+                        style={{ width: `${beatProgress * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -192,7 +220,7 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
           >
             <div className="flex flex-wrap gap-x-1 gap-y-1.5 sm:gap-x-2 sm:gap-y-2">
               {song.chords.map((entry, i) => {
-                const isActive = i === currentIndex;
+                const isActive = i === currentIndex && !isCountingIn;
                 const isPast = i < currentIndex;
                 return (
                   <div
@@ -281,7 +309,7 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
               {/* Previous */}
               <button
                 onClick={prev}
-                disabled={currentIndex === 0}
+                disabled={currentIndex === 0 || isCountingIn}
                 className="bg-gray-800/80 hover:bg-gray-700 disabled:opacity-30 text-gray-300 rounded-full w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center transition-colors border border-gray-600/50"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
@@ -289,7 +317,7 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
                 </svg>
               </button>
 
-              {/* Play / Pause — large, prominent */}
+              {/* Play / Pause */}
               <button
                 onClick={togglePlay}
                 className={`relative rounded-full w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center text-white font-bold shadow-xl transition-all duration-200 transform hover:scale-110 active:scale-95 ${
@@ -300,7 +328,6 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
                       : "bg-green-600 hover:bg-green-500 shadow-green-500/20"
                 }`}
               >
-                {/* Glow ring */}
                 <span
                   className={`absolute inset-0 rounded-full border-2 transition-colors duration-200 ${
                     isFinished
@@ -329,7 +356,7 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
               {/* Next */}
               <button
                 onClick={next}
-                disabled={currentIndex >= song.chords.length - 1}
+                disabled={currentIndex >= song.chords.length - 1 || isCountingIn}
                 className="bg-gray-800/80 hover:bg-gray-700 disabled:opacity-30 text-gray-300 rounded-full w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center transition-colors border border-gray-600/50"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
@@ -340,7 +367,7 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
 
             {/* Counter — right */}
             <div className="absolute right-0 text-gray-400 text-xs sm:text-sm font-medium tabular-nums">
-              {currentIndex + 1} / {totalChords}
+              {isCountingIn ? "—" : `${currentIndex + 1} / ${totalChords}`}
             </div>
           </div>
         </div>

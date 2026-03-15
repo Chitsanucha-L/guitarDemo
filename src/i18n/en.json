@@ -31,6 +31,7 @@
     "hide": "Hide",
     "add": "+ Add",
     "noFingering": "(no fingering)",
+    "noVoicingData": "No fingering data",
     "reset": "Reset",
     "notes": "Notes",
     "voicing": "Voicing"
