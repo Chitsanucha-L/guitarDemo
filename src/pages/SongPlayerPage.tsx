@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import LanguageSwitcher from "../guitar/ui/LanguageSwitcher";
+import Navbar from "../guitar/ui/Navbar";
 import GameCanvas from "../guitar/GameCanvas";
 import type { StrumDirectionFn } from "../guitar/GuitarModel";
 import { SONGS } from "../guitar/data/songs";
@@ -114,16 +114,7 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
 
   return (
     <div className="w-screen h-screen relative overflow-hidden">
-      {/* Navbar */}
-      <nav className="fixed top-0 left-0 w-full bg-gray-900/95 backdrop-blur-md text-white px-3 py-2 sm:p-4 flex justify-between items-center shadow-lg z-10 border-b border-gray-700/50">
-        <h1 className="text-base sm:text-xl font-bold truncate mr-2">{t("nav.title")}</h1>
-        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-          <Link to="/" className="text-sm sm:text-base hover:text-yellow-400 transition-colors">{t("nav.home")}</Link>
-          <Link to="/game" className="text-sm sm:text-base hover:text-yellow-400 transition-colors">{t("nav.gameMode")}</Link>
-          <Link to="/songs" className="text-sm sm:text-base text-yellow-400">{t("nav.songMode")}</Link>
-          <LanguageSwitcher />
-        </div>
-      </nav>
+      <Navbar title={t("nav.title")} activeLink="songs" />
 
       {/* 3D fretboard */}
       <div className="absolute top-10 sm:top-15 left-0 right-0 bottom-0 bg-[#111111]">

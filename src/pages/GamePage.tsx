@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import GameCanvas from "../guitar/GameCanvas";
 import GameHUD from "../guitar/ui/GameHUD";
 import GameFeedback from "../guitar/ui/GameFeedback";
-import LanguageSwitcher from "../guitar/ui/LanguageSwitcher";
+import Navbar from "../guitar/ui/Navbar";
 import { useChordGame } from "../guitar/hooks/useChordGame";
 import type { GameMode, GameDifficulty } from "../guitar/hooks/useChordGame";
 import { useGameStats } from "../guitar/hooks/useGameStats";
@@ -119,16 +119,7 @@ export default function GamePage() {
 
   return (
     <div className="w-screen h-screen relative">
-      {/* Navbar */}
-      <nav className="fixed top-0 left-0 w-full bg-gray-900/95 backdrop-blur-md text-white px-3 py-2 sm:p-4 flex justify-between items-center shadow-lg z-10 border-b border-gray-700/50">
-        <h1 className="text-base sm:text-xl font-bold truncate mr-2">{t("game.title")}</h1>
-        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-          <Link to="/" className="text-sm sm:text-base hover:text-yellow-400 transition-colors">{t("nav.home")}</Link>
-          <Link to="/game" className="text-sm sm:text-base text-yellow-400">{t("nav.gameMode")}</Link>
-          <Link to="/songs" className="text-sm sm:text-base hover:text-yellow-400 transition-colors">{t("nav.songMode")}</Link>
-          <LanguageSwitcher />
-        </div>
-      </nav>
+      <Navbar title={t("game.title")} activeLink="game" />
 
       {/* Main Content */}
       <div className="absolute top-10 sm:top-15 left-0 right-0 bottom-0 overflow-hidden bg-[#111111]">
