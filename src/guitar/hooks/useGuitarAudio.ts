@@ -2,6 +2,7 @@ import { useEffect, useMemo, useCallback, useRef } from "react";
 import type { MutableRefObject } from "react";
 import type { ChordData } from "../data/types";
 import { stringToNote, getNoteName } from "../data/constants";
+import { getAudioBufferCache } from "../audioPreload";
 
 export function useGuitarAudio(
   highlightChord: ChordData | null,
@@ -9,7 +10,8 @@ export function useGuitarAudio(
   chordRef?: MutableRefObject<ChordData | null>,
 ) {
   const audioContext = useMemo(() => new (window.AudioContext || (window as any).webkitAudioContext)(), []);
-  const sounds = useMemo<{ [key: string]: AudioBuffer }>(() => ({}), []);
+  /** Use shared preload cache so we never re-fetch/re-decode; no local loading. */
+  const sounds = useMemo(() => getAudioBufferCache(), []);
   const volume = 0.3;
 
   const lastPlayed = useRef<{ meshName: string; time: number } | null>(null);
@@ -17,32 +19,13 @@ export function useGuitarAudio(
   const noteDisplayTimeout = useRef<number | null>(null);
   const activeSources = useRef<Map<number, { source: AudioBufferSourceNode; gain: GainNode }>>(new Map());
 
-  // โหลดเสียงทุกไฟล์
   useEffect(() => {
-    async function loadSounds() {
-      // โหลดเสียงทุกสาย (1-6) ทุก fret (0-20)
-      for (let stringNum = 1; stringNum <= 6; stringNum++) {
-        for (let fret = 0; fret <= 20; fret++) {
-          const meshName = `String_${stringNum}_${fret}`;
-          try {
-            const res = await fetch(`/sounds/${meshName}.mp3`);
-            const buf = await res.arrayBuffer();
-            sounds[meshName] = await audioContext.decodeAudioData(buf);
-          } catch (err) {
-            console.warn(`Cannot load ${meshName}`, err);
-          }
-        }
-      }
-    }
-    loadSounds();
-
-    // Cleanup: ล้าง timeout เมื่อ component ถูก unmount
     return () => {
       if (noteDisplayTimeout.current) {
         clearTimeout(noteDisplayTimeout.current);
       }
     };
-  }, [audioContext, sounds]);
+  }, []);
 
   const playSound = useCallback((
     meshName: string,

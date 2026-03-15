@@ -18,6 +18,7 @@ import StrumPanel from "./ui/StrumPanel";
 import ScaleSelector from "./ui/ScaleSelector";
 import ProgressionPanel from "./ui/ProgressionPanel";
 import { useChordProgression } from "./hooks/useChordProgression";
+import { useAudioPreload } from "./hooks/useAudioPreload";
 import type { ChordProgression } from "./data/chordProgressions";
 import type { Root } from "./types/chord";
 import type { Stroke } from "./hooks/useStrummingEngine";
@@ -91,11 +92,24 @@ function CameraController({ isPlayMode }: { isPlayMode: boolean }) {
   );
 }
 
-function LoadingScreen() {
-  const { progress, active } = useProgress();
+function LoadingScreen({
+  modelProgress,
+  modelActive,
+  audioReady,
+  audioProgress,
+}: {
+  modelProgress: number;
+  modelActive: boolean;
+  audioReady: boolean;
+  audioProgress: number;
+}) {
   const { t } = useTranslation();
+  const loading = modelActive || !audioReady;
+  const combinedProgress = modelActive
+    ? modelProgress * 0.5
+    : 50 + audioProgress * 0.5;
 
-  if (!active) return null;
+  if (!loading) return null;
 
   return (
     <div className="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-[#1a1a1a]">
@@ -108,12 +122,12 @@ function LoadingScreen() {
         </div>
         <div className="text-center">
           <p className="text-white text-lg font-semibold">{t("loading.title")}</p>
-          <p className="text-gray-400 text-sm mt-1">{progress.toFixed(0)}%</p>
+          <p className="text-gray-400 text-sm mt-1">{Math.round(combinedProgress)}%</p>
         </div>
         <div className="w-64 h-2 bg-gray-700 rounded-full overflow-hidden">
           <div
             className="h-full bg-yellow-400 rounded-full transition-all duration-300 ease-out"
-            style={{ width: `${progress}%` }}
+            style={{ width: `${combinedProgress}%` }}
           />
         </div>
       </div>
@@ -152,7 +166,9 @@ function SectionHeader({
 
 export default function Guitar3D() {
   const { t } = useTranslation();
-  const { active: isLoading } = useProgress();
+  const { progress: modelProgress, active: modelActive } = useProgress();
+  const { ready: audioReady, progress: audioProgress } = useAudioPreload();
+  const isLoading = modelActive || !audioReady;
   const [highlightChord, setHighlightChord] = useState<ChordData | null>(null);
   const [selectedChordName, setSelectedChordName] = useState<string | null>(null);
   const [isHoldingPick, setIsHoldingPick] = useState(false);
@@ -363,7 +379,12 @@ export default function Guitar3D() {
         <FingerLegend highlightChord={highlightChord} />
       </div>
 
-      <LoadingScreen />
+      <LoadingScreen
+        modelProgress={modelProgress}
+        modelActive={modelActive}
+        audioReady={audioReady}
+        audioProgress={audioProgress}
+      />
 
       <Canvas shadows camera={{ position: [0.3, 6, 0.01], fov: 30 }} gl={{ preserveDrawingBuffer: true }} className="pointer-events-auto">
         <Suspense fallback={null}>
