@@ -2,7 +2,7 @@ import { useRef, useState, useCallback, useEffect } from "react";
 
 // Keep the sheet away from the top nav so the handle is always draggable/clickable.
 // We'll also cap "full" height dynamically based on reserved top/bottom UI.
-const PEEK_HEIGHT = 60; // px
+const PEEK_HEIGHT = 65; // px
 const HALF_HEIGHT = 0.28; // vh fraction (initial ~35%)
 const FULL_HEIGHT_FRACTION_CAP = 0.75; // vh fraction cap
 const SNAP_THRESHOLD = 0.08;
