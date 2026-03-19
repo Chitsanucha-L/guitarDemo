@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "./LanguageSwitcher";
 
-export type NavActiveLink = "home" | "game" | "songs";
+export type NavActiveLink = "home" | "game" | "songs" | "tuner";
 
 interface NavbarProps {
   /** Navbar title (e.g. app name or page title). */
@@ -50,6 +50,12 @@ export default function Navbar({
           className={`${linkClass} ${activeLink === "songs" ? activeClass : inactiveClass}`}
         >
           {t("nav.songMode")}
+        </Link>
+        <Link
+          to="/tuner"
+          className={`${linkClass} ${activeLink === "tuner" ? activeClass : inactiveClass}`}
+        >
+          {t("nav.tuner")}
         </Link>
         <LanguageSwitcher />
       </div>

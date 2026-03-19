@@ -3,7 +3,8 @@
     "title": "Guitar Trainer",
     "home": "หน้าหลัก",
     "gameMode": "โหมดเกม",
-    "songMode": "โหมดเพลง"
+    "songMode": "โหมดเพลง",
+    "tuner": "จูนเนอร์"
   },
   "loading": {
     "title": "กำลังโหลดโมเดลกีตาร์",
@@ -159,5 +160,21 @@
     "restart": "เริ่มใหม่",
     "finished": "จบเพลงแล้ว!",
     "metronome": "เมโทรนอม"
+  },
+  "tuner": {
+    "title": "จูนกีตาร์",
+    "subtitle": "จูนกีตาร์ด้วยไมโครโฟนของคุณ",
+    "startListening": "เริ่มฟัง",
+    "stopListening": "หยุดฟัง",
+    "waitingForSignal": "ดีดสายกีตาร์...",
+    "tapToStart": "กดปุ่มด้านบนเพื่อเริ่มจูน",
+    "selectString": "เลือกสาย",
+    "referenceTones": "เสียงอ้างอิง",
+    "targetLabel": "เป้าหมาย",
+    "referencePitch": "ความถี่อ้างอิง (A4)",
+    "decreasePitch": "ลด A4",
+    "increasePitch": "เพิ่ม A4",
+    "inputLevel": "ระดับเสียง",
+    "tooQuiet": "เสียงเบาเกินไป ลองดีดใกล้ไมโครโฟนหรือดีดแรงขึ้น"
   }
 }

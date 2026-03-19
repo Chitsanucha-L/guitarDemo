@@ -341,8 +341,8 @@ function assignFingers(
         f => !usedFingers.has(f),
       );
       const higherFretStrings = frettedStrings
-        .filter(s => s.fret > barreFret)
-        .sort((a, b) => a.fret - b.fret || a.index - b.index);
+      .filter(s => s.fret > barreFret)
+      .sort((a, b) => a.fret - b.fret || a.index - b.index);
 
       higherFretStrings.forEach((s, i) => {
         if (i < available.length) fingerMap.set(s.index, available[i]);
@@ -360,10 +360,10 @@ function assignFingers(
         .filter(s => !fingerMap.has(s.index))
         .sort((a, b) => a.fret - b.fret || a.index - b.index);
 
-      const extra: Finger[] = [2, 3, 4];
-      remaining.forEach((s, i) => {
-        if (i < extra.length) fingerMap.set(s.index, extra[i]);
-      });
+    const extra: Finger[] = [2, 3, 4];
+    remaining.forEach((s, i) => {
+      if (i < extra.length) fingerMap.set(s.index, extra[i]);
+    });
     }
   } else {
     // ── No barre: sort by fret, then string index ──
@@ -1044,11 +1044,11 @@ export function generateFingerings(
 
   // ── 2. Non-tension chords: use existing shape transposition ──
   if (!tension) {
-    const shapes = SHAPES[quality];
+  const shapes = SHAPES[quality];
     if (shapes) {
       const hasOverrideVoicing = result.length > 0; // override was added in step 1
 
-      for (const shape of shapes) {
+  for (const shape of shapes) {
         // If offset is 0, this shape IS the open position.
         // Skip it when we already have an override (avoids near-duplicate).
         // E.g. A open = [0,0,2,2,2,0], A-shape offset 0 = [x,0,2,2,2,0]
@@ -1056,23 +1056,23 @@ export function generateFingerings(
         const offset = (SEMITONES[root] - STRING_OPEN[rootString] + 12) % 12;
         if (offset === 0 && hasOverrideVoicing) continue;
 
-        const chord = transposeShape(shape, root);
+    const chord = transposeShape(shape, root);
 
-        const frets = Object.values(chord.notes).map(n => n.fret);
-        const hasPlayable = frets.some(f => f >= 0);
-        const maxFret = Math.max(...frets);
+    const frets = Object.values(chord.notes).map(n => n.fret);
+    const hasPlayable = frets.some(f => f >= 0);
+    const maxFret = Math.max(...frets);
 
-        if (!hasPlayable) continue;
+    if (!hasPlayable) continue;
         if (maxFret > 14) continue;
-        if (!validateVoicing(chord, root, quality)) continue;
+    if (!validateVoicing(chord, root, quality)) continue;
 
-        const isDuplicate = result.some(v => isSameShape(v.data, chord));
-        if (isDuplicate) continue;
+    const isDuplicate = result.some(v => isSameShape(v.data, chord));
+    if (isDuplicate) continue;
 
-        const shapeType = shape.rootStringIndex === 0 ? "e-shape" : "a-shape";
-        const label = shape.rootStringIndex === 0 ? "E Shape" : "A Shape";
+    const shapeType = shape.rootStringIndex === 0 ? "e-shape" : "a-shape";
+    const label = shape.rootStringIndex === 0 ? "E Shape" : "A Shape";
 
-        result.push({ id: shapeType, label, data: chord });
+    result.push({ id: shapeType, label, data: chord });
       }
     }
 

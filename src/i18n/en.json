@@ -3,7 +3,8 @@
     "title": "Guitar Trainer",
     "home": "Home",
     "gameMode": "Game Mode",
-    "songMode": "Song Mode"
+    "songMode": "Song Mode",
+    "tuner": "Tuner"
   },
   "loading": {
     "title": "Loading Guitar Model",
@@ -159,5 +160,21 @@
     "restart": "Restart",
     "finished": "Song Complete!",
     "metronome": "Metronome"
+  },
+  "tuner": {
+    "title": "Guitar Tuner",
+    "subtitle": "Tune your guitar using your microphone",
+    "startListening": "Start Listening",
+    "stopListening": "Stop Listening",
+    "waitingForSignal": "Play a string...",
+    "tapToStart": "Tap the button above to start tuning",
+    "selectString": "Select String",
+    "referenceTones": "Reference Tones",
+    "targetLabel": "Target",
+    "referencePitch": "Reference Pitch",
+    "decreasePitch": "Decrease A4",
+    "increasePitch": "Increase A4",
+    "inputLevel": "Input",
+    "tooQuiet": "Sound too quiet. Play closer to the mic or pluck harder."
   }
 }

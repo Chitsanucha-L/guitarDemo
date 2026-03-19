@@ -6,6 +6,7 @@ import HomePage from "./pages/HomePage";
 import GamePage from "./pages/GamePage";
 import SongListPage from "./pages/SongListPage";
 import SongPlayerPage from "./pages/SongPlayerPage";
+import TunerPage from "./pages/TunerPage";
 import PortraitWarning from "./guitar/ui/PortraitWarning";
 import GlobalLoadingScreen from "./guitar/ui/GlobalLoadingScreen";
 import PreloadScene from "./guitar/PreloadScene";
@@ -60,6 +61,7 @@ function App() {
         <Route path="/game" element={<GamePage />} />
         <Route path="/songs" element={<SongListPage />} />
         <Route path="/songs/:songId" element={<SongPlayerPage />} />
+        <Route path="/tuner" element={<TunerPage />} />
       </Routes>
     </BrowserRouter>
   );
