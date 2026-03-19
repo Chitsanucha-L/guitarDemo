@@ -5,8 +5,6 @@ import {
   type GameDifficulty,
   type GameChordEntry,
 } from "../data/gameDifficulty";
-import { getNote } from "../data/constants";
-import type { Note } from "../data/types";
 
 export type GameStatus = "idle" | "playing" | "correct" | "wrong" | "gameover" | "won";
 export type GameMode = "practice" | "challenge";
@@ -30,31 +28,10 @@ export interface PressedBarre {
 /** Challenge mode countdown (seconds). */
 const CHALLENGE_TIME_SECONDS = 60;
 
-/** String order 6→1 for pitch computation (getNote uses index 0=string6). */
-const STRING_ORDER: Note[] = ["E6", "A", "D", "G", "B", "e1"];
-
-/** Get the set of pitch classes (note names) that define this chord — any voicing. */
-function getChordPitchClasses(data: ChordData): Set<string> {
-  const set = new Set<string>();
-  for (let i = 0; i < STRING_ORDER.length; i++) {
-    const noteKey = STRING_ORDER[i];
-    const fret = data.notes[noteKey]?.fret ?? -1;
-    if (fret >= 0) set.add(getNote(i, fret));
-  }
-  return set;
-}
-
-/** Get pitch classes the user is playing (each string: pressed fret or 0 = open). */
-function getPlayedPitchClasses(pressed: PressedPosition[]): { set: Set<string>; perString: { stringName: string; fret: number; note: string }[] } {
-  const perString: { stringName: string; fret: number; note: string }[] = [];
-  for (let i = 0; i < STRING_ORDER.length; i++) {
-    const stringName = STRING_ORDER[i];
-    const fret = pressed.find((p) => p.string === stringName)?.fret ?? 0;
-    const note = getNote(i, fret);
-    perString.push({ stringName, fret, note });
-  }
-  const set = new Set(perString.map((s) => s.note));
-  return { set, perString };
+function getRequiredFingerPositions(data: ChordData): PressedPosition[] {
+  return Object.entries(data.notes)
+    .filter(([, v]) => (v?.fret ?? -1) > 0)
+    .map(([string, v]) => ({ string, fret: v.fret }));
 }
 
 function shuffle<T>(arr: T[]): T[] {
@@ -245,22 +222,22 @@ export function useChordGame() {
   const buildFeedback = useCallback((): { isCorrect: boolean; markers: FeedbackMarker[]; missing: number } => {
     if (!currentChord) return { isCorrect: true, markers: [], missing: 0 };
 
-    const required = getChordPitchClasses(currentChord.data);
-    const { set: playedSet, perString } = getPlayedPitchClasses(pressedPositions);
+    const requiredPositions = getRequiredFingerPositions(currentChord.data);
+    const requiredKeySet = new Set(requiredPositions.map((p) => `${p.string}:${p.fret}`));
+    const playedPositions = pressedPositions.filter((p) => p.fret > 0);
+    const playedKeySet = new Set(playedPositions.map((p) => `${p.string}:${p.fret}`));
 
+    const missing = requiredPositions.filter((p) => !playedKeySet.has(`${p.string}:${p.fret}`)).length;
     const markers: FeedbackMarker[] = [];
-    for (const { stringName, fret, note } of perString) {
-      if (fret <= 0) continue;
-      const type = required.has(note) ? "correct" : "wrong";
-      markers.push({ string: stringName, fret, type });
+    for (const p of playedPositions) {
+      const type = requiredKeySet.has(`${p.string}:${p.fret}`) ? "correct" : "wrong";
+      markers.push({ string: p.string, fret: p.fret, type });
     }
 
     const isCorrect =
-      required.size > 0 &&
-      required.size === playedSet.size &&
-      [...required].every((n) => playedSet.has(n)) &&
-      [...playedSet].every((n) => required.has(n));
-    const missing = [...required].filter((n) => !playedSet.has(n)).length;
+      requiredPositions.length > 0 &&
+      requiredPositions.length === playedPositions.length &&
+      missing === 0;
 
     return { isCorrect, markers, missing };
   }, [currentChord, pressedPositions]);

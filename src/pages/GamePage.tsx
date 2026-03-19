@@ -406,7 +406,7 @@ export default function GamePage() {
             <button
               onClick={handleCheck}
               disabled={isChecking || pressCount === 0}
-              className="bg-green-600 hover:bg-green-500 disabled:opacity-40 disabled:hover:bg-green-600 text-white font-bold text-lg lg:text-2xl px-10 lg:px-16 py-3.5 lg:py-4 rounded-xl shadow-2xl shadow-green-500/20 transition-all duration-200 transform hover:scale-105 border-2 border-green-400/50"
+              className="bg-green-600 hover:bg-green-500 disabled:opacity-40 disabled:hover:bg-green-600 text-white font-bold text-sm lg:text-xl px-6 lg:px-16 py-2.5 lg:py-4 rounded-xl shadow-2xl shadow-green-500/20 transition-all duration-200 transform hover:scale-105 border-2 border-green-400/50"
             >
               {isChecking ? t("game.listening") : t("game.checkChord")}
             </button>

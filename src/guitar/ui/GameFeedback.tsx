@@ -42,18 +42,18 @@ export default function GameFeedback({ gameStatus, gameMode = "challenge", missi
         }`}
       >
         <div
-          className={`px-6 lg:px-12 py-4 lg:py-6 rounded-2xl border-2 ${
+          className={`px-5 lg:px-12 py-3 lg:py-6 rounded-2xl border-2 ${
             isCorrect
               ? "bg-gray-900/90 border-green-500/50 shadow-green-500/20"
               : "bg-gray-900/90 border-red-500/50 shadow-red-500/20"
           } shadow-2xl backdrop-blur-md max-w-sm text-center`}
         >
-          <div className={`text-3xl lg:text-5xl font-black drop-shadow-lg ${
+          <div className={`text-xl lg:text-5xl font-black drop-shadow-lg ${
             isCorrect ? "text-green-400" : "text-red-400"
           }`}>
             {isCorrect ? `✓ ${t("game.correct")}` : `✗ ${t("game.wrong")}`}
           </div>
-          <div className="text-sm lg:text-base text-gray-400 mt-2">
+          <div className="text-[11px] lg:text-base text-gray-400 mt-1.5 lg:mt-2">
             {isPractice ? (
               isCorrect
                 ? t("mode.practiceCorrect")
