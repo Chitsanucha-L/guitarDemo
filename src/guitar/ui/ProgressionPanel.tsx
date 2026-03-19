@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { PROGRESSIONS, type ChordProgression } from "../data/chordProgressions";
 
@@ -6,15 +6,23 @@ interface ProgressionPanelProps {
   active: boolean;
   currentIndex: number;
   onSelect: (progression: ChordProgression | null) => void;
+  /** When this value changes, clear internal selection state. */
+  resetToken?: number;
 }
 
 export default function ProgressionPanel({
   active,
   currentIndex,
   onSelect,
+  resetToken,
 }: ProgressionPanelProps) {
   const { t } = useTranslation();
   const [selected, setSelected] = useState<ChordProgression | null>(null);
+
+  useEffect(() => {
+    if (resetToken === undefined) return;
+    setSelected(null);
+  }, [resetToken]);
 
   function handleSelect(prog: ChordProgression) {
     if (selected?.id === prog.id) {

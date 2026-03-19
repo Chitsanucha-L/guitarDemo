@@ -4,6 +4,7 @@ import { fingerColors } from "../data/constants";
 interface ChordDiagramProps {
   chordName: string;
   chordData: ChordData;
+  compact?: boolean;
 }
 
 const STRING_ORDER: Note[] = ["E6", "A", "D", "G", "B", "e1"];
@@ -20,7 +21,7 @@ const BARRE_H = 10;
 
 function sx(i: number) { return SX + i * GAP; }
 
-export default function ChordDiagram({ chordName, chordData }: ChordDiagramProps) {
+export default function ChordDiagram({ chordName, chordData, compact = false }: ChordDiagramProps) {
   const frets = STRING_ORDER.map(s => chordData.notes[s]?.fret ?? -1);
   const playableFrets = frets.filter(f => f > 0);
   const minFret = playableFrets.length > 0 ? Math.min(...playableFrets) : 0;
@@ -47,13 +48,16 @@ export default function ChordDiagram({ chordName, chordData }: ChordDiagramProps
   }
 
   return (
-    <div className="bg-gray-900/80 backdrop-blur-sm rounded-lg px-3 py-3 shadow-lg border border-gray-700/50 w-56">
-      <div className="text-center mb-1.5">
-        <div className="text-sm font-bold text-white">{chordName}</div>
+    <div className={`bg-gray-900/80 backdrop-blur-sm rounded-lg shadow-lg border border-gray-700/50 ${compact ? "px-2 py-2 w-full" : "px-3 py-3 w-56"}`}>
+      <div className={`text-center ${compact ? "mb-0.5" : "mb-1.5"}`}>
+        <div className={`${compact ? "text-xs" : "text-sm"} font-bold text-white`}>{chordName}</div>
       </div>
 
-      <div className="relative mx-auto" style={{ width: svgW }}>
-        <svg viewBox={`0 0 ${svgW} ${svgH}`} className="w-full">
+      <div
+        className={`relative mx-auto ${compact ? "w-full overflow-hidden" : ""}`}
+        style={compact ? { width: "100%" } : { width: svgW }}
+      >
+        <svg viewBox={`0 0 ${svgW} ${svgH}`} className="w-full block">
           {/* Fret numbers per string */}
           {frets.map((f, i) => (
             <text key={`num-${i}`}

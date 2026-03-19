@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useImperativeHandle, useEffect, forwardRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
   useStrummingEngine,
@@ -8,9 +8,16 @@ import {
   type StrumPattern,
 } from "../hooks/useStrummingEngine";
 
+export interface StrumPanelHandle {
+  isPlaying: boolean;
+  toggle: () => void;
+}
+
 interface StrumPanelProps {
   onStroke: (stroke: Stroke, subdivision: number) => void;
   onBarChange?: () => void;
+  hidePlayButton?: boolean;
+  onPlayingChange?: (playing: boolean) => void;
 }
 
 const BEAT_LABELS = [
@@ -20,7 +27,10 @@ const BEAT_LABELS = [
   "4", "e", "&", "a",
 ];
 
-export default function StrumPanel({ onStroke, onBarChange }: StrumPanelProps) {
+const StrumPanel = forwardRef<StrumPanelHandle, StrumPanelProps>(function StrumPanel(
+  { onStroke, onBarChange, hidePlayButton, onPlayingChange },
+  ref,
+) {
   const { t } = useTranslation();
   const [pattern, setPattern] = useState<StrumPattern>(PRESET_PATTERNS[0]);
   const [bpm, setBpm] = useState(PRESET_PATTERNS[0].recommendedBpm ?? 65);
@@ -36,6 +46,15 @@ export default function StrumPanel({ onStroke, onBarChange }: StrumPanelProps) {
     onStroke: handleStroke,
     onBarChange,
   });
+
+  useImperativeHandle(ref, () => ({
+    isPlaying,
+    toggle: () => (isPlaying ? stop() : play()),
+  }), [isPlaying, play, stop]);
+
+  useEffect(() => {
+    onPlayingChange?.(isPlaying);
+  }, [isPlaying, onPlayingChange]);
 
   const grid = useMemo(() => {
     return Array.from({ length: SUBDIVISIONS_PER_BAR }, (_, i) => {
@@ -186,17 +205,21 @@ export default function StrumPanel({ onStroke, onBarChange }: StrumPanelProps) {
         </div>
       </div>
 
-      {/* Play / Stop */}
-      <button
-        onClick={isPlaying ? stop : play}
-        className={`w-full px-4 py-2 text-sm font-bold rounded-md shadow-md transition-all duration-200 ${
-          isPlaying
-            ? "bg-red-600 hover:bg-red-500 text-white"
-            : "bg-green-600 hover:bg-green-500 text-white"
-        }`}
-      >
-        {isPlaying ? `⏹ ${t("strum.stop")}` : `▶ ${t("strum.play")}`}
-      </button>
+      {/* Play / Stop — hidden when parent renders its own button */}
+      {!hidePlayButton && (
+        <button
+          onClick={isPlaying ? stop : play}
+          className={`w-full px-4 py-2 text-sm font-bold rounded-md shadow-md transition-all duration-200 ${
+            isPlaying
+              ? "bg-red-600 hover:bg-red-500 text-white"
+              : "bg-green-600 hover:bg-green-500 text-white"
+          }`}
+        >
+          {isPlaying ? `⏹ ${t("strum.stop")}` : `▶ ${t("strum.play")}`}
+        </button>
+      )}
     </div>
   );
-}
+});
+
+export default StrumPanel;

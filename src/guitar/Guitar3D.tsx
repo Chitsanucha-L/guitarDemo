@@ -15,7 +15,12 @@ import CurrentNoteDisplay from "./ui/CurrentNoteDisplay";
 import ChordDiagram from "./ui/ChordDiagram";
 import FingerLegend from "./ui/FingerLegend";
 import StrumPanel from "./ui/StrumPanel";
+import type { StrumPanelHandle } from "./ui/StrumPanel";
 import ScaleSelector from "./ui/ScaleSelector";
+import BottomSheet from "./ui/BottomSheet";
+import ChordBuilderSheet from "./ui/ChordBuilderSheet";
+import MobileNav from "./ui/MobileNav";
+import MobileBottomTabs, { type MobileBottomTab } from "./ui/MobileBottomTabs";
 import ProgressionPanel from "./ui/ProgressionPanel";
 import { useChordProgression } from "./hooks/useChordProgression";
 import type { ChordProgression } from "./data/chordProgressions";
@@ -129,8 +134,24 @@ export default function Guitar3D() {
   const previousChordRef = useRef<ChordData | null>(null);
   const chordRef = useRef<ChordData | null>(null);
   const strumFnRef = useRef<StrumDirectionFn | null>(null);
+  const strumPanelRef = useRef<StrumPanelHandle>(null);
+  const [strumPlaying, setStrumPlaying] = useState(false);
 
   const [openPanels, setOpenPanels] = useState<Set<PanelId>>(new Set(["chord"]));
+
+  const [activeMobileTab, setActiveMobileTab] = useState<MobileBottomTab>("play");
+
+  // Keep in sync with MobileBottomTabs: h-[56px] lg:h-[44px]
+  const [tabBarHeight, setTabBarHeight] = useState(() =>
+    typeof window !== "undefined" && window.matchMedia("(min-width:640px)").matches ? 40 : 56,
+  );
+  useEffect(() => {
+    const mql = window.matchMedia("(min-width:640px)");
+    const update = () => setTabBarHeight(mql.matches ? 44 : 56);
+    mql.addEventListener("change", update);
+    return () => mql.removeEventListener("change", update);
+  }, []);
+  const mobileSheetBottomOffsetPx = tabBarHeight;
 
   useEffect(() => {
     chordRef.current = highlightChord;
@@ -143,6 +164,7 @@ export default function Guitar3D() {
 
   const [activeProgression, setActiveProgression] = useState<ChordProgression | null>(null);
   const progression = useChordProgression(activeProgression?.chords ?? ["C"]);
+  const [progressionResetToken, setProgressionResetToken] = useState(0);
 
   const togglePanel = useCallback((id: PanelId) => {
     setOpenPanels((prev) => {
@@ -194,6 +216,10 @@ export default function Guitar3D() {
     }
   }, []);
 
+  const handlePlayChord = useCallback(() => {
+    strumFnRef.current?.("down", 30);
+  }, []);
+
   const handleBarChange = useCallback(() => {
     if (!activeProgression) return;
     const nextChord = progression.advance();
@@ -205,6 +231,11 @@ export default function Guitar3D() {
   const handleProgressionSelect = useCallback((prog: ChordProgression | null) => {
     setActiveProgression(prog);
     if (prog) {
+      // Selecting a progression disables Scale mode.
+      setScaleNotes(null);
+      setRootSemitone(null);
+      setScaleFretRange([0, 12]);
+
       progression.reset();
       applyChord(prog.chords[0]);
     }
@@ -213,6 +244,11 @@ export default function Guitar3D() {
   const handleScaleChange = useCallback(
     (notes: number[] | null, root: number | null, fretRange: [number, number]) => {
       if (notes) {
+        // Selecting a scale disables Progression mode.
+        setActiveProgression(null);
+        progression.reset();
+        setProgressionResetToken((t) => t + 1);
+
         previousChordRef.current = highlightChord;
         chordRef.current = null;
         setHighlightChord(null);
@@ -222,16 +258,114 @@ export default function Guitar3D() {
       setRootSemitone(root);
       setScaleFretRange(fretRange);
     },
-    [highlightChord],
+    [highlightChord, progression],
   );
 
   return (
-    <div className="w-full max-w-screen h-screen relative overflow-hidden bg-[#1a1a1a]">
+    <div className="w-full max-w-screen min-h-screen min-h-dvh h-screen h-dvh relative overflow-hidden bg-[#1a1a1a]">
 
-      {/* Left sidebar */}
-      <div className="absolute top-12 sm:top-18 left-2 sm:left-4 z-50 pointer-events-auto">
+      {/* Mobile: top nav + fixed CTA + bottom tabs + bottom sheet */}
+      <div className="xl:hidden">
+        <MobileNav
+          chordName={selectedChordName}
+          rightModeLabel={isHoldingPick ? t("pick.playMode") : t("pick.viewMode")}
+          rightModeActive={isHoldingPick}
+          onRightModeToggle={() => setIsHoldingPick((p) => !p)}
+        />
+
+        <MobileBottomTabs
+          activeTab={activeMobileTab}
+          onTabChange={setActiveMobileTab}
+        />
+
+        <BottomSheet
+          defaultSnap="half"
+          bottomOffsetPx={mobileSheetBottomOffsetPx}
+          topOffsetPx={56}
+          handle={
+            <div className="w-16 flex items-center justify-center">
+              <div className="w-12 h-1.5 rounded-full bg-gray-500/80" aria-hidden />
+            </div>
+          }
+        >
+          <div className="relative px-3 pb-3 pt-4">
+            {/* Play CTA (top-right of bottom sheet) */}
+            {activeMobileTab === "play" && (
+              <button
+                type="button"
+                onClick={handlePlayChord}
+                disabled={!highlightChord}
+                className="absolute right-3 top-1 z-10 h-[30px] min-h-[30px] px-3 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 text-white text-xs font-bold shadow-xl active:scale-[0.99] transition-transform touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Play Chord
+              </button>
+            )}
+
+            {/* Strum Play/Stop (top-right of bottom sheet) */}
+            {activeMobileTab === "strum" && (
+              <button
+                type="button"
+                onClick={() => strumPanelRef.current?.toggle()}
+                className={`absolute right-3 top-1 z-10 h-[30px] min-h-[30px] px-3 rounded-2xl text-white text-xs font-bold shadow-xl active:scale-[0.99] transition-all touch-manipulation ${
+                  strumPlaying
+                    ? "bg-gradient-to-r from-red-500 to-red-600"
+                    : "bg-gradient-to-r from-green-500 to-emerald-600"
+                }`}
+              >
+                {strumPlaying ? "⏹ Stop" : "▶ Play"}
+              </button>
+            )}
+
+            <div className={activeMobileTab === "play" ? "" : "hidden"}>
+              <ChordBuilderSheet
+                selectedChordName={selectedChordName}
+                onSelect={handleChordSelect}
+                onClear={handleClearChord}
+                onRootChange={handleRootChange}
+              />
+
+              {highlightChord && selectedChordName && (
+                <div className="mt-3 border-t border-gray-700/40 pt-3 flex flex-col min-[420px]:flex-row gap-3 items-start min-[420px]:items-center">
+                  <div className="shrink-0 w-[120px]">
+                    <ChordDiagram chordName={selectedChordName} chordData={highlightChord} compact />
+                  </div>
+                  <div className="flex-1 min-w-0 min-[420px]:self-center">
+                    <FingerLegend highlightChord={highlightChord} inline />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className={activeMobileTab === "strum" ? "" : "hidden"}>
+              <StrumPanel
+                ref={strumPanelRef}
+                onStroke={handleStroke}
+                onBarChange={handleBarChange}
+                hidePlayButton
+                onPlayingChange={setStrumPlaying}
+              />
+            </div>
+
+            <div className={activeMobileTab === "progression" ? "" : "hidden"}>
+              <ProgressionPanel
+                active={!!activeProgression}
+                currentIndex={progression.index}
+                onSelect={handleProgressionSelect}
+                resetToken={progressionResetToken}
+              />
+            </div>
+
+            <div className={activeMobileTab === "scale" ? "" : "hidden"}>
+              <ScaleSelector root={chordRoot} scaleNotes={scaleNotes} onScaleChange={handleScaleChange} />
+            </div>
+          </div>
+        </BottomSheet>
+      </div>
+
+      {/* Left sidebar — desktop only */}
+      <div className="absolute top-12 lg:top-18 left-2 lg:left-4 z-50 pointer-events-auto hidden xl:block">
         <div
-          className="w-56 sm:w-80 max-h-[calc(100vh-4rem)] sm:max-h-[calc(100vh-5rem)] overflow-y-auto pr-1 space-y-2 pb-10"
+          className="w-56 lg:w-80 max-h-[calc(100vh-4rem)] lg:max-h-[calc(100vh-5rem)] overflow-y-auto pr-1 space-y-2 pb-10"
           style={{ scrollbarWidth: "thin", scrollbarColor: "#4b5563 transparent" }}
         >
           {/* Pick toggle — always visible */}
@@ -313,20 +447,20 @@ export default function Guitar3D() {
         </div>
       </div>
 
-      {/* Top center — Now Playing */}
-      <div className="absolute top-12 sm:top-18 left-1/2 -translate-x-1/2 z-50">
+      {/* Top center — Now Playing (desktop only; mobile uses ChordBadge) */}
+      <div className="absolute top-12 lg:top-18 left-1/2 -translate-x-1/2 z-50 hidden xl:block">
         <CurrentNoteDisplay currentNote={currentNote} chordName={selectedChordName} />
       </div>
 
-      {/* Right side — Chord Diagram */}
+      {/* Right side — Chord Diagram (desktop only) */}
       {highlightChord && selectedChordName && (
-        <div className="absolute top-12 sm:top-18 right-2 sm:right-5 z-50">
+        <div className="absolute top-12 lg:top-18 right-2 lg:right-5 z-50 hidden xl:block">
           <ChordDiagram chordName={selectedChordName} chordData={highlightChord} />
         </div>
       )}
 
-      {/* Finger legend */}
-      <div>
+      {/* Finger legend (desktop only) */}
+      <div className="hidden xl:block">
         <FingerLegend highlightChord={highlightChord} />
       </div>
 

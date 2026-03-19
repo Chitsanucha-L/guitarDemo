@@ -158,13 +158,13 @@ export default function ChordSelector({ selectedChordName, onSelect, onClear, on
             {t("chord.rootNote")}
           </span>
         </div>
-        <div className="grid grid-cols-6 gap-1 sm:gap-1.5">
+        <div className="grid grid-cols-6 gap-1 lg:gap-1.5">
           {ALL_ROOTS.map(root => {
             const isActive = selectedChordName !== null && selection.root === root;
             return (
               <button
                 key={root}
-                className={`px-1.5 sm:px-2 py-1 sm:py-1.5 text-xs sm:text-sm font-bold rounded-md shadow-md transition-all duration-200 ${
+                className={`px-1.5 lg:px-2 py-1 lg:py-1.5 text-xs lg:text-sm font-bold rounded-md shadow-md transition-all duration-200 ${
                   isActive
                     ? "bg-blue-600 text-white ring-2 ring-blue-300 scale-105"
                     : "bg-gray-700/80 text-gray-300 hover:bg-gray-600"
@@ -186,7 +186,7 @@ export default function ChordSelector({ selectedChordName, onSelect, onClear, on
             {t("chord.chordType")}
           </span>
         </div>
-        <div className="flex flex-wrap gap-1 sm:gap-1.5">
+        <div className="flex flex-wrap gap-1 lg:gap-1.5">
           {ALL_QUALITIES.map(quality => {
             const isActive = selectedChordName !== null && selection.quality === quality;
             const colors = QUALITY_COLORS[quality];
@@ -194,7 +194,7 @@ export default function ChordSelector({ selectedChordName, onSelect, onClear, on
             return (
               <button
                 key={quality}
-                className={`px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm font-bold rounded-md shadow-md transition-all duration-200 ${
+                className={`px-2 lg:px-3 py-1 lg:py-1.5 text-xs lg:text-sm font-bold rounded-md shadow-md transition-all duration-200 ${
                   isActive
                     ? `text-white scale-105 ${colors.active}`
                     : `text-gray-200 ${colors.idle}`

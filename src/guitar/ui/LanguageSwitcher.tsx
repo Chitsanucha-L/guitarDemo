@@ -7,7 +7,7 @@ export default function LanguageSwitcher() {
   const { i18n } = useTranslation();
 
   return (
-    <div className="flex rounded-md overflow-hidden border border-gray-500/50">
+    <div className="inline-flex w-fit rounded-md overflow-hidden border border-gray-500/50">
       {LANGS.map((lng) => {
         const active = i18n.language === lng;
         return (

@@ -7,11 +7,13 @@ export default function HomePage() {
   const { t } = useTranslation();
 
   return (
-    <div className="max-w-screen max-h-screen w-full h-full flex flex-col">
-      <Navbar title={t("nav.title")} activeLink="home" variant="home" />
+    <div className="w-full min-h-screen min-h-dvh h-screen h-dvh flex flex-col overflow-hidden">
+      <div className="hidden xl:block">
+        <Navbar title={t("nav.title")} activeLink="home" variant="home" />
+      </div>
 
-      {/* Main Content */}
-      <div className="flex-1 w-full h-full z-0">
+      {/* Main Content — fullscreen; mobile uses in-canvas MobileNav */}
+      <div className="flex-1 w-full min-h-0 relative z-0">
         <Guitar3D />
       </div>
     </div>

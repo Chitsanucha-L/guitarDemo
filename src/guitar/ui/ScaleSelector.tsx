@@ -82,7 +82,7 @@ export default function ScaleSelector({ root, scaleNotes, onScaleChange }: Scale
   }`;
 
   return (
-    <div className="space-y-2">
+    <div>
       {/* Active indicator */}
       <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
         isActive ? "max-h-10 opacity-100" : "max-h-0 opacity-0"
@@ -121,12 +121,12 @@ export default function ScaleSelector({ root, scaleNotes, onScaleChange }: Scale
           <div className="text-gray-500 text-[10px] font-semibold uppercase tracking-wider">
             {t("scale.position")}
           </div>
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1 p-[1px]">
             {POSITIONS.map(pos => (
               <button
                 key={pos.id}
                 onClick={() => handlePosition(pos)}
-                className={`px-2 py-1 text-[11px] font-bold rounded transition-all duration-300 ${
+                className={`px-2.5 py-1 text-[11px] font-bold rounded transition-all duration-300 ${
                   position.id === pos.id
                     ? "bg-cyan-700 text-white ring-1 ring-cyan-400"
                     : "bg-gray-800 text-gray-500 hover:bg-gray-700"
@@ -144,7 +144,7 @@ export default function ScaleSelector({ root, scaleNotes, onScaleChange }: Scale
 
       {/* Legend */}
       <div className={collapsible}>
-        <div className="flex items-center gap-3 pt-1">
+        <div className="flex items-center gap-3">
           <div className="flex items-center gap-1">
             <span className="inline-block w-2.5 h-2.5 rounded-full bg-yellow-400" />
             <span className="text-gray-400 text-[10px]">{t("scale.root")}</span>

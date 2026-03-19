@@ -13,9 +13,10 @@ const STRING_KEYS: Record<string, string> = {
 
 interface FingerLegendProps {
   highlightChord: ChordData | null;
+  inline?: boolean;
 }
 
-export default function FingerLegend({ highlightChord }: FingerLegendProps) {
+export default function FingerLegend({ highlightChord, inline = false }: FingerLegendProps) {
   const { t } = useTranslation();
 
   if (!highlightChord) return null;
@@ -39,16 +40,20 @@ export default function FingerLegend({ highlightChord }: FingerLegendProps) {
   const sortedFingers = [...grouped.entries()].sort(([a], [b]) => a - b);
 
   return (
-    <div className="absolute bottom-3 sm:bottom-5 right-3 sm:right-5 z-50 bg-black/60 text-white text-xs sm:text-sm p-2 sm:p-3 rounded-lg pointer-events-auto space-y-1 sm:space-y-1.5 max-w-[50vw]">
+    <div className={
+      inline
+        ? "text-white text-[11px] space-y-1"
+        : "absolute bottom-3 lg:bottom-5 right-3 lg:right-5 z-50 bg-black/60 text-white text-xs lg:text-sm p-2 lg:p-3 rounded-lg pointer-events-auto space-y-1 lg:space-y-1.5 max-w-[50vw]"
+    }>
       {barre && (
-        <div className="flex items-center gap-2">
-          <span className="w-3 h-3 rounded-full" style={{ background: fingerColors[barre.finger] }} />
+        <div className={`flex items-center ${inline ? "gap-1.5" : "gap-2"}`}>
+          <span className={`${inline ? "w-2.5 h-2.5" : "w-3 h-3"} rounded-full shrink-0`} style={{ background: fingerColors[barre.finger] }} />
           <span>{t(`finger.${barre.finger}`)} → {t("finger.barreFret", { fret: barre.fret })}</span>
         </div>
       )}
       {sortedFingers.map(([finger, { notes, fret }]) => (
-        <div key={finger} className="flex items-center gap-2">
-          <span className="w-3 h-3 rounded-full" style={{ background: fingerColors[finger] }} />
+        <div key={finger} className={`flex items-center ${inline ? "gap-1.5" : "gap-2"}`}>
+          <span className={`${inline ? "w-2.5 h-2.5" : "w-3 h-3"} rounded-full shrink-0`} style={{ background: fingerColors[finger] }} />
           <span>{t(`finger.${finger}`)} → {notes.join(", ")} {t("finger.fret", { fret })}</span>
         </div>
       ))}
