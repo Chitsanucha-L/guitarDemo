@@ -29,7 +29,7 @@ export default function MobileBottomTabs({
       className="fixed left-0 right-0 bottom-0 z-50 bg-gray-900/80 backdrop-blur-md border-t border-gray-700/40"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
-      <div className="flex items-stretch justify-around px-2 h-[56px] lg:h-[40px]">
+      <div className="flex items-stretch justify-around px-2 h-[40px] lg:h-[56px]">
         {TAB_META.map((tab) => {
           const isActive = tab.id === activeTab;
           const label =
