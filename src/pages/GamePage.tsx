@@ -170,8 +170,8 @@ export default function GamePage() {
 
         {/* Start Screen */}
         {gameStatus === "idle" && (
-          <div className="absolute inset-0 flex items-end lg:items-center justify-center z-50 bg-black/60 backdrop-blur-sm pointer-events-none">
-            <div className="bg-gray-900/95 backdrop-blur-md p-3 lg:p-5 lg:p-8 rounded-t-2xl lg:rounded-2xl shadow-2xl border border-gray-700/50 border-b-0 lg:border-b text-center w-full lg:max-w-lg lg:mx-4 pointer-events-auto max-h-[calc(100%-1rem)] lg:max-h-[80vh] overflow-y-auto">
+          <div className="absolute inset-0 flex items-center justify-center z-50 bg-black/60 backdrop-blur-sm pointer-events-none">
+            <div className="bg-gray-900/95 backdrop-blur-md p-3 lg:p-5 rounded-2xl shadow-2xl border border-gray-700/50 text-center max-w-lg lg:mx-4 pointer-events-auto max-h-[75vh] lg:max-h-[80vh] overflow-y-auto">
               <h2 className="text-lg lg:text-2xl lg:text-4xl font-bold text-yellow-400 mb-2 lg:mb-2 lg:mb-4">{t("game.startTitle")}</h2>
 
               {/* Difficulty + Mode row */}
@@ -190,7 +190,7 @@ export default function GamePage() {
                       }`}
                     >
                       <div className="text-[10px] lg:text-xs lg:text-sm font-bold leading-tight">{t(`difficulty.${d}`)}</div>
-                      <div className="hidden lg:block text-[10px] lg:text-[11px] text-gray-500 mt-0.5 leading-tight">{t(`difficulty.${d}Desc`)}</div>
+                      <div className="text-[10px] lg:text-[11px] text-gray-500 mt-0.5 leading-tight">{t(`difficulty.${d}Desc`)}</div>
                     </button>
                   ))}
                 </div>
@@ -226,12 +226,12 @@ export default function GamePage() {
               </div>
 
               {/* Instructions — collapsed on mobile */}
-              <div className="hidden lg:block">
-                <p className="text-gray-400 text-xs lg:text-sm mb-4 lg:mb-6 leading-relaxed">
+              <div>
+                <p className="text-gray-400 text-[11px] lg:text-sm mb-4 lg:mb-6 leading-relaxed">
                   {t("game.instruction1")}<br />
                   {t("game.instruction2")}<br />
                   {t("game.instruction3")} <span className="text-cyan-400 font-bold">{t("game.instruction3check")}</span> {t("game.instruction3end")}<br />
-                  <span className="text-gray-500 text-xs mt-1 block">
+                  <span className="text-gray-500 text-[11px] lg:text-sm mt-1 block">
                     {selectedDifficulty === "easy" ? t("difficulty.barreEasy") : t("mode.barreHint")}
                   </span>
                   {selectedMode === "challenge" && (
