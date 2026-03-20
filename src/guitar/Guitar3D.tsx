@@ -480,7 +480,7 @@ export default function Guitar3D() {
         <Suspense fallback={null}>
           <Environment preset="apartment" />
           <GuitarModel
-            position={isBelowLg ? [0, 1, -0.06] : [0.12, 1, -0.06]}
+            position={isBelowLg ? [-0.06, 1, -0.06] : [0.12, 1, -0.06]}
             rotation={[0, -0.015, 0]}
             highlightChord={scaleNotes ? null : highlightChord}
             chordRef={chordRef}
