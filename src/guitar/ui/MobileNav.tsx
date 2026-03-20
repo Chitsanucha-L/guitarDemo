@@ -111,21 +111,21 @@ export default function MobileNav({
             <div className="flex flex-col p-2">
               <Link
                 to="/"
-                className="min-h-[44px] flex items-center px-4 rounded-xl text-gray-200 hover:bg-gray-700/80"
+                className="min-h-[44px] flex items-center px-4 rounded-xl text-[15px] text-gray-200 hover:bg-gray-700/80"
                 onClick={() => setMenuOpen(false)}
               >
                 {t("nav.home")}
               </Link>
               <Link
                 to="/game"
-                className="min-h-[44px] flex items-center px-4 rounded-xl text-gray-200 hover:bg-gray-700/80"
+                className="min-h-[44px] flex items-center px-4 rounded-xl text-[15px] text-gray-200 hover:bg-gray-700/80"
                 onClick={() => setMenuOpen(false)}
               >
                 {t("nav.gameMode")}
               </Link>
               <Link
                 to="/songs"
-                className="min-h-[44px] flex items-center px-4 rounded-xl text-gray-200 hover:bg-gray-700/80"
+                className="min-h-[44px] flex items-center px-4 rounded-xl text-[15px] text-gray-200 hover:bg-gray-700/80"
                 onClick={() => setMenuOpen(false)}
               >
                 {t("nav.songMode")}

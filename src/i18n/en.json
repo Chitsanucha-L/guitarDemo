@@ -136,13 +136,13 @@
   "difficulty": {
     "title": "Difficulty",
     "easy": "Easy",
-    "easyDesc": "Open major & minor only (C G D A E, Am Em Dm)",
+    "easyDesc": "Open major & minor only",
     "medium": "Medium",
-    "mediumDesc": "Easy + F, Bm + C# D# F# G# A# B (maj/min barre)",
+    "mediumDesc": "Easy + major/minor barre",
     "hard": "Hard",
-    "hardDesc": "All roots × qualities (7, maj7, sus, dim, aug, …)",
+    "hardDesc": "All roots × qualities",
     "veryHard": "Very hard",
-    "veryHardDesc": "Hard + tension chords (add9, 9, …)",
+    "veryHardDesc": "Hard + tension chords",
     "barreEasy": "No barre chords on Easy — open shapes only."
   },
   "song": {

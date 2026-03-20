@@ -171,11 +171,11 @@ export default function GamePage() {
         {/* Start Screen */}
         {gameStatus === "idle" && (
           <div className="absolute inset-0 flex items-center justify-center z-50 bg-black/60 backdrop-blur-sm pointer-events-none">
-            <div className="bg-gray-900/95 backdrop-blur-md p-3 lg:p-5 rounded-2xl shadow-2xl border border-gray-700/50 text-center max-w-lg lg:mx-4 pointer-events-auto max-h-[75vh] lg:max-h-[80vh] overflow-y-auto">
-              <h2 className="text-lg lg:text-2xl lg:text-4xl font-bold text-yellow-400 mb-2 lg:mb-2 lg:mb-4">{t("game.startTitle")}</h2>
+            <div className="bg-gray-900/95 backdrop-blur-md p-3 lg:p-8 rounded-2xl shadow-2xl border border-gray-700/50 text-center max-w-md lg:max-w-lg lg:mx-4 pointer-events-auto max-h-[75vh] lg:max-h-[80vh] overflow-y-auto">
+              <h2 className="text-lg lg:text-4xl font-bold text-yellow-400 mb-2 lg:mb-4">{t("game.startTitle")}</h2>
 
               {/* Difficulty + Mode row */}
-              <div className="mb-2 lg:mb-4 text-left">
+              <div className="mb-2.5 lg:mb-4 text-left">
                 <div className="text-gray-400 text-[10px] lg:text-xs lg:text-sm font-semibold uppercase tracking-wider mb-1 lg:mb-2">{t("difficulty.title")}</div>
                 <div className="grid grid-cols-4 gap-1 lg:gap-2">
                   {(["easy", "medium", "hard", "veryHard"] as const).map((d) => (
@@ -183,7 +183,7 @@ export default function GamePage() {
                       key={d}
                       type="button"
                       onClick={() => setSelectedDifficulty(d)}
-                      className={`rounded-lg lg:rounded-xl border px-1 lg:px-2 py-1 lg:py-2 lg:py-3 text-left transition-all ${
+                      className={`rounded-lg lg:rounded-xl border px-1.5 lg:px-2 py-1.5 lg:py-3 text-left transition-all ${
                         selectedDifficulty === d
                           ? "bg-cyan-600/40 border-cyan-400/60 text-white"
                           : "bg-gray-800/50 border-gray-600/50 text-gray-400 hover:text-gray-200"
@@ -220,14 +220,14 @@ export default function GamePage() {
                     {t("mode.challenge")}
                   </button>
                 </div>
-                <p className="text-gray-500 text-[10px] lg:text-xs lg:text-sm mt-1 lg:mt-2">
+                {/* <p className="text-gray-500 text-[10px] lg:text-xs lg:text-sm mt-1 lg:mt-2">
                   {selectedMode === "practice" ? t("mode.practiceDesc") : t("mode.challengeDesc")}
-                </p>
+                </p> */}
               </div>
 
               {/* Instructions — collapsed on mobile */}
               <div>
-                <p className="text-gray-400 text-[11px] lg:text-sm mb-4 lg:mb-6 leading-relaxed">
+                <p className="hidden lg:block text-gray-400 text-[11px] lg:text-sm mb-4 lg:mb-6 leading-relaxed">
                   {t("game.instruction1")}<br />
                   {t("game.instruction2")}<br />
                   {t("game.instruction3")} <span className="text-cyan-400 font-bold">{t("game.instruction3check")}</span> {t("game.instruction3end")}<br />
@@ -256,25 +256,25 @@ export default function GamePage() {
 
               {/* Stats summary — per mode */}
               {modeStats.totalGames > 0 && (
-                <div className="mb-2 lg:mb-4 grid grid-cols-3 gap-1 lg:gap-2 lg:gap-3">
-                  <div className="bg-gray-800/60 rounded-lg lg:rounded-xl p-1.5 lg:p-2 lg:p-3 border border-gray-700/30">
+                <div className="mb-2 lg:mb-4 grid grid-cols-3 gap-3 lg:gap-3">
+                  <div className="bg-gray-800/60 rounded-lg lg:rounded-xl p-1.5 lg:p-2.5 border border-gray-700/30">
                     <div className="text-[9px] lg:text-xs text-gray-500 uppercase">{t("stats.bestScore")}</div>
-                    <div className="text-base lg:text-lg lg:text-2xl font-bold text-yellow-400">{modeStats.bestScore}</div>
+                    <div className="text-[13px] lg:text-2xl font-bold text-yellow-400">{modeStats.bestScore}</div>
                   </div>
-                  <div className="bg-gray-800/60 rounded-lg lg:rounded-xl p-1.5 lg:p-2 lg:p-3 border border-gray-700/30">
+                  <div className="bg-gray-800/60 rounded-lg lg:rounded-xl p-1.5 lg:p-2.5 border border-gray-700/30">
                     <div className="text-[9px] lg:text-xs text-gray-500 uppercase">{t("stats.accuracy")}</div>
-                    <div className="text-base lg:text-lg lg:text-2xl font-bold text-cyan-400">{modeAccuracy}%</div>
+                    <div className="text-[13px] lg:text-2xl font-bold text-cyan-400">{modeAccuracy}%</div>
                   </div>
-                  <div className="bg-gray-800/60 rounded-lg lg:rounded-xl p-1.5 lg:p-2 lg:p-3 border border-gray-700/30">
+                  <div className="bg-gray-800/60 rounded-lg lg:rounded-xl p-1.5 lg:p-2.5 border border-gray-700/30">
                     <div className="text-[9px] lg:text-xs text-gray-500 uppercase">{t("stats.totalGames")}</div>
-                    <div className="text-base lg:text-lg lg:text-2xl font-bold text-white">{modeStats.totalGames}</div>
+                    <div className="text-[13px] lg:text-2xl font-bold text-white">{modeStats.totalGames}</div>
                   </div>
                 </div>
               )}
 
               <button
                 onClick={() => startGame(selectedMode, selectedDifficulty)}
-                className="w-full lg:w-auto bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-bold text-sm lg:text-base lg:text-xl px-5 lg:px-6 lg:px-10 py-2.5 lg:py-2.5 lg:py-3.5 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg shadow-yellow-500/20"
+                className="w-full lg:w-auto bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-bold text-sm lg:text-lg px-5 lg:px-8 py-2 lg:py-3 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg shadow-yellow-500/20"
               >
                 {t("game.startGame")}
               </button>

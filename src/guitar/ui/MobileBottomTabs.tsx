@@ -26,6 +26,7 @@ export default function MobileBottomTabs({
 
   return (
     <div
+      data-mobile-bottom-tabs
       className="fixed left-0 right-0 bottom-0 z-50 bg-gray-900/80 backdrop-blur-md border-t border-gray-700/40"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >

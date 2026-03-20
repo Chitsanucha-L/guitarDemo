@@ -141,15 +141,22 @@ export default function Guitar3D() {
 
   const [activeMobileTab, setActiveMobileTab] = useState<MobileBottomTab>("play");
 
-  // Keep in sync with MobileBottomTabs: h-[56px] lg:h-[44px]
-  const [tabBarHeight, setTabBarHeight] = useState(() =>
-    typeof window !== "undefined" && window.matchMedia("(min-width:640px)").matches ? 40 : 56,
-  );
+  const [tabBarHeight, setTabBarHeight] = useState(40);
+  const [navHeight, setNavHeight] = useState(56);
   useEffect(() => {
-    const mql = window.matchMedia("(min-width:640px)");
-    const update = () => setTabBarHeight(mql.matches ? 44 : 56);
-    mql.addEventListener("change", update);
-    return () => mql.removeEventListener("change", update);
+    const measure = () => {
+      const tabs = document.querySelector("[data-mobile-bottom-tabs]");
+      if (tabs) setTabBarHeight(tabs.getBoundingClientRect().height);
+      const nav = document.querySelector("[data-mobile-nav]");
+      if (nav) setNavHeight(nav.getBoundingClientRect().height);
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    window.visualViewport?.addEventListener("resize", measure);
+    return () => {
+      window.removeEventListener("resize", measure);
+      window.visualViewport?.removeEventListener("resize", measure);
+    };
   }, []);
   const mobileSheetBottomOffsetPx = tabBarHeight;
 
@@ -281,7 +288,7 @@ export default function Guitar3D() {
         <BottomSheet
           defaultSnap="half"
           bottomOffsetPx={mobileSheetBottomOffsetPx}
-          topOffsetPx={56}
+          topOffsetPx={navHeight}
           handle={
             <div className="w-16 flex items-center justify-center">
               <div className="w-12 h-1.5 rounded-full bg-gray-500/80" aria-hidden />
@@ -289,17 +296,7 @@ export default function Guitar3D() {
           }
         >
           <div className="relative px-3 pb-3 pt-4">
-            {/* Play CTA (top-right of bottom sheet) */}
-            {activeMobileTab === "play" && (
-              <button
-                type="button"
-                onClick={handlePlayChord}
-                disabled={!highlightChord}
-                className="absolute right-3 top-1 z-10 h-[30px] min-h-[30px] px-3 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 text-white text-xs font-bold shadow-xl active:scale-[0.99] transition-transform touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Play Chord
-              </button>
-            )}
+            {/* Strum tab still has its own top-right CTA; Play button moved into the chord row below */}
 
             {/* Strum Play/Stop (top-right of bottom sheet) */}
             {activeMobileTab === "strum" && (
@@ -332,6 +329,14 @@ export default function Guitar3D() {
                   <div className="flex-1 min-w-0 min-[420px]:self-center">
                     <FingerLegend highlightChord={highlightChord} inline />
                   </div>
+                  <button
+                    type="button"
+                    onClick={handlePlayChord}
+                    disabled={!highlightChord}
+                    className="shrink-0 self-center h-[34px] min-h-[34px] px-4 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 text-white text-xs font-bold shadow-xl active:scale-[0.97] transition-transform touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    ▶ Play
+                  </button>
                 </div>
               )}
             </div>

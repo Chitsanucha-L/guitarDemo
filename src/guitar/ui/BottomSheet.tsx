@@ -1,48 +1,76 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 
-// Keep the sheet away from the top nav so the handle is always draggable/clickable.
-// We'll also cap "full" height dynamically based on reserved top/bottom UI.
-const PEEK_HEIGHT = 65; // px
-const HALF_HEIGHT = 0.28; // vh fraction (initial ~35%)
-const FULL_HEIGHT_FRACTION_CAP = 0.75; // vh fraction cap
 const SNAP_THRESHOLD = 0.08;
 const MOVE_CLICK_THRESHOLD_PX = 18;
+
+// All snap points as fractions of *available* height (viewport − top − bottom).
+const PEEK_MIN_PX = 50;
+const PEEK_FRACTION = 0.1;
+const HALF_FRACTION = 0.35;
+const FULL_FRACTION = 0.92;
 
 type SnapPoint = "peek" | "half" | "full";
 
 interface BottomSheetProps {
   children: React.ReactNode;
-  /** Initial snap point */
   defaultSnap?: SnapPoint;
-  /** Called when user drags to a new snap point */
   onSnapChange?: (snap: SnapPoint) => void;
-  /** Optional handle (e.g. drag pill) - if not provided, default pill is shown */
   handle?: React.ReactNode;
-  /** Reserve UI space at the bottom (e.g. tab bar + fixed CTA). */
+  /** Space reserved at the bottom (e.g. tab bar height, excluding safe area). */
   bottomOffsetPx?: number;
-  /** Reserve UI space at the top (e.g. top navbar) to prevent overlap. */
+  /** Space reserved at the top (e.g. mobile nav height, including safe area). */
   topOffsetPx?: number;
 }
 
-function snapToPercent(snap: SnapPoint): number {
-  if (typeof window === "undefined") return HALF_HEIGHT;
+function useAvailableHeight(topOffsetPx: number, bottomOffsetPx: number) {
+  const compute = useCallback(
+    () =>
+      Math.max(
+        200,
+        (typeof window !== "undefined" ? window.innerHeight : 800) -
+          topOffsetPx -
+          bottomOffsetPx,
+      ),
+    [topOffsetPx, bottomOffsetPx],
+  );
+
+  const [height, setHeight] = useState(compute);
+
+  useEffect(() => {
+    const update = () => setHeight(compute());
+    update();
+    window.addEventListener("resize", update);
+    window.visualViewport?.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("resize", update);
+      window.visualViewport?.removeEventListener("resize", update);
+    };
+  }, [compute]);
+
+  return height;
+}
+
+function peekFrac(available: number) {
+  return Math.max(PEEK_FRACTION, PEEK_MIN_PX / available);
+}
+
+function snapFrac(snap: SnapPoint, available: number): number {
   switch (snap) {
     case "peek":
-      return PEEK_HEIGHT / window.innerHeight;
+      return peekFrac(available);
     case "half":
-      return HALF_HEIGHT;
+      return HALF_FRACTION;
     case "full":
-      return FULL_HEIGHT_FRACTION_CAP;
+      return FULL_FRACTION;
     default:
-      return HALF_HEIGHT;
+      return HALF_FRACTION;
   }
 }
 
-function percentToSnap(p: number): SnapPoint {
-  const peek = snapToPercent("peek");
-  const half = snapToPercent("half");
-  if (p <= peek + SNAP_THRESHOLD) return "peek";
-  if (p <= half + SNAP_THRESHOLD) return "half";
+function nearestSnap(f: number, available: number): SnapPoint {
+  const peek = peekFrac(available);
+  if (f <= peek + SNAP_THRESHOLD) return "peek";
+  if (f <= HALF_FRACTION + SNAP_THRESHOLD) return "half";
   return "full";
 }
 
@@ -54,18 +82,25 @@ export default function BottomSheet({
   bottomOffsetPx = 0,
   topOffsetPx = 0,
 }: BottomSheetProps) {
-  const [heightPercent, setHeightPercent] = useState(() => snapToPercent(defaultSnap));
+  const available = useAvailableHeight(topOffsetPx, bottomOffsetPx);
+  const [frac, setFrac] = useState(() => {
+    const a =
+      typeof window !== "undefined"
+        ? Math.max(200, window.innerHeight - topOffsetPx - bottomOffsetPx)
+        : 600;
+    return snapFrac(defaultSnap, a);
+  });
   const [isDragging, setIsDragging] = useState(false);
   const startY = useRef(0);
-  const startPercent = useRef(0);
+  const startFrac = useRef(0);
   const movedRef = useRef(false);
 
   const commitSnap = useCallback(
     (snap: SnapPoint) => {
-      setHeightPercent(snapToPercent(snap));
+      setFrac(snapFrac(snap, available));
       onSnapChange?.(snap);
     },
-    [onSnapChange],
+    [onSnapChange, available],
   );
 
   const onPointerDown = useCallback(
@@ -75,65 +110,55 @@ export default function BottomSheet({
       setIsDragging(true);
       movedRef.current = false;
       startY.current = e.clientY;
-      startPercent.current = heightPercent;
+      startFrac.current = frac;
     },
-    [heightPercent],
+    [frac],
   );
-
-  const computeMaxHeightFraction = useCallback(() => {
-    if (typeof window === "undefined") return FULL_HEIGHT_FRACTION_CAP;
-    // Height available for the sheet body.
-    const availablePx = window.innerHeight - topOffsetPx - bottomOffsetPx;
-    const fraction = availablePx / window.innerHeight;
-    return Math.max(0.25, Math.min(FULL_HEIGHT_FRACTION_CAP, fraction));
-  }, [topOffsetPx, bottomOffsetPx]);
 
   const onPointerMove = useCallback(
     (e: React.PointerEvent) => {
-      if (!isDragging || typeof window === "undefined") return;
+      if (!isDragging) return;
       const dy = e.clientY - startY.current;
       if (Math.abs(dy) > MOVE_CLICK_THRESHOLD_PX) movedRef.current = true;
-      const maxH = computeMaxHeightFraction();
-      const minH = PEEK_HEIGHT / window.innerHeight;
-      const h = Math.max(minH, Math.min(maxH, startPercent.current + dy / window.innerHeight));
-      setHeightPercent(h);
+      const minF = peekFrac(available);
+      // Drag up (dy < 0) → open (increase height); drag down → close.
+      const h = Math.max(
+        minF,
+        Math.min(FULL_FRACTION, startFrac.current - dy / available),
+      );
+      setFrac(h);
     },
-    [isDragging, computeMaxHeightFraction],
+    [isDragging, available],
   );
 
   const onPointerUp = useCallback(() => {
     if (!isDragging) return;
     setIsDragging(false);
-    // If the user just tapped the handle (no meaningful drag),
-    // toggle between "half" and "peek" so it feels like open/close.
     if (!movedRef.current) {
-      const currentSnap = percentToSnap(heightPercent);
-      const nextSnap: SnapPoint = currentSnap === "peek" ? "half" : "peek";
-      commitSnap(nextSnap);
+      const current = nearestSnap(frac, available);
+      commitSnap(current === "peek" ? "half" : "peek");
       return;
     }
-
-    commitSnap(percentToSnap(heightPercent));
-  }, [isDragging, heightPercent, commitSnap]);
+    commitSnap(nearestSnap(frac, available));
+  }, [isDragging, frac, available, commitSnap]);
 
   useEffect(() => {
-    const onPointerUpGlobal = () => setIsDragging(false);
-    window.addEventListener("pointerup", onPointerUpGlobal);
-    return () => window.removeEventListener("pointerup", onPointerUpGlobal);
+    const up = () => setIsDragging(false);
+    window.addEventListener("pointerup", up);
+    return () => window.removeEventListener("pointerup", up);
   }, []);
 
-  const heightPct = (() => {
-    const maxH = computeMaxHeightFraction();
-    return Math.max(snapToPercent("peek"), Math.min(maxH, heightPercent)) * 100;
-  })();
+  const heightPx = Math.round(
+    Math.max(peekFrac(available), Math.min(FULL_FRACTION, frac)) * available,
+  );
 
   return (
     <div
       className="fixed left-0 right-0 z-40 flex flex-col rounded-t-3xl bg-gray-900/95 backdrop-blur-xl shadow-2xl border border-gray-700/30 border-b-0 transition-[height] duration-200 ease-out"
       style={{
         bottom: `calc(${bottomOffsetPx}px + env(safe-area-inset-bottom, 0px))`,
-        height: `${heightPct}vh`,
-        paddingBottom: "env(safe-area-inset-bottom, 0px)",
+        height: `${heightPx}px`,
+        maxHeight: `calc(100dvh - ${topOffsetPx}px - ${bottomOffsetPx}px - env(safe-area-inset-bottom, 0px))`,
         transitionProperty: isDragging ? "none" : "height",
       }}
     >
