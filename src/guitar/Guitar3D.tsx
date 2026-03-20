@@ -160,6 +160,16 @@ export default function Guitar3D() {
   }, []);
   const mobileSheetBottomOffsetPx = tabBarHeight;
 
+  const [isBelowLg, setIsBelowLg] = useState(
+    () => typeof window !== "undefined" && !window.matchMedia("(min-width:1280px)").matches,
+  );
+  useEffect(() => {
+    const mql = window.matchMedia("(min-width:1280px)");
+    const update = () => setIsBelowLg(!mql.matches);
+    mql.addEventListener("change", update);
+    return () => mql.removeEventListener("change", update);
+  }, []);
+
   useEffect(() => {
     chordRef.current = highlightChord;
   }, [highlightChord]);
@@ -473,6 +483,7 @@ export default function Guitar3D() {
         <Suspense fallback={null}>
           <Environment preset="apartment" />
           <GuitarModel
+            position={isBelowLg ? [0, 1, -0.06] : [0.12, 1, -0.06]}
             rotation={[0, -0.015, 0]}
             highlightChord={scaleNotes ? null : highlightChord}
             chordRef={chordRef}
