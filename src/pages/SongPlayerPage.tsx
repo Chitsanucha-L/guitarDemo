@@ -346,7 +346,7 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
         <div className="flex-1" />
 
         {/* Lyrics panel */}
-        <div className="pointer-events-auto mx-2 lg:mx-6 mb-2 lg:mb-3">
+        <div className="pointer-events-auto mx-2 lg:mx-6 mb-1.5 lg:mb-3">
           {isMobileLike ? (
             <div className="bg-gray-900/85 backdrop-blur-md rounded-2xl border border-gray-700/50 px-2 py-1">
               <div
@@ -430,7 +430,7 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
         </div>
 
         {/* Control bar */}
-        <div className="pointer-events-auto pb-2 lg:pb-5 px-3 lg:px-6">
+        <div className="pointer-events-auto pb-1.5 lg:pb-5 px-3 lg:px-6">
           {/* Song progress */}
           <div className="w-full h-1 bg-gray-800 rounded-full mb-2 lg:mb-4 overflow-hidden">
             <div

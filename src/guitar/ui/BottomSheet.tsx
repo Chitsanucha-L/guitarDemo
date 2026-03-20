@@ -156,9 +156,9 @@ export default function BottomSheet({
     <div
       className="fixed left-0 right-0 z-40 flex flex-col rounded-t-3xl bg-gray-900/95 backdrop-blur-xl shadow-2xl border border-gray-700/30 border-b-0 transition-[height] duration-200 ease-out"
       style={{
-        bottom: `calc(${bottomOffsetPx}px + env(safe-area-inset-bottom, 0px))`,
+        bottom: `${bottomOffsetPx}px`,
         height: `${heightPx}px`,
-        maxHeight: `calc(100dvh - ${topOffsetPx}px - ${bottomOffsetPx}px - env(safe-area-inset-bottom, 0px))`,
+        maxHeight: `calc(100dvh - ${topOffsetPx}px - ${bottomOffsetPx}px)`,
         transitionProperty: isDragging ? "none" : "height",
       }}
     >
