@@ -1,37 +1,31 @@
-import { useRef, useState, useCallback, useEffect } from "react";
+import { useRef, useState, useCallback, useEffect, useLayoutEffect } from "react";
 
 const SNAP_THRESHOLD = 0.08;
 const MOVE_CLICK_THRESHOLD_PX = 18;
 
-// All snap points as fractions of *available* height (viewport − top − bottom).
-const PEEK_MIN_PX = 50;
-const PEEK_FRACTION = 0.1;
-const HALF_FRACTION = 0.35;
+const HALF_FRACTION = 0.45;
 const FULL_FRACTION = 0.92;
 
 type SnapPoint = "peek" | "half" | "full";
 
 interface BottomSheetProps {
   children: React.ReactNode;
+  stickyHeader?: React.ReactNode;
   defaultSnap?: SnapPoint;
+  snap?: SnapPoint;
   onSnapChange?: (snap: SnapPoint) => void;
   handle?: React.ReactNode;
-  /** Space reserved at the bottom (e.g. tab bar height, excluding safe area). */
-  bottomOffsetPx?: number;
-  /** Space reserved at the top (e.g. mobile nav height, including safe area). */
   topOffsetPx?: number;
 }
 
-function useAvailableHeight(topOffsetPx: number, bottomOffsetPx: number) {
+function useAvailableHeight(topOffsetPx: number) {
   const compute = useCallback(
     () =>
       Math.max(
         200,
-        (typeof window !== "undefined" ? window.innerHeight : 800) -
-          topOffsetPx -
-          bottomOffsetPx,
+        (typeof window !== "undefined" ? window.innerHeight : 800) - topOffsetPx,
       ),
-    [topOffsetPx, bottomOffsetPx],
+    [topOffsetPx],
   );
 
   const [height, setHeight] = useState(compute);
@@ -50,46 +44,82 @@ function useAvailableHeight(topOffsetPx: number, bottomOffsetPx: number) {
   return height;
 }
 
-function peekFrac(available: number) {
-  return Math.max(PEEK_FRACTION, PEEK_MIN_PX / available);
-}
-
-function snapFrac(snap: SnapPoint, available: number): number {
-  switch (snap) {
-    case "peek":
-      return peekFrac(available);
-    case "half":
-      return HALF_FRACTION;
-    case "full":
-      return FULL_FRACTION;
-    default:
-      return HALF_FRACTION;
-  }
-}
-
-function nearestSnap(f: number, available: number): SnapPoint {
-  const peek = peekFrac(available);
-  if (f <= peek + SNAP_THRESHOLD) return "peek";
-  if (f <= HALF_FRACTION + SNAP_THRESHOLD) return "half";
-  return "full";
-}
-
 export default function BottomSheet({
   children,
+  stickyHeader,
   defaultSnap = "half",
+  snap: controlledSnap,
   onSnapChange,
   handle,
-  bottomOffsetPx = 0,
   topOffsetPx = 0,
 }: BottomSheetProps) {
-  const available = useAvailableHeight(topOffsetPx, bottomOffsetPx);
-  const [frac, setFrac] = useState(() => {
-    const a =
-      typeof window !== "undefined"
-        ? Math.max(200, window.innerHeight - topOffsetPx - bottomOffsetPx)
-        : 600;
-    return snapFrac(defaultSnap, a);
-  });
+  const available = useAvailableHeight(topOffsetPx);
+
+  const headerRef = useRef<HTMLDivElement>(null);
+  const [headerPx, setHeaderPx] = useState(0);
+
+  useLayoutEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const measure = () => {
+      const h = el.getBoundingClientRect().height;
+      if (h > 0) setHeaderPx(h);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const peekPx = Math.max(60, headerPx);
+  const peekFrac = peekPx / available;
+  const halfFrac = Math.max(peekFrac + 0.05, HALF_FRACTION);
+
+  const snapFrac = useCallback(
+    (s: SnapPoint): number => {
+      switch (s) {
+        case "peek":
+          return peekFrac;
+        case "half":
+          return halfFrac;
+        case "full":
+          return FULL_FRACTION;
+        default:
+          return halfFrac;
+      }
+    },
+    [peekFrac, halfFrac],
+  );
+
+  const nearestSnap = useCallback(
+    (f: number): SnapPoint => {
+      if (f <= peekFrac + SNAP_THRESHOLD) return "peek";
+      if (f <= halfFrac + SNAP_THRESHOLD) return "half";
+      return "full";
+    },
+    [peekFrac, halfFrac],
+  );
+
+  const [frac, setFrac] = useState(() => snapFrac(defaultSnap));
+  const snapRef = useRef<SnapPoint>(defaultSnap);
+
+  // When peekFrac changes (header measured), sync frac if at peek.
+  useLayoutEffect(() => {
+    if (snapRef.current === "peek") {
+      setFrac(peekFrac);
+    }
+  }, [peekFrac]);
+
+  // Respond to controlled snap changes from parent.
+  const prevControlled = useRef(controlledSnap);
+  useEffect(() => {
+    if (controlledSnap && controlledSnap !== prevControlled.current) {
+      setFrac(snapFrac(controlledSnap));
+      snapRef.current = controlledSnap;
+    }
+    prevControlled.current = controlledSnap;
+  }, [controlledSnap, snapFrac]);
+
   const [isDragging, setIsDragging] = useState(false);
   const startY = useRef(0);
   const startFrac = useRef(0);
@@ -97,11 +127,26 @@ export default function BottomSheet({
 
   const commitSnap = useCallback(
     (snap: SnapPoint) => {
-      setFrac(snapFrac(snap, available));
+      snapRef.current = snap;
+      setFrac(snapFrac(snap));
       onSnapChange?.(snap);
     },
-    [onSnapChange, available],
+    [onSnapChange, snapFrac],
   );
+
+  const finishDrag = useCallback(() => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    if (!movedRef.current) {
+      const current = nearestSnap(frac);
+      commitSnap(current === "peek" ? "half" : "peek");
+      return;
+    }
+    commitSnap(nearestSnap(frac));
+  }, [isDragging, frac, nearestSnap, commitSnap]);
+
+  const finishDragRef = useRef(finishDrag);
+  finishDragRef.current = finishDrag;
 
   const onPointerDown = useCallback(
     (e: React.PointerEvent) => {
@@ -120,59 +165,49 @@ export default function BottomSheet({
       if (!isDragging) return;
       const dy = e.clientY - startY.current;
       if (Math.abs(dy) > MOVE_CLICK_THRESHOLD_PX) movedRef.current = true;
-      const minF = peekFrac(available);
-      // Drag up (dy < 0) → open (increase height); drag down → close.
       const h = Math.max(
-        minF,
+        peekFrac,
         Math.min(FULL_FRACTION, startFrac.current - dy / available),
       );
       setFrac(h);
     },
-    [isDragging, available],
+    [isDragging, available, peekFrac],
   );
 
-  const onPointerUp = useCallback(() => {
-    if (!isDragging) return;
-    setIsDragging(false);
-    if (!movedRef.current) {
-      const current = nearestSnap(frac, available);
-      commitSnap(current === "peek" ? "half" : "peek");
-      return;
-    }
-    commitSnap(nearestSnap(frac, available));
-  }, [isDragging, frac, available, commitSnap]);
-
+  // Global pointerup: commit snap via ref so it always uses latest state.
   useEffect(() => {
-    const up = () => setIsDragging(false);
+    const up = () => finishDragRef.current();
     window.addEventListener("pointerup", up);
     return () => window.removeEventListener("pointerup", up);
   }, []);
 
-  const heightPx = Math.round(
-    Math.max(peekFrac(available), Math.min(FULL_FRACTION, frac)) * available,
-  );
+  const heightPx = Math.max(peekPx, Math.round(Math.min(FULL_FRACTION, frac) * available));
 
   return (
     <div
-      className="fixed left-0 right-0 z-40 flex flex-col rounded-t-3xl bg-gray-900/95 backdrop-blur-xl shadow-2xl border border-gray-700/30 border-b-0 transition-[height] duration-200 ease-out"
+      className="fixed left-0 right-0 bottom-0 z-40 flex flex-col rounded-t-2xl bg-gray-900/95 backdrop-blur-xl shadow-2xl border border-gray-700/30 border-b-0 transition-[height] duration-200 ease-out"
       style={{
-        bottom: `${bottomOffsetPx}px`,
         height: `${heightPx}px`,
-        maxHeight: `calc(100dvh - ${topOffsetPx}px - ${bottomOffsetPx}px)`,
+        maxHeight: `calc(100dvh - ${topOffsetPx}px)`,
+        paddingBottom: "env(safe-area-inset-bottom, 0px)",
         transitionProperty: isDragging ? "none" : "height",
       }}
     >
-      <div
-        className="flex shrink-0 items-center justify-center py-2 touch-none cursor-grab active:cursor-grabbing"
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerLeave={onPointerUp}
-      >
-        {handle ?? (
-          <div className="w-12 h-1 rounded-full bg-gray-500/80" aria-hidden />
-        )}
+      <div ref={headerRef} className="shrink-0">
+        <div
+          className="flex items-center justify-center pt-1.5 pb-1 touch-none cursor-grab active:cursor-grabbing"
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={() => finishDragRef.current()}
+          onPointerLeave={() => finishDragRef.current()}
+        >
+          {handle ?? (
+            <div className="w-10 h-1 rounded-full bg-gray-500/60" aria-hidden />
+          )}
+        </div>
+        {stickyHeader}
       </div>
+
       <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain min-h-0">
         {children}
       </div>

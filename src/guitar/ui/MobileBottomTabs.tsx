@@ -3,19 +3,18 @@ import { useTranslation } from "react-i18next";
 export type MobileBottomTab = "play" | "strum" | "progression" | "scale";
 
 interface MobileBottomTabsProps {
-  activeTab: MobileBottomTab;
+  activeTab: MobileBottomTab | null;
   onTabChange: (tab: MobileBottomTab) => void;
 }
 
 const TAB_META: Array<{
   id: MobileBottomTab;
   icon: string;
-  label: string;
 }> = [
-  { id: "play", icon: "🎸", label: "Play" },
-  { id: "strum", icon: "🎵", label: "Strumming" },
-  { id: "progression", icon: "🔄", label: "Progression" },
-  { id: "scale", icon: "🎹", label: "Scale" },
+  { id: "play", icon: "🎸" },
+  { id: "strum", icon: "🎵" },
+  { id: "progression", icon: "🔄" },
+  { id: "scale", icon: "🎹" },
 ];
 
 export default function MobileBottomTabs({
@@ -25,49 +24,42 @@ export default function MobileBottomTabs({
   const { t } = useTranslation();
 
   return (
-    <div
-      data-mobile-bottom-tabs
-      className="fixed left-0 right-0 bottom-0 z-50 bg-gray-900/80 backdrop-blur-md border-t border-gray-700/40"
-      style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
-    >
-      <div className="flex items-stretch justify-around px-2 h-[40px] lg:h-[56px]">
-        {TAB_META.map((tab) => {
-          const isActive = tab.id === activeTab;
-          const label =
-            tab.id === "play"
-              ? t("sections.play")
-              : tab.id === "strum"
-                ? t("sections.strumming")
-                : tab.id === "progression"
-                  ? t("sections.progression")
-                  : t("sections.scale");
+    <div className="flex items-stretch justify-around px-1.5 pb-1.5 border-b border-gray-700/30">
+      {TAB_META.map((tab) => {
+        const isActive = tab.id === activeTab;
+        const label =
+          tab.id === "play"
+            ? t("sections.play")
+            : tab.id === "strum"
+              ? t("sections.strumming")
+              : tab.id === "progression"
+                ? t("sections.progression")
+                : t("sections.scale");
 
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => onTabChange(tab.id)}
-              className={`flex-1 min-h-[44px] flex items-center justify-center gap-2 px-1.5 rounded-2xl transition-all touch-manipulation ${
-                isActive
-                  ? "bg-gradient-to-r from-yellow-400/20 to-amber-400/20"
-                  : "bg-transparent hover:bg-white/5"
+        return (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => onTabChange(tab.id)}
+            className={`flex-1 flex items-center justify-center gap-1.5 px-1.5 py-3 rounded-xl transition-all touch-manipulation ${
+              isActive
+                ? "bg-gradient-to-r from-yellow-400/20 to-amber-400/20"
+                : "bg-transparent hover:bg-white/5 active:bg-white/10"
+            }`}
+          >
+            <span className="text-[15px] leading-none" aria-hidden>
+              {tab.icon}
+            </span>
+            <span
+              className={`text-xs font-bold ${
+                isActive ? "text-yellow-200" : "text-gray-400"
               }`}
             >
-              <span className="text-[16px] leading-none" aria-hidden>
-                {tab.icon}
-              </span>
-              <span
-                className={`text-xs font-bold ${
-                  isActive ? "text-yellow-200" : "text-gray-300"
-                }`}
-              >
-                {label}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+              {label}
+            </span>
+          </button>
+        );
+      })}
     </div>
   );
 }
-

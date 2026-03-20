@@ -139,14 +139,17 @@ export default function Guitar3D() {
 
   const [openPanels, setOpenPanels] = useState<Set<PanelId>>(new Set(["chord"]));
 
-  const [activeMobileTab, setActiveMobileTab] = useState<MobileBottomTab>("play");
+  const [activeMobileTab, setActiveMobileTab] = useState<MobileBottomTab | null>(null);
+  const [sheetSnap, setSheetSnap] = useState<"peek" | "half" | "full">("peek");
 
-  const [tabBarHeight, setTabBarHeight] = useState(40);
+  const handleTabChange = useCallback((tab: MobileBottomTab) => {
+    setActiveMobileTab(tab);
+    if (sheetSnap === "peek") setSheetSnap("half");
+  }, [sheetSnap]);
+
   const [navHeight, setNavHeight] = useState(56);
   useEffect(() => {
     const measure = () => {
-      const tabs = document.querySelector("[data-mobile-bottom-tabs]");
-      if (tabs) setTabBarHeight(tabs.getBoundingClientRect().height);
       const nav = document.querySelector("[data-mobile-nav]");
       if (nav) setNavHeight(nav.getBoundingClientRect().height);
     };
@@ -158,7 +161,6 @@ export default function Guitar3D() {
       window.visualViewport?.removeEventListener("resize", measure);
     };
   }, []);
-  const mobileSheetBottomOffsetPx = tabBarHeight;
 
   const [isBelowLg, setIsBelowLg] = useState(
     () => typeof window !== "undefined" && !window.matchMedia("(min-width:1280px)").matches,
@@ -290,30 +292,25 @@ export default function Guitar3D() {
           onRightModeToggle={() => setIsHoldingPick((p) => !p)}
         />
 
-        <MobileBottomTabs
-          activeTab={activeMobileTab}
-          onTabChange={setActiveMobileTab}
-        />
-
         <BottomSheet
-          defaultSnap="half"
-          bottomOffsetPx={mobileSheetBottomOffsetPx}
+          defaultSnap="peek"
+          snap={sheetSnap}
+          onSnapChange={setSheetSnap}
           topOffsetPx={navHeight}
-          handle={
-            <div className="w-16 flex items-center justify-center">
-              <div className="w-12 h-1.5 rounded-full bg-gray-500/80" aria-hidden />
-            </div>
+          stickyHeader={
+            <MobileBottomTabs
+              activeTab={activeMobileTab}
+              onTabChange={handleTabChange}
+            />
           }
         >
-          <div className="relative px-3 pb-3 pt-4">
-            {/* Strum tab still has its own top-right CTA; Play button moved into the chord row below */}
-
-            {/* Strum Play/Stop (top-right of bottom sheet) */}
+          <div className="relative px-4 pb-4 pt-3">
+            {/* Strum Play/Stop action */}
             {activeMobileTab === "strum" && (
               <button
                 type="button"
                 onClick={() => strumPanelRef.current?.toggle()}
-                className={`absolute right-3 top-1 z-10 h-[30px] min-h-[30px] px-3 rounded-2xl text-white text-xs font-bold shadow-xl active:scale-[0.99] transition-all touch-manipulation ${
+                className={`absolute right-4 top-2 z-10 h-[32px] min-h-[32px] px-4 rounded-2xl text-white text-xs font-bold shadow-xl active:scale-[0.97] transition-all touch-manipulation ${
                   strumPlaying
                     ? "bg-gradient-to-r from-red-500 to-red-600"
                     : "bg-gradient-to-r from-green-500 to-emerald-600"
