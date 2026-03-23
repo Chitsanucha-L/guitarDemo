@@ -50,6 +50,15 @@ export default function GamePage() {
   const { allStats, recordGame, getAccuracy } = useGameStats();
 
   const strumRef = useRef<StrumHandle | null>(null);
+  const [isBelowLg, setIsBelowLg] = useState(
+    () => typeof window !== "undefined" && !window.matchMedia("(min-width:1280px)").matches,
+  );
+  useEffect(() => {
+    const mql = window.matchMedia("(min-width:1280px)");
+    const onChange = (e: MediaQueryListEvent) => setIsBelowLg(!e.matches);
+    mql.addEventListener("change", onChange);
+    return () => mql.removeEventListener("change", onChange);
+  }, []);
   const [isChecking, setIsChecking] = useState(false);
   const [showQuitModal, setShowQuitModal] = useState(false);
   const [selectedMode, setSelectedMode] = useState<GameMode>("practice");
@@ -142,6 +151,7 @@ export default function GamePage() {
             pressedBarre={pressedBarre}
             feedbackMarkers={feedbackMarkers}
             strumRef={strumRef}
+            isBelowLg={isBelowLg}
           />
         </div>
 
