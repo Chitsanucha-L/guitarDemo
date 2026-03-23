@@ -196,7 +196,7 @@ export default function GamePage() {
                     <button
                       onClick={clearPresses}
                       disabled={isChecking}
-                      className="bg-gray-800/80 backdrop-blur-sm hover:bg-gray-700 disabled:opacity-40 text-gray-300 font-bold text-sm lg:text-lg px-5 lg:px-8 py-3 lg:py-4 rounded-xl shadow-lg transition-all duration-200 border border-gray-600/50"
+                      className="bg-gray-800/80 backdrop-blur-sm hover:bg-gray-700 disabled:opacity-40 text-gray-300 font-bold text-[11px] lg:text-lg xl:text-xl px-5 lg:px-8 xl:px-10 py-2 lg:py-4 rounded-xl shadow-lg transition-all duration-200 border border-gray-600/50"
                     >
                       {t("game.clear")} ({pressCount})
                     </button>
@@ -204,7 +204,7 @@ export default function GamePage() {
                   <button
                     onClick={handleCheck}
                     disabled={isChecking || pressCount === 0}
-                    className="bg-green-600 hover:bg-green-500 disabled:opacity-40 disabled:hover:bg-green-600 text-white font-bold text-[11px] lg:text-xl px-5 lg:px-16 py-2 lg:py-4 rounded-xl shadow-2xl shadow-green-500/20 transition-all duration-200 transform hover:scale-105 border-2 border-green-400/50"
+                    className="bg-green-600 hover:bg-green-500 disabled:opacity-40 disabled:hover:bg-green-600 text-white font-bold text-[11px] lg:text-lg xl:text-xl px-5 lg:px-8 xl:px-10 py-2 lg:py-4 rounded-xl shadow-md lg:shadow-2xl shadow-green-500/20 transition-all duration-200 transform hover:scale-105 border-1 border-green-400/50"
                   >
                     {isChecking ? t("game.listening") : t("game.checkChord")}
                   </button>
