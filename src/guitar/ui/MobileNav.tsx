@@ -51,7 +51,7 @@ export default function MobileNav({
 
         {/* Center: chord badge */}
         <div className="absolute left-1/2 -translate-x-1/2">
-          <div className="rounded-2xl bg-gray-900/75 border border-gray-700/50 backdrop-blur-md px-3 py-1.5 shadow-lg">
+          <div className="rounded-2xl bg-gray-900/75 border border-gray-700/50 backdrop-blur-md px-2.5 py-1 shadow-lg">
             <span className="text-base font-bold text-white">
               {chordName ?? "—"}
             </span>
