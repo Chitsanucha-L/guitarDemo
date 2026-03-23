@@ -172,49 +172,42 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
           />
         </div>
 
-        {/* Overlay */}
-        <div className="absolute inset-0 pointer-events-none z-20 flex flex-col">
+        {/* Scrollable UI overlay */}
+        <div className="absolute inset-0 z-20 overflow-y-auto overscroll-contain scrollbar-visible">
+        <div className="flex flex-col min-h-full pointer-events-none">
 
         {/* Top section */}
-        <div className="flex flex-col px-3 pt-1.5 lg:pt-4 gap-1 lg:gap-2">
+        <div className="shrink-0 flex flex-col px-3 pt-1.5 lg:pt-4 gap-1 lg:gap-2">
           {isMobileLike ? (
-            <div className="flex justify-between gap-2">
+            <div className="relative flex items-start justify-between gap-2">
               {/* Left: Back */}
               <div className="pointer-events-auto shrink-0">
                 <button
                   onClick={() => navigate("/songs")}
-                  className="bg-gray-900/60 backdrop-blur-md rounded-xl px-2.5 py-1.5 border border-gray-600/50 text-gray-300 hover:text-white hover:border-gray-500 transition-colors text-[11px] font-medium"
+                  className="bg-gray-900/60 backdrop-blur-md rounded-xl px-2.5 py-1 border border-gray-600/50 text-gray-300 hover:text-white hover:border-gray-500 transition-colors text-[11px] font-medium"
                 >
                   &larr; {t("song.backToList")}
                 </button>
               </div>
 
-              {/* Center: Big chord card on same row */}
-              <div className="pointer-events-none flex-1 flex justify-center min-w-0">
+              {/* Center: chord card — absolute so it's truly centered */}
+              <div className="absolute left-1/2 -translate-x-1/2 top-0 pointer-events-none">
                 <div className="relative">
                   {countInNumber !== null ? (
                     <>
                       <div className="absolute -inset-1 bg-blue-500/20 rounded-2xl blur-lg" />
-                      <div className="relative bg-gray-900/90 backdrop-blur-md rounded-2xl px-5 lg:px-10 py-2 lg:py-3 border-2 border-blue-500/50">
-                        <div className="text-[9px] text-white/90 text-center uppercase tracking-wider">
-                          COUNT IN
-                        </div>
-                        <div className="text-xl font-black text-blue-400 text-center tabular-nums">
-                          {countInNumber}
-                        </div>
+                      <div className="relative bg-gray-900/90 backdrop-blur-md rounded-2xl px-4 py-1.5 border-2 border-blue-500/50">
+                        <div className="text-[8px] text-white/90 text-center uppercase tracking-wider">COUNT IN</div>
+                        <div className="text-lg font-black text-blue-400 text-center tabular-nums">{countInNumber}</div>
                       </div>
                     </>
                   ) : (
                     <>
                       <div className="absolute -inset-1 bg-yellow-500/20 rounded-2xl blur-lg" />
-                      <div className="relative bg-gray-900/80 backdrop-blur-md rounded-2xl px-5 lg:px-10 py-2 lg:py-3 border-2 border-yellow-500/40">
-                        <div className="text-[9px] text-gray-500 text-center uppercase tracking-wider">
-                          {song.title}
-                        </div>
-                        <div className="text-xl font-black text-yellow-400 text-center tabular-nums">
-                          {currentChordName || "—"}
-                        </div>
-                        <div className="mt-0.5 w-full h-[3px] bg-gray-700/50 rounded-full overflow-hidden">
+                      <div className="relative bg-gray-900/80 backdrop-blur-md rounded-2xl px-4 py-1.5 border-2 border-yellow-500/40">
+                        <div className="text-[8px] text-gray-500 text-center uppercase tracking-wider">{song.title}</div>
+                        <div className="text-lg font-black text-yellow-400 text-center tabular-nums">{currentChordName || "—"}</div>
+                        <div className="mt-0.5 w-full h-[2px] bg-gray-700/50 rounded-full overflow-hidden">
                           <div className="h-full bg-yellow-400/80 rounded-full transition-none" style={{ width: `${beatProgress * 100}%` }} />
                         </div>
                       </div>
@@ -224,20 +217,20 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
               </div>
 
               {/* Right: Metronome + BPM */}
-              <div className="flex gap-1.5 pointer-events-auto shrink-0">
+              <div className="flex gap-1 pointer-events-auto shrink-0 items-center">
                 <button
                   onClick={() => setMetronomeOn((v) => !v)}
-                  className={`text-[10px] h-[25px] px-2.5 py-0 rounded-md border transition-colors font-medium flex items-center justify-center ${
+                  className={`text-[9px] px-2 py-1 rounded-md border transition-colors font-medium flex items-center justify-center ${
                     metronomeOn
                       ? "border-green-500/50 text-green-400 bg-green-500/10"
                       : "border-gray-600/50 text-gray-500 bg-gray-800/40"
                   }`}
                 >
-                  {t("song.metronome")} {metronomeOn ? "ON" : "OFF"}
+                  {metronomeOn ? "ON" : "OFF"}
                 </button>
-                <div className="bg-gray-900/60 backdrop-blur-md rounded-xl px-2.5 py-1 h-[40px] flex flex-col justify-center border border-gray-600/50 text-center">
-                  <div className="text-[9px] text-gray-500 uppercase leading-none mb-0.5">{t("song.tempo")}</div>
-                  <div className="text-sm font-bold text-white tabular-nums leading-none">{song.tempo}</div>
+                <div className="bg-gray-900/60 backdrop-blur-md rounded-lg px-1.5 py-1 border border-gray-600/50 text-center">
+                  <div className="text-[8px] text-gray-500 uppercase leading-none">{t("song.tempo")}</div>
+                  <div className="text-[11px] lg:text-sm font-bold text-white tabular-nums leading-none">{song.tempo}</div>
                 </div>
               </div>
             </div>
@@ -278,10 +271,10 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
                     <>
                       <div className="absolute -inset-1 bg-blue-500/20 rounded-2xl blur-lg" />
                       <div className="relative bg-gray-900/90 backdrop-blur-md rounded-2xl px-5 lg:px-10 py-2 lg:py-3 border-2 border-blue-500/50">
-                        <div className="text-[9px] lg:text-xs text-white/90 text-center uppercase tracking-wider">
+                        <div className="text-[9px] lg:text-xs xl:text-sm text-white/90 text-center uppercase tracking-wider">
                           COUNT IN
                         </div>
-                        <div className="text-lg lg:text-4xl font-black text-blue-400 text-center tabular-nums">
+                        <div className="text-lg lg:text-4xl xl:text-5xl font-black text-blue-400 text-center tabular-nums">
                           {countInNumber}
                         </div>
                       </div>
@@ -290,10 +283,10 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
                     <>
                       <div className="absolute -inset-1 bg-yellow-500/20 rounded-2xl blur-lg" />
                       <div className="relative bg-gray-900/80 backdrop-blur-md rounded-2xl px-5 lg:px-10 py-2 lg:py-3 border-2 border-yellow-500/40">
-                        <div className="text-[10px] lg:text-xs text-gray-500 text-center uppercase tracking-wider">
+                        <div className="text-[10px] lg:text-xs xl:text-sm text-gray-500 text-center uppercase tracking-wider">
                           {song.title}
                         </div>
-                        <div className="text-2xl lg:text-4xl font-black text-yellow-400 text-center tabular-nums">
+                        <div className="mt-0 lg:mt-1 text-2xl lg:text-4xl xl:text-5xl font-black text-yellow-400 text-center tabular-nums">
                           {currentChordName || "—"}
                         </div>
                         <div className="mt-1 lg:mt-2 w-full h-1 bg-gray-700/50 rounded-full overflow-hidden">
@@ -308,16 +301,16 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
           )}
         </div>
 
-        {/* Spacer */}
-        <div className="flex-1" />
+        {/* Guitar visibility spacer — guarantees minimum guitar window */}
+        <div className="flex-1 min-h-[45dvh]" />
 
         {/* Lyrics panel */}
-        <div className="pointer-events-auto mx-2 lg:mx-6 mb-1.5 lg:mb-3">
+        <div className="pointer-events-auto mx-2 lg:mx-6 mb-1 lg:mb-3">
           {isMobileLike ? (
-            <div className="bg-gray-900/85 backdrop-blur-md rounded-2xl border border-gray-700/50 px-2 py-1">
+            <div className="bg-gray-900/85 backdrop-blur-md rounded-xl border border-gray-700/50 px-1.5 py-0.5">
               <div
                 ref={lyricsRef}
-                className="flex gap-1.5 overflow-x-auto overflow-y-hidden whitespace-nowrap scrollbar-none p-1"
+                className="flex gap-1 overflow-x-auto overflow-y-hidden whitespace-nowrap scrollbar-none py-0.5 px-0.5"
                 style={{ WebkitOverflowScrolling: "touch" }}
               >
                 {song.chords.slice(mobileLineRange.start, mobileLineRange.end + 1).map((entry, localIdx) => {
@@ -329,21 +322,21 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
                     <div
                       key={i}
                       data-active={isActive}
-                      className={`inline-flex flex-col items-center justify-center rounded-xl px-2 py-1 transition-all duration-200 min-w-[4.25rem] ${isActive
-                          ? "bg-yellow-500/20 border border-yellow-500/50 scale-[1.02] shadow-lg shadow-yellow-500/10"
+                      className={`inline-flex flex-col items-center justify-center rounded-lg px-1.5 py-0.5 transition-all duration-200 min-w-[3.5rem] ${isActive
+                          ? "bg-yellow-500/20 border border-yellow-500/50 shadow-lg shadow-yellow-500/10"
                           : isPast
                             ? "opacity-40"
                             : "border border-transparent"
                         }`}
                     >
                       <span
-                        className={`text-sm font-bold transition-colors duration-200 ${isActive ? "text-yellow-400" : isPast ? "text-gray-600" : "text-blue-400"
+                        className={`text-xs font-bold transition-colors duration-200 ${isActive ? "text-yellow-400" : isPast ? "text-gray-600" : "text-blue-400"
                           }`}
                       >
                         {entry.chord}
                       </span>
                       <span
-                        className={`text-[10px] leading-tight text-center ${isActive ? "text-white" : isPast ? "text-gray-600" : "text-gray-400"
+                        className={`text-[9px] leading-tight text-center ${isActive ? "text-white" : isPast ? "text-gray-600" : "text-gray-400"
                           }`}
                       >
                         {lyric || " "}
@@ -396,9 +389,9 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
         </div>
 
         {/* Control bar */}
-        <div className="pointer-events-auto pb-1.5 lg:pb-5 px-3 lg:px-6">
+        <div className="pointer-events-auto pb-1 lg:pb-5 px-2 lg:px-6" style={{ paddingBottom: "max(0.25rem, env(safe-area-inset-bottom, 0px))" }}>
           {/* Song progress */}
-          <div className="w-full h-1 bg-gray-800 rounded-full mb-2 lg:mb-4 overflow-hidden">
+          <div className="w-full h-[3px] lg:h-1 bg-gray-800 rounded-full mb-1 lg:mb-4 overflow-hidden">
             <div
               className="h-full bg-yellow-400/60 rounded-full transition-all duration-300"
               style={{ width: `${progressPct}%` }}
@@ -505,6 +498,7 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
             </div>
           </div>
         </div>
+      </div>
       </div>
       </div>
     </div>

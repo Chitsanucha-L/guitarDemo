@@ -34,13 +34,13 @@ export default function MobileNav({
         data-mobile-nav="true"
         className={`${
           position === "fixed" ? "fixed top-0 left-0 right-0 z-60" : "relative z-10 shrink-0"
-        } flex items-center justify-between px-3 py-1 bg-gray-900/80 backdrop-blur-md border-b border-gray-700/40`}
-        style={{ paddingTop: "max(0.5rem, env(safe-area-inset-top))" }}
+        } flex items-center justify-between px-3 bg-gray-900/80 backdrop-blur-md border-b border-gray-700/40`}
+        style={{ paddingTop: "max(0.5rem, env(safe-area-inset-top))", paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
       >
         {/* Left: hamburger */}
         <button
           type="button"
-          className="min-h-[42px] min-w-[42px] flex items-center justify-center rounded-xl text-gray-300 hover:bg-gray-700/80 active:scale-95 transition touch-manipulation"
+          className="flex items-center justify-center rounded-xl text-gray-300 hover:bg-gray-700/80 active:scale-95 transition touch-manipulation"
           onClick={() => setMenuOpen((o) => !o)}
           aria-label="Menu"
         >
@@ -51,8 +51,8 @@ export default function MobileNav({
 
         {/* Center: chord badge */}
         <div className="absolute left-1/2 -translate-x-1/2">
-          <div className="rounded-2xl bg-gray-900/75 border border-gray-700/50 backdrop-blur-md px-4 py-2 shadow-lg">
-            <span className="text-sm font-bold text-white">
+          <div className="rounded-2xl bg-gray-900/75 border border-gray-700/50 backdrop-blur-md px-3 py-1.5 shadow-lg">
+            <span className="text-base font-bold text-white">
               {chordName ?? "—"}
             </span>
           </div>
@@ -64,7 +64,7 @@ export default function MobileNav({
             <button
               type="button"
               onClick={onRightModeToggle}
-              className={`min-h-[38px] px-4 rounded-2xl text-[12px] font-bold transition-all touch-manipulation flex items-center gap-2 ${
+              className={`py-1.5 px-4 rounded-xl text-[12px] font-bold transition-all touch-manipulation flex items-center gap-2 ${
                 rightModeActive
                   ? "bg-emerald-600 text-white ring-2 ring-emerald-400"
                   : "bg-gray-700/90 text-gray-300 hover:bg-gray-600"
@@ -79,7 +79,7 @@ export default function MobileNav({
               {resolvedRightLabel}
             </button>
           ) : (
-            <div className="min-h-[44px] px-4 rounded-2xl text-sm font-bold flex items-center bg-gray-700/50 text-gray-200 border border-gray-600/40">
+            <div className="py-1.5 px-4 rounded-xl text-[12px] font-bold flex items-center bg-gray-700/50 text-gray-200 border border-gray-600/40">
               {resolvedRightLabel}
             </div>
           )}
