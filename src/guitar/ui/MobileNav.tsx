@@ -34,8 +34,8 @@ export default function MobileNav({
         data-mobile-nav="true"
         className={`${
           position === "fixed" ? "fixed top-0 left-0 right-0 z-60" : "relative z-10 shrink-0"
-        } flex items-center justify-between px-3 bg-gray-900/80 backdrop-blur-md border-b border-gray-700/40`}
-        style={{ paddingTop: "max(0.5rem, env(safe-area-inset-top))", paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
+        } flex items-center justify-between px-3 py-1 bg-gray-900/80 backdrop-blur-md border-b border-gray-700/40`}
+        style={{ paddingTop: "max(0.5rem, env(safe-area-inset-top))" }}
       >
         {/* Left: hamburger */}
         <button
