@@ -123,14 +123,17 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
     return () => cancelAnimationFrame(rafId);
   }, [isCountingIn, playOriginMs, beatMs, countInBeats, countInMs]);
 
-  // --- Auto-scroll lyrics ---
+  // --- Auto-scroll lyrics (scoped to lyrics container only) ---
   useEffect(() => {
     const container = lyricsRef.current;
     if (!container) return;
-    const activeEl = container.querySelector("[data-active='true']");
-    if (activeEl) {
-      activeEl.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
-    }
+    const activeEl = container.querySelector("[data-active='true']") as HTMLElement | null;
+    if (!activeEl) return;
+    container.scrollTo({
+      left: activeEl.offsetLeft - container.clientWidth / 2 + activeEl.clientWidth / 2,
+      top: activeEl.offsetTop - container.clientHeight / 2 + activeEl.clientHeight / 2,
+      behavior: "smooth",
+    });
   }, [currentIndex]);
 
   // --- Keyboard shortcuts ---
