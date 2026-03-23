@@ -8,6 +8,8 @@ interface MobileNavProps {
   rightModeLabel?: string;
   rightModeActive?: boolean;
   onRightModeToggle?: () => void;
+  /** "fixed" (default) pins to viewport top; "static" renders in normal flow. */
+  position?: "fixed" | "static";
 }
 
 export default function MobileNav({
@@ -15,6 +17,7 @@ export default function MobileNav({
   rightModeLabel,
   rightModeActive,
   onRightModeToggle,
+  position = "fixed",
 }: MobileNavProps) {
   const { t } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -29,7 +32,9 @@ export default function MobileNav({
     <>
       <nav
         data-mobile-nav="true"
-        className="fixed top-0 left-0 right-0 z-60 flex items-center justify-between px-3 py-1 bg-gray-900/80 backdrop-blur-md border-b border-gray-700/40"
+        className={`${
+          position === "fixed" ? "fixed top-0 left-0 right-0 z-60" : "relative z-10 shrink-0"
+        } flex items-center justify-between px-3 py-1 bg-gray-900/80 backdrop-blur-md border-b border-gray-700/40`}
         style={{ paddingTop: "max(0.5rem, env(safe-area-inset-top))" }}
       >
         {/* Left: hamburger */}

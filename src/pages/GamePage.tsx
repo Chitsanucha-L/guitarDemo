@@ -121,22 +121,15 @@ export default function GamePage() {
   const isPlaying = gameStatus === "playing" || gameStatus === "correct" || gameStatus === "wrong";
 
   return (
-    <div className="w-screen h-screen relative">
+    <div className="flex flex-col w-screen h-dvh overflow-hidden">
       {isMobileLike ? (
-        <MobileNav chordName={currentChord?.name ?? null} rightModeLabel={t("nav.gameMode")} />
+        <MobileNav chordName={currentChord?.name ?? null} rightModeLabel={t("nav.gameMode")} position="static" />
       ) : (
-        <Navbar title={t("game.title")} activeLink="game" />
+        <Navbar title={t("game.title")} activeLink="game" position="static" />
       )}
 
       {/* Main Content */}
-      <div
-        className="absolute left-0 right-0 bottom-0 overflow-hidden bg-[#111111]"
-        style={{
-          // Keep this as a plain rem/px value so we don't risk invalid CSS
-          // (some browsers handle env(...) inconsistently).
-          top: isMobileLike ? "3.5rem" : "3.75rem",
-        }}
-      >
+      <div className="flex-1 relative min-h-0 overflow-hidden bg-[#111111]">
         
         {/* 3D Canvas */}
         <GameCanvas

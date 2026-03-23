@@ -35,7 +35,6 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
   const navigate = useNavigate();
   const lyricsRef = useRef<HTMLDivElement>(null);
   const isMobileLike = useIsMobileLike();
-  const [mobileNavHeightPx, setMobileNavHeightPx] = useState<number>(0);
 
   const {
     currentIndex,
@@ -57,31 +56,6 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
     restart,
     switchMode,
   } = useSongPlayer(song);
-
-  // Measure MobileNav actual rendered height (includes safe-area padding).
-  useEffect(() => {
-    if (!isMobileLike) return;
-    const el = document.querySelector("[data-mobile-nav='true']") as HTMLElement | null;
-    if (!el) return;
-
-    const measure = () => setMobileNavHeightPx(Math.ceil(el.getBoundingClientRect().height));
-    measure();
-
-    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(measure) : null;
-    ro?.observe(el);
-    window.addEventListener("resize", measure);
-    return () => {
-      ro?.disconnect();
-      window.removeEventListener("resize", measure);
-    };
-  }, [isMobileLike]);
-
-  const mobileTopOffset = useMemo(() => {
-    if (!isMobileLike) return "3.75rem";
-    // Fallback for first paint before measurement.
-    const px = mobileNavHeightPx > 0 ? mobileNavHeightPx : 76;
-    return `${px}px`;
-  }, [isMobileLike, mobileNavHeightPx]);
 
   const mobileLineRange = useMemo(() => {
     const chords = song.chords;
@@ -180,34 +154,26 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
   const progressPct = totalChords > 0 ? ((currentIndex + 1) / totalChords) * 100 : 0;
 
   return (
-    <div className="w-screen h-screen relative overflow-hidden">
+    <div className="flex flex-col w-screen h-dvh overflow-hidden">
       {isMobileLike ? (
-        <MobileNav rightModeLabel={t("nav.songMode")} />
+        <MobileNav rightModeLabel={t("nav.songMode")} position="static" />
       ) : (
-        <Navbar title={t("nav.title")} activeLink="songs" />
+        <Navbar title={t("nav.title")} activeLink="songs" position="static" />
       )}
 
-      {/* 3D fretboard */}
-      <div
-        className="absolute left-0 right-0 bottom-0 bg-[#111111]"
-        style={{
-          top: mobileTopOffset,
-        }}
-      >
-        <GameCanvas
-          currentChord={currentChordData}
-          canPlay={false}
-          onStrumReady={handleStrumReady}
-        />
-      </div>
+      {/* Main area: canvas + overlay fill remaining height */}
+      <div className="flex-1 relative min-h-0 overflow-hidden bg-[#111111]">
+        {/* 3D fretboard (no touch needed) */}
+        <div className="absolute inset-0 pointer-events-none">
+          <GameCanvas
+            currentChord={currentChordData}
+            canPlay={false}
+            onStrumReady={handleStrumReady}
+          />
+        </div>
 
-      {/* Overlay */}
-      <div
-        className="absolute left-0 right-0 bottom-0 pointer-events-none z-20 flex flex-col"
-        style={{
-          top: mobileTopOffset,
-        }}
-      >
+        {/* Overlay */}
+        <div className="absolute inset-0 pointer-events-none z-20 flex flex-col">
 
         {/* Top section */}
         <div className="flex flex-col px-3 pt-1.5 lg:pt-4 gap-1 lg:gap-2">
@@ -539,6 +505,7 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
             </div>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
