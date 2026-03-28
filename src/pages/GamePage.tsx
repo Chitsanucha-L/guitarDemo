@@ -51,10 +51,10 @@ export default function GamePage() {
 
   const strumRef = useRef<StrumHandle | null>(null);
   const [isBelowLg, setIsBelowLg] = useState(
-    () => typeof window !== "undefined" && !window.matchMedia("(min-width:1280px)").matches,
+    () => typeof window !== "undefined" && !window.matchMedia("(min-width:1024px)").matches,
   );
   useEffect(() => {
-    const mql = window.matchMedia("(min-width:1280px)");
+    const mql = window.matchMedia("(min-width:1024px)");
     const onChange = (e: MediaQueryListEvent) => setIsBelowLg(!e.matches);
     mql.addEventListener("change", onChange);
     return () => mql.removeEventListener("change", onChange);

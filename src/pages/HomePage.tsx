@@ -8,7 +8,7 @@ export default function HomePage() {
 
   return (
     <div className="w-full min-h-screen min-h-dvh h-screen h-dvh flex flex-col overflow-hidden">
-      <div className="hidden xl:block">
+      <div className="hidden lg:block">
         <Navbar title={t("nav.title")} activeLink="home" variant="home" />
       </div>
 

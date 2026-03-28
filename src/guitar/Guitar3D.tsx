@@ -163,10 +163,10 @@ export default function Guitar3D() {
   }, []);
 
   const [isBelowLg, setIsBelowLg] = useState(
-    () => typeof window !== "undefined" && !window.matchMedia("(min-width:1280px)").matches,
+    () => typeof window !== "undefined" && !window.matchMedia("(min-width:1024px)").matches,
   );
   useEffect(() => {
-    const mql = window.matchMedia("(min-width:1280px)");
+    const mql = window.matchMedia("(min-width:1024px)");
     const update = () => setIsBelowLg(!mql.matches);
     mql.addEventListener("change", update);
     return () => mql.removeEventListener("change", update);
@@ -284,7 +284,7 @@ export default function Guitar3D() {
     <div className="w-full max-w-screen min-h-screen min-h-dvh h-screen h-dvh relative overflow-hidden bg-[#1a1a1a]">
 
       {/* Mobile: top nav + fixed CTA + bottom tabs + bottom sheet */}
-      <div className="xl:hidden">
+      <div className="lg:hidden">
         <MobileNav
           chordName={selectedChordName}
           rightModeLabel={isHoldingPick ? t("pick.playMode") : t("pick.viewMode")}
@@ -375,7 +375,7 @@ export default function Guitar3D() {
       </div>
 
       {/* Left sidebar — desktop only */}
-      <div className="absolute top-12 lg:top-18 left-2 lg:left-4 z-50 pointer-events-auto hidden xl:block">
+      <div className="absolute top-12 lg:top-18 left-2 lg:left-4 z-50 pointer-events-auto hidden lg:block">
         <div
           className="w-56 lg:w-80 max-h-[calc(100vh-4rem)] lg:max-h-[calc(100vh-5rem)] overflow-y-auto pr-1 space-y-2 pb-10"
           style={{ scrollbarWidth: "thin", scrollbarColor: "#4b5563 transparent" }}
@@ -460,19 +460,19 @@ export default function Guitar3D() {
       </div>
 
       {/* Top center — Now Playing (desktop only; mobile uses ChordBadge) */}
-      <div className="absolute top-12 lg:top-18 left-1/2 -translate-x-1/2 z-50 hidden xl:block">
+      <div className="absolute top-12 lg:top-18 left-1/2 -translate-x-1/2 z-50 hidden lg:block">
         <CurrentNoteDisplay currentNote={currentNote} chordName={selectedChordName} />
       </div>
 
       {/* Right side — Chord Diagram (desktop only) */}
       {highlightChord && selectedChordName && (
-        <div className="absolute top-12 lg:top-18 right-2 lg:right-5 z-50 hidden xl:block">
+        <div className="absolute top-12 lg:top-18 right-2 lg:right-5 z-50 hidden lg:block">
           <ChordDiagram chordName={selectedChordName} chordData={highlightChord} />
         </div>
       )}
 
       {/* Finger legend (desktop only) */}
-      <div className="hidden xl:block">
+      <div className="hidden lg:block">
         <FingerLegend highlightChord={highlightChord} />
       </div>
 

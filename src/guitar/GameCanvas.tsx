@@ -22,7 +22,7 @@ interface GameCanvasProps {
 
 function FixedCamera({ isBelowLg }: { isBelowLg: boolean }) {
   const { size } = useThree();
-  const worldHeight = isBelowLg ? 0.7 : 0.9;
+  const worldHeight = isBelowLg ? 0.95 : 1.1;
 
   return (
     <OrthographicCamera
