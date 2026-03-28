@@ -5,6 +5,7 @@ export type MobileBottomTab = "play" | "strum" | "progression" | "scale";
 interface MobileBottomTabsProps {
   activeTab: MobileBottomTab | null;
   onTabChange: (tab: MobileBottomTab) => void;
+  disabledTabs?: Set<MobileBottomTab>;
 }
 
 const TAB_META: Array<{
@@ -20,6 +21,7 @@ const TAB_META: Array<{
 export default function MobileBottomTabs({
   activeTab,
   onTabChange,
+  disabledTabs,
 }: MobileBottomTabsProps) {
   const { t } = useTranslation();
 
@@ -27,6 +29,7 @@ export default function MobileBottomTabs({
     <div className="flex items-stretch justify-around px-1.5 pb-1.5 border-b border-gray-700/30">
       {TAB_META.map((tab) => {
         const isActive = tab.id === activeTab;
+        const isDisabled = disabledTabs?.has(tab.id) ?? false;
         const label =
           tab.id === "play"
             ? t("sections.play")
@@ -40,11 +43,14 @@ export default function MobileBottomTabs({
           <button
             key={tab.id}
             type="button"
+            disabled={isDisabled}
             onClick={() => onTabChange(tab.id)}
             className={`flex-1 flex items-center justify-center gap-1.5 px-1.5 py-3 rounded-xl transition-all touch-manipulation ${
-              isActive
-                ? "bg-gradient-to-r from-yellow-400/20 to-amber-400/20"
-                : "bg-transparent hover:bg-white/5 active:bg-white/10"
+              isDisabled
+                ? "opacity-40 cursor-not-allowed"
+                : isActive
+                  ? "bg-gradient-to-r from-yellow-400/20 to-amber-400/20"
+                  : "bg-transparent hover:bg-white/5 active:bg-white/10"
             }`}
           >
             <span className="text-[15px] leading-none" aria-hidden>
@@ -52,7 +58,7 @@ export default function MobileBottomTabs({
             </span>
             <span
               className={`text-xs font-bold ${
-                isActive ? "text-yellow-200" : "text-gray-400"
+                isDisabled ? "text-gray-600" : isActive ? "text-yellow-200" : "text-gray-400"
               }`}
             >
               {label}

@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect, Suspense } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo, Suspense } from "react";
 import * as THREE from "three";
 import { Canvas, useThree, useFrame } from "@react-three/fiber";
 import { Environment, OrbitControls } from "@react-three/drei";
@@ -24,10 +24,13 @@ import MobileBottomTabs, { type MobileBottomTab } from "./ui/MobileBottomTabs";
 import ProgressionPanel from "./ui/ProgressionPanel";
 import { useChordProgression } from "./hooks/useChordProgression";
 import type { ChordProgression } from "./data/chordProgressions";
+import { transposeProgression } from "./data/chordProgressions";
 import type { Root } from "./types/chord";
 import type { Stroke } from "./hooks/useStrummingEngine";
 
 type PanelId = "chord" | "strum" | "progression" | "scale";
+
+const DISABLED_TABS_WHILE_PLAYING = new Set<import("./ui/MobileBottomTabs").MobileBottomTab>(["play", "scale"]);
 
 const DEFAULT_POSITION = new THREE.Vector3(0.3, 6, 0.01);
 const DEFAULT_TARGET = new THREE.Vector3(0, 0, 0);
@@ -182,7 +185,11 @@ export default function Guitar3D() {
   const [scaleFretRange, setScaleFretRange] = useState<[number, number]>([0, 12]);
 
   const [activeProgression, setActiveProgression] = useState<ChordProgression | null>(null);
-  const progression = useChordProgression(activeProgression?.chords ?? ["C"]);
+  const transposedChords = useMemo(
+    () => activeProgression ? transposeProgression(activeProgression.degrees, chordRoot) : ["C"],
+    [activeProgression, chordRoot],
+  );
+  const progression = useChordProgression(transposedChords);
   const [progressionResetToken, setProgressionResetToken] = useState(0);
 
   const togglePanel = useCallback((id: PanelId) => {
@@ -219,11 +226,21 @@ export default function Guitar3D() {
     chordRef.current = null;
     setHighlightChord(null);
     setSelectedChordName(null);
+
+    // Same as Progression "Clear": wipe active progression and panel selection.
+    setActiveProgression(null);
+    progression.reset();
+    setProgressionResetToken((t) => t + 1);
   };
 
   const handleRootChange = useCallback((root: Root) => {
     setChordRoot(root);
-  }, []);
+    if (activeProgression) {
+      const newChords = transposeProgression(activeProgression.degrees, root);
+      progression.reset();
+      applyChord(newChords[0]);
+    }
+  }, [activeProgression, progression, applyChord]);
 
   const handleStrumReady = useCallback((fn: StrumDirectionFn) => {
     strumFnRef.current = fn;
@@ -250,15 +267,15 @@ export default function Guitar3D() {
   const handleProgressionSelect = useCallback((prog: ChordProgression | null) => {
     setActiveProgression(prog);
     if (prog) {
-      // Selecting a progression disables Scale mode.
       setScaleNotes(null);
       setRootSemitone(null);
       setScaleFretRange([0, 12]);
 
+      const chords = transposeProgression(prog.degrees, chordRoot);
       progression.reset();
-      applyChord(prog.chords[0]);
+      applyChord(chords[0]);
     }
-  }, [progression, applyChord]);
+  }, [chordRoot, progression, applyChord]);
 
   const handleScaleChange = useCallback(
     (notes: number[] | null, root: number | null, fretRange: [number, number]) => {
@@ -279,6 +296,15 @@ export default function Guitar3D() {
     },
     [highlightChord, progression],
   );
+
+  const handleStrumPlayingChange = useCallback((playing: boolean) => {
+    setStrumPlaying(playing);
+    if (playing && activeProgression && !highlightChord) {
+      progression.reset();
+      const chords = transposeProgression(activeProgression.degrees, chordRoot);
+      applyChord(chords[0]);
+    }
+  }, [activeProgression, highlightChord, progression, chordRoot, applyChord]);
 
   return (
     <div className="w-full max-w-screen min-h-screen min-h-dvh h-screen h-dvh relative overflow-hidden bg-[#1a1a1a]">
@@ -301,6 +327,7 @@ export default function Guitar3D() {
             <MobileBottomTabs
               activeTab={activeMobileTab}
               onTabChange={handleTabChange}
+              disabledTabs={strumPlaying ? DISABLED_TABS_WHILE_PLAYING : undefined}
             />
           }
         >
@@ -354,7 +381,7 @@ export default function Guitar3D() {
                 onStroke={handleStroke}
                 onBarChange={handleBarChange}
                 hidePlayButton
-                onPlayingChange={setStrumPlaying}
+                onPlayingChange={handleStrumPlayingChange}
               />
             </div>
 
@@ -364,6 +391,7 @@ export default function Guitar3D() {
                 currentIndex={progression.index}
                 onSelect={handleProgressionSelect}
                 resetToken={progressionResetToken}
+                transposedChords={activeProgression ? transposedChords : undefined}
               />
             </div>
 
@@ -387,7 +415,7 @@ export default function Guitar3D() {
           />
 
           {/* ── CHORD BUILDER ── */}
-          <div className="mt-1">
+          <div className={`mt-1 transition-opacity ${strumPlaying ? "opacity-50 pointer-events-none" : ""}`}>
             <p className="text-[10px] uppercase tracking-widest text-gray-500 font-semibold px-1 mb-1.5">{t("sections.chordBuilder")}</p>
             <div className="bg-gray-900/80 rounded-xl backdrop-blur-sm overflow-hidden">
               <SectionHeader
@@ -419,7 +447,7 @@ export default function Guitar3D() {
                   onToggle={() => togglePanel("strum")}
                 />
                 <div className="px-3 pb-3 pt-1" style={{ display: openPanels.has("strum") ? undefined : "none" }}>
-                  <StrumPanel onStroke={handleStroke} onBarChange={handleBarChange} />
+                  <StrumPanel onStroke={handleStroke} onBarChange={handleBarChange} onPlayingChange={handleStrumPlayingChange} />
                 </div>
               </div>
 
@@ -435,6 +463,8 @@ export default function Guitar3D() {
                     active={!!activeProgression}
                     currentIndex={progression.index}
                     onSelect={handleProgressionSelect}
+                    resetToken={progressionResetToken}
+                    transposedChords={activeProgression ? transposedChords : undefined}
                   />
                 </div>
               </div>
@@ -442,7 +472,7 @@ export default function Guitar3D() {
           </div>
 
           {/* ── THEORY ── */}
-          <div className="mt-4 border-t border-t-2 border-gray-700/40 pt-3">
+          <div className={`mt-4 border-t border-t-2 border-gray-700/40 pt-3 transition-opacity ${strumPlaying ? "opacity-50 pointer-events-none" : ""}`}>
             <p className="text-[10px] uppercase tracking-widest text-gray-500 font-semibold px-1 mb-1.5">{t("sections.theory")}</p>
             <div className="bg-gray-900/80 rounded-xl backdrop-blur-sm overflow-hidden">
               <SectionHeader

@@ -8,6 +8,8 @@ interface ProgressionPanelProps {
   onSelect: (progression: ChordProgression | null) => void;
   /** When this value changes, clear internal selection state. */
   resetToken?: number;
+  /** Chord names transposed to the current root (used for display). */
+  transposedChords?: string[];
 }
 
 export default function ProgressionPanel({
@@ -15,6 +17,7 @@ export default function ProgressionPanel({
   currentIndex,
   onSelect,
   resetToken,
+  transposedChords,
 }: ProgressionPanelProps) {
   const { t } = useTranslation();
   const [selected, setSelected] = useState<ChordProgression | null>(null);
@@ -74,12 +77,12 @@ export default function ProgressionPanel({
       {/* Chord timeline */}
       {selected && (
         <div className="flex flex-wrap items-center gap-1 pt-1">
-          {selected.chords.map((chord, i) => {
+          {(transposedChords ?? []).map((chord, i) => {
             const isCurrent = active && i === currentIndex;
             return (
               <div key={`${chord}-${i}`} className="flex items-center">
                 <span
-                  className={`px-2 py-1 text-xs font-bold rounded transition-all duration-200 ${
+                  className={`px-3 py-1 text-[15px] font-bold rounded transition-all duration-200 ${
                     isCurrent
                       ? "bg-amber-500 text-white scale-110 shadow-md shadow-amber-500/40"
                       : i < currentIndex && active
@@ -89,8 +92,8 @@ export default function ProgressionPanel({
                 >
                   {chord}
                 </span>
-                {i < selected.chords.length - 1 && (
-                  <span className="text-gray-600 text-[10px] mx-0.5">›</span>
+                {i < (transposedChords ?? []).length - 1 && (
+                  <span className="text-gray-600 text-[12px] mx-1">›</span>
                 )}
               </div>
             );
