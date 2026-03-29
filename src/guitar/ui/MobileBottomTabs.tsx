@@ -32,7 +32,7 @@ export default function MobileBottomTabs({
         const isDisabled = disabledTabs?.has(tab.id) ?? false;
         const label =
           tab.id === "play"
-            ? t("sections.play")
+            ? t("sections.chordBuilder")
             : tab.id === "strum"
               ? t("sections.strumming")
               : tab.id === "progression"
