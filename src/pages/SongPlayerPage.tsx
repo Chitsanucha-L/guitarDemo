@@ -318,29 +318,32 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
               >
                 {song.chords.slice(mobileLineRange.start, mobileLineRange.end + 1).map((entry, localIdx) => {
                   const i = mobileLineRange.start + localIdx;
-                  const isActive = i === currentIndex && !isCountingIn;
+                  const isActive = i === currentIndex;
                   const isPast = i < currentIndex;
                   const lyric = (entry.lyrics ?? "").trim();
                   return (
                     <div
                       key={i}
                       data-active={isActive}
-                      className={`inline-flex flex-col items-center justify-center rounded-lg px-1.5 py-0.5 transition-all duration-200 min-w-[3.5rem] ${isActive
+                      className={`inline-flex flex-col items-center justify-center rounded-lg px-1.5 py-0.5 transition-all duration-200 min-w-[3.5rem] ${
+                        isActive
                           ? "bg-yellow-500/20 border border-yellow-500/50 shadow-lg shadow-yellow-500/10"
                           : isPast
                             ? "opacity-40"
                             : "border border-transparent"
-                        }`}
+                      }`}
                     >
                       <span
-                        className={`text-xs font-bold transition-colors duration-200 ${isActive ? "text-yellow-400" : isPast ? "text-gray-600" : "text-blue-400"
-                          }`}
+                        className={`text-xs font-bold transition-colors duration-200 ${
+                          isActive ? "text-yellow-400" : isPast ? "text-gray-600" : "text-blue-400"
+                        }`}
                       >
                         {entry.chord}
                       </span>
                       <span
-                        className={`text-[9px] leading-tight text-center ${isActive ? "text-white" : isPast ? "text-gray-600" : "text-gray-400"
-                          }`}
+                        className={`text-[9px] leading-tight text-center ${
+                          isActive ? "text-white" : isPast ? "text-gray-600" : "text-gray-400"
+                        }`}
                       >
                         {lyric || " "}
                       </span>
@@ -356,29 +359,32 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
             >
               <div className="flex flex-wrap gap-x-1 gap-y-1.5 lg:gap-x-2 lg:gap-y-2">
                 {song.chords.map((entry, i) => {
-                  const isActive = i === currentIndex && !isCountingIn;
+                  const isActive = i === currentIndex;
                   const isPast = i < currentIndex;
                   return (
                     <div
                       key={i}
                       data-active={isActive}
-                      className={`flex flex-col items-center rounded-lg px-2 lg:px-3 py-1 lg:py-1.5 transition-all duration-200 min-w-[4rem] lg:min-w-[5.5rem] ${isActive
+                      className={`flex flex-col items-center rounded-lg px-2 lg:px-3 py-1 lg:py-1.5 transition-all duration-200 min-w-[4rem] lg:min-w-[5.5rem] ${
+                        isActive
                           ? "bg-yellow-500/20 border border-yellow-500/50 scale-105 shadow-lg shadow-yellow-500/10"
                           : isPast
                             ? "opacity-40"
                             : "border border-transparent"
-                        }`}
+                      }`}
                     >
                       <span
-                        className={`text-sm lg:text-lg font-bold transition-colors duration-200 ${isActive ? "text-yellow-400" : isPast ? "text-gray-600" : "text-blue-400"
-                          }`}
+                        className={`text-sm lg:text-lg font-bold transition-colors duration-200 ${
+                          isActive ? "text-yellow-400" : isPast ? "text-gray-600" : "text-blue-400"
+                        }`}
                       >
                         {entry.chord}
                       </span>
                       {entry.lyrics && (
                         <span
-                          className={`text-[10px] lg:text-xs leading-tight text-center ${isActive ? "text-white" : isPast ? "text-gray-600" : "text-gray-400"
-                            }`}
+                          className={`text-[10px] lg:text-xs leading-tight text-center ${
+                            isActive ? "text-white" : isPast ? "text-gray-600" : "text-gray-400"
+                          }`}
                         >
                           {entry.lyrics}
                         </span>
