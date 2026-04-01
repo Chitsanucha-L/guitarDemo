@@ -392,7 +392,7 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
         </div>
 
         {/* Control bar */}
-        <div className="pointer-events-auto pb-1 lg:pb-5 px-2 lg:px-6" style={{ paddingBottom: "max(0.25rem, env(safe-area-inset-bottom, 0px))" }}>
+        <div className="pointer-events-auto pb-1 lg:pb-5 px-2 lg:px-6">
           {/* Song progress */}
           <div className="w-full h-[3px] lg:h-1 bg-gray-800 rounded-full mb-1 lg:mb-4 overflow-hidden">
             <div
