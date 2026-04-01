@@ -56,7 +56,7 @@ export default function GameHUD({
             </div>
             <div className="flex justify-center flex-wrap gap-1 mt-0.5 lg:mt-2">
               <span
-                className={`text-[7px] lg:text-[9px] font-bold px-2 py-0.5 rounded-full ${
+                className={`text-[7px] lg:text-[9px] xl:text-[11px] font-bold px-2 lg:px-2.5 xl:px-3 py-0.5 lg:py-1 rounded-full ${
                   isPractice
                     ? "bg-purple-600/60 text-purple-200 border border-purple-400/30"
                     : "bg-orange-600/60 text-orange-200 border border-orange-400/30"
@@ -65,7 +65,7 @@ export default function GameHUD({
                 {isPractice ? t("mode.practice") : t("mode.challenge")}
               </span>
               {difficultyLabel && (
-                <span className="text-[7px] lg:text-[9px] font-bold px-2 py-0.5 rounded-full bg-cyan-600/50 text-cyan-100 border border-cyan-400/30">
+                <span className="text-[7px] lg:text-[9px] xl:text-[11px] font-bold px-2 lg:px-2.5 xl:px-3 py-0.5 lg:py-1 rounded-full bg-cyan-600/50 text-cyan-100 border border-cyan-400/30">
                   {difficultyLabel}
                 </span>
               )}
