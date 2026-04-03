@@ -19,12 +19,12 @@ export default function SongListPage() {
 
       {/* Content */}
       <div
-        className="px-4 lg:px-8 pb-8 max-w-4xl mx-auto w-full"
+        className="px-4 lg:px-8 pb-8 max-w-2xl lg:max-w-3xl xl:max-w-4xl mx-auto w-full"
         style={{ paddingTop: isMobileLike ? "3.5rem" : "3.75rem" }}
       >
-        <div className="text-center mb-6 lg:mb-10 mt-4 lg:mt-5">
-          <h2 className="text-2xl lg:text-4xl font-bold text-yellow-400 mb-2">{t("song.title")}</h2>
-          <p className="text-gray-400 text-sm lg:text-base">{t("song.subtitle")}</p>
+        <div className="text-center mb-6 lg:mb-10 mt-4 lg:mt-6 xl:mt-8">
+          <h2 className="text-xl lg:text-2xl xl:text-3xl font-bold text-yellow-400 mb-2">{t("song.title")}</h2>
+          <p className="text-gray-400 text-[13px] lg:text-[14px] xl:text-[15px]">{t("song.subtitle")}</p>
         </div>
 
         <div className="grid gap-4 lg:gap-6">
@@ -38,16 +38,16 @@ export default function SongListPage() {
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-xl lg:text-2xl font-bold text-white group-hover:text-yellow-400 transition-colors truncate">
+                    <h3 className="text-base lg:text-lg xl:text-xl font-bold text-white group-hover:text-yellow-400 transition-colors truncate">
                       {song.title}
                     </h3>
-                    <p className="text-gray-400 text-sm mt-0.5">{song.artist}</p>
+                    <p className="text-gray-400 text-[11px] lg:text-[12px] xl:text-[13px] mt-0.5">{song.artist}</p>
 
                     <div className="flex flex-wrap gap-2 mt-3">
                       {chordNames.map((c) => (
                         <span
                           key={c}
-                          className="inline-block bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-lg px-2.5 py-0.5 text-sm font-semibold"
+                          className="inline-block bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-lg px-2.5 py-0.5 text-[12px] lg:text-[13px] xl:text-[14px] font-semibold"
                         >
                           {c}
                         </span>
@@ -56,13 +56,13 @@ export default function SongListPage() {
                   </div>
 
                   <div className="flex flex-col items-end gap-1.5 shrink-0">
-                    <span className="inline-block bg-green-600/20 text-green-400 border border-green-500/30 rounded-lg px-3 py-0.5 text-xs font-bold uppercase">
+                    <span className="inline-block bg-green-600/20 text-green-400 border border-green-500/30 rounded-lg px-3 py-0.5 text-[10px] lg:text-[11px] xl:text-[12px] font-bold uppercase">
                       {t("song.beginner")}
                     </span>
-                    <span className="text-gray-500 text-xs">
+                    <span className="text-gray-500 text-[10px] lg:text-[11px] xl:text-[12px]">
                       {song.tempo} BPM &middot; {t("song.key")} {song.key}
                     </span>
-                    <span className="text-gray-500 text-xs">
+                    <span className="text-gray-500 text-[10px] lg:text-[11px] xl:text-[12px]">
                       {song.chords.length} {t("song.changes")}
                     </span>
                   </div>

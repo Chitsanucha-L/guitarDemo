@@ -57,9 +57,36 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
     switchMode,
   } = useSongPlayer(song);
 
+  /** Extra chords shown in the strip: +2 when width ≤1024px, +6 when ≤1440px (and >1024), else 0. */
+  const [lineRangeExtra, setLineRangeExtra] = useState(() => {
+    if (typeof window === "undefined") return 0;
+    if (window.matchMedia("(max-width: 1024px)").matches) return 2;
+    if (window.matchMedia("(max-width: 1440px)").matches) return 6;
+    return 0;
+  });
+
+  useEffect(() => {
+    const m1024 = window.matchMedia("(max-width: 1024px)");
+    const m1440 = window.matchMedia("(max-width: 1440px)");
+    const update = () => {
+      if (m1024.matches) setLineRangeExtra(2);
+      else if (m1440.matches) setLineRangeExtra(6);
+      else setLineRangeExtra(0);
+    };
+    update();
+    m1024.addEventListener("change", update);
+    m1440.addEventListener("change", update);
+    return () => {
+      m1024.removeEventListener("change", update);
+      m1440.removeEventListener("change", update);
+    };
+  }, []);
+
   const mobileLineRange = useMemo(() => {
     const chords = song.chords;
     const idx = Math.min(Math.max(currentIndex, 0), chords.length - 1);
+    const extra = lineRangeExtra;
+    const n = chords.length;
 
     const isBreak = (i: number) => (chords[i]?.lyrics ?? "").trim() === "";
     const hasExplicitBreaks = chords.some((c) => (c.lyrics ?? "").trim() === "");
@@ -69,19 +96,21 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
       let start = idx;
       while (start > 0 && !isBreak(start) && !isBreak(start - 1)) start -= 1;
       if (isBreak(start)) {
-        while (start < chords.length - 1 && isBreak(start)) start += 1;
+        while (start < n - 1 && isBreak(start)) start += 1;
       }
       let end = start;
-      while (end < chords.length - 1 && !isBreak(end) && !isBreak(end + 1)) end += 1;
+      while (end < n - 1 && !isBreak(end) && !isBreak(end + 1)) end += 1;
+      start = Math.max(0, start - extra);
+      end = Math.min(n - 1, end + extra);
       return { start, end };
     }
 
     // Fallback: group into a stable chunk so it still behaves like "one line".
-    const chunk = 7;
+    const chunk = 7 + extra;
     const start = Math.floor(idx / chunk) * chunk;
-    const end = Math.min(chords.length - 1, start + chunk - 1);
+    const end = Math.min(n - 1, start + chunk - 1);
     return { start, end };
-  }, [currentIndex, song.chords]);
+  }, [currentIndex, song.chords, lineRangeExtra]);
 
   // --- Audio: strum on chord change ---
   // ★ Wire the 3D guitar's strum function directly into useSongPlayer's ref.
@@ -307,94 +336,57 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
         {/* Guitar visibility spacer — guarantees minimum guitar window */}
         <div className="flex-1 min-h-[45dvh]" />
 
-        {/* Lyrics panel */}
+        {/* Lyrics panel — one row, horizontal scroll (same pattern as mobile on all breakpoints) */}
         <div className="pointer-events-auto mx-2 lg:mx-6 mb-1 lg:mb-3">
-          {isMobileLike ? (
-            <div className="bg-gray-900/85 backdrop-blur-md rounded-xl border border-gray-700/50 px-1.5 py-0.5">
-              <div
-                ref={lyricsRef}
-                className="flex gap-1 overflow-x-auto overflow-y-hidden whitespace-nowrap scrollbar-none py-0.5 px-0.5"
-                style={{ WebkitOverflowScrolling: "touch" }}
-              >
-                {song.chords.slice(mobileLineRange.start, mobileLineRange.end + 1).map((entry, localIdx) => {
-                  const i = mobileLineRange.start + localIdx;
-                  const isActive = i === currentIndex;
-                  const isPast = i < currentIndex;
-                  const lyric = (entry.lyrics ?? "").trim();
-                  return (
-                    <div
-                      key={i}
-                      data-active={isActive}
-                      className={`inline-flex flex-col items-center justify-center rounded-lg px-1.5 py-0.5 transition-all duration-200 min-w-[3.5rem] ${
-                        isActive
-                          ? "bg-yellow-500/20 border border-yellow-500/50 shadow-lg shadow-yellow-500/10"
-                          : isPast
-                            ? "opacity-40"
-                            : "border border-transparent"
-                      }`}
-                    >
-                      <span
-                        className={`text-xs font-bold transition-colors duration-200 ${
-                          isActive ? "text-yellow-400" : isPast ? "text-gray-600" : "text-blue-400"
-                        }`}
-                      >
-                        {entry.chord}
-                      </span>
-                      <span
-                        className={`text-[9px] leading-tight text-center ${
-                          isActive ? "text-white" : isPast ? "text-gray-600" : "text-gray-400"
-                        }`}
-                      >
-                        {lyric || " "}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ) : (
+          <div
+            className={`bg-gray-900/85 backdrop-blur-md border border-gray-700/50 ${
+              isMobileLike ? "rounded-xl px-1.5 py-0.5" : "rounded-2xl px-3 lg:px-6 py-2 lg:py-3"
+            }`}
+          >
             <div
               ref={lyricsRef}
-              className="bg-gray-900/85 backdrop-blur-md rounded-2xl border border-gray-700/50 px-3 lg:px-6 py-3 lg:py-4 max-h-[7rem] lg:max-h-[11rem] overflow-y-auto scrollbar-thin"
+              className={`flex gap-1 lg:gap-2 overflow-x-auto overflow-y-hidden whitespace-nowrap py-0.5 px-0.5 lg:py-1 lg:px-1 ${
+                isMobileLike ? "scrollbar-none" : "scrollbar-visible"
+              }`}
+              style={{ WebkitOverflowScrolling: "touch" }}
             >
-              <div className="flex flex-wrap gap-x-1 gap-y-1.5 lg:gap-x-2 lg:gap-y-2">
-                {song.chords.map((entry, i) => {
-                  const isActive = i === currentIndex;
-                  const isPast = i < currentIndex;
-                  return (
-                    <div
-                      key={i}
-                      data-active={isActive}
-                      className={`flex flex-col items-center rounded-lg px-2 lg:px-3 py-1 lg:py-1.5 transition-all duration-200 min-w-[4rem] lg:min-w-[5.5rem] ${
-                        isActive
-                          ? "bg-yellow-500/20 border border-yellow-500/50 scale-105 shadow-lg shadow-yellow-500/10"
-                          : isPast
-                            ? "opacity-40"
-                            : "border border-transparent"
+              {song.chords.slice(mobileLineRange.start, mobileLineRange.end + 1).map((entry, localIdx) => {
+                const i = mobileLineRange.start + localIdx;
+                const isActive = i === currentIndex;
+                const isPast = i < currentIndex;
+                const lyric = (entry.lyrics ?? "").trim();
+                return (
+                  <div
+                    key={i}
+                    data-active={isActive}
+                    className={`inline-flex shrink-0 flex-col items-center justify-center rounded-lg transition-all duration-200 min-w-[3.5rem] lg:min-w-[4.5rem] xl:min-w-[5rem] px-1.5 py-0.5 lg:px-2.5 lg:py-1.5 ${
+                      isActive
+                        ? "bg-yellow-500/20 border border-yellow-500/50 shadow-lg shadow-yellow-500/10 lg:scale-105"
+                        : isPast
+                          ? "opacity-40"
+                          : "border border-transparent"
+                    }`}
+                  >
+                    <span
+                      className={`font-bold transition-colors duration-200 text-xs lg:text-base xl:text-lg ${
+                        isActive ? "text-yellow-400" : isPast ? "text-gray-600" : "text-blue-400"
                       }`}
                     >
-                      <span
-                        className={`text-sm lg:text-lg font-bold transition-colors duration-200 ${
-                          isActive ? "text-yellow-400" : isPast ? "text-gray-600" : "text-blue-400"
-                        }`}
-                      >
-                        {entry.chord}
-                      </span>
-                      {entry.lyrics && (
-                        <span
-                          className={`text-[10px] lg:text-xs leading-tight text-center ${
-                            isActive ? "text-white" : isPast ? "text-gray-600" : "text-gray-400"
-                          }`}
-                        >
-                          {entry.lyrics}
-                        </span>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+                      {entry.chord}
+                    </span>
+                    <span
+                      className={`leading-tight text-center max-w-[6.5rem] lg:max-w-[8rem] truncate text-[9px] lg:text-xs ${
+                        isActive ? "text-white" : isPast ? "text-gray-600" : "text-gray-400"
+                      }`}
+                      title={lyric || undefined}
+                    >
+                      {lyric || "\u00a0"}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
-          )}
+          </div>
         </div>
 
         {/* Control bar */}

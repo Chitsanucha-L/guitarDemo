@@ -1,65 +1,24 @@
 import { useEffect, useState } from "react";
 
 /**
- * Decide "mobile-like" UI based on viewport constraints that better match
- * landscape phones than width-only Tailwind breakpoints.
+ * Matches Home / Guitar3D / Tailwind `lg:` — viewport below 1024px uses the compact
+ * (mobile) chrome; at 1024px and up uses desktop chrome.
  *
- * We treat the viewport as mobile-like when:
- * - height is relatively small (e.g. landscape phone), OR
- * - pointer is coarse (touch), OR
- * - width is not too large.
+ * We intentionally do **not** use max-height, pointer:coarse, or UA here: those made
+ * short desktop windows (e.g. DevTools open, 1440×884) incorrectly show mobile UI.
  */
 export default function useIsMobileLike() {
-  const [isMobileLike, setIsMobileLike] = useState(false);
+  const [isMobileLike, setIsMobileLike] = useState(() =>
+    typeof window !== "undefined" && !window.matchMedia("(min-width: 1024px)").matches,
+  );
 
   useEffect(() => {
-    const ua =
-      typeof navigator !== "undefined" ? navigator.userAgent || "" : "";
-    const isProbablyMobileUa =
-      /iPhone|iPad|iPod|Android|Mobile|Windows Phone/i.test(ua);
-
-    const mqlHeight = window.matchMedia("(max-height: 900px)");
-    const mqlCoarse = window.matchMedia("(pointer: coarse)");
-    const mqlWidth = window.matchMedia("(max-width: 1150px)");
-    const mqlDeviceWidth = window.matchMedia("(max-device-width: 1024px)");
-    const mqlOrientationLandscape = window.matchMedia("(orientation: landscape)");
-    const mqlShortLandscape = window.matchMedia(
-      "(orientation: landscape) and (max-height: 700px)",
-    );
-
-    const update = () => {
-      // Prefer "mobile-like" decisions even if viewport is large (e.g. desktop browser
-      // simulating a handheld in landscape).
-      const next =
-        isProbablyMobileUa ||
-        mqlCoarse.matches ||
-        mqlDeviceWidth.matches ||
-        mqlShortLandscape.matches ||
-        mqlHeight.matches ||
-        mqlOrientationLandscape.matches && mqlWidth.matches;
-
-      setIsMobileLike(Boolean(next));
-    };
-
+    const mql = window.matchMedia("(min-width: 1024px)");
+    const update = () => setIsMobileLike(!mql.matches);
     update();
-
-    mqlHeight.addEventListener("change", update);
-    mqlCoarse.addEventListener("change", update);
-    mqlWidth.addEventListener("change", update);
-    mqlDeviceWidth.addEventListener("change", update);
-    mqlOrientationLandscape.addEventListener("change", update);
-    mqlShortLandscape.addEventListener("change", update);
-
-    return () => {
-      mqlHeight.removeEventListener("change", update);
-      mqlCoarse.removeEventListener("change", update);
-      mqlWidth.removeEventListener("change", update);
-      mqlDeviceWidth.removeEventListener("change", update);
-      mqlOrientationLandscape.removeEventListener("change", update);
-      mqlShortLandscape.removeEventListener("change", update);
-    };
+    mql.addEventListener("change", update);
+    return () => mql.removeEventListener("change", update);
   }, []);
 
   return isMobileLike;
 }
-
