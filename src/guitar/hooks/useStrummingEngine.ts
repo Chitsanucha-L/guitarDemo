@@ -30,8 +30,8 @@ export const PRESET_PATTERNS: StrumPattern[] = [
     ],
   },
   {
-    id: "simple-groove-1",
-    label: "Simple Groove 1",
+    id: "groove-1",
+    label: "Groove 1",
     recommendedBpm: 110,
     steps: [
       { stroke: "down", subdivision: 0 },
@@ -42,8 +42,8 @@ export const PRESET_PATTERNS: StrumPattern[] = [
     ],
   },
   {
-    id: "simple-groove-2",
-    label: "Simple Groove 2",
+    id: "groove-2",
+    label: "Groove 2",
     recommendedBpm: 65,
     steps: [
       { stroke: "down", subdivision: 0 },
