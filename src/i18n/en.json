@@ -98,7 +98,12 @@
     "penalty": "-2 seconds",
     "youWin": "YOU CLEARED THE SET!",
     "youWinDesc": "You got every chord in the pool right ({{count}} unique).",
-    "chordsCleared": "cleared"
+    "chordsCleared": "cleared",
+    "canvasViewControls": "Guitar view size",
+    "canvasZoomOut": "See more guitar",
+    "canvasZoomIn": "Closer view",
+    "canvasResetView": "Default view",
+    "canvasResetButton": "Reset"
   },
   "portrait": {
     "title": "Please Rotate Your Device",

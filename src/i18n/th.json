@@ -98,7 +98,12 @@
     "penalty": "-2 วินาที",
     "youWin": "ผ่านครบทุกคอร์ด!",
     "youWinDesc": "ตอบถูกครบทุกคอร์ดในชุด ({{count}} คอร์ด)",
-    "chordsCleared": "ผ่านแล้ว"
+    "chordsCleared": "ผ่านแล้ว",
+    "canvasViewControls": "ขนาดมุมมองกีต้าร์",
+    "canvasZoomOut": "เห็นกีต้าร์มากขึ้น",
+    "canvasZoomIn": "ซูมใกล้",
+    "canvasResetView": "มุมมองเริ่มต้น",
+    "canvasResetButton": "รีเซ็ต"
   },
   "portrait": {
     "title": "กรุณาหมุนอุปกรณ์ของคุณ",
