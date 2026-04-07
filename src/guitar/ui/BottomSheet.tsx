@@ -1,4 +1,5 @@
 import { useRef, useState, useCallback, useEffect, useLayoutEffect } from "react";
+import PersistentScrollbar from "./PersistentScrollbar";
 
 const SNAP_THRESHOLD = 0.08;
 const MOVE_CLICK_THRESHOLD_PX = 18;
@@ -208,12 +209,9 @@ export default function BottomSheet({
         {stickyHeader}
       </div>
 
-      <div
-        className="flex-1 min-h-0 overflow-y-scroll overflow-x-hidden overscroll-contain scrollbar-visible"
-        style={{ WebkitOverflowScrolling: "touch" }}
-      >
+      <PersistentScrollbar className="flex-1 min-h-0" scrollClassName="overflow-x-hidden">
         {children}
-      </div>
+      </PersistentScrollbar>
     </div>
   );
 }

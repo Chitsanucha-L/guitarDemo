@@ -35,7 +35,7 @@ export default function GameHUD({
       {/* Score — Top Left */}
       <div className="absolute top-1 lg:top-20 left-3 lg:left-6">
         <div className="bg-gray-900/60 backdrop-blur-md rounded-xl px-3 lg:px-5 py-1.5 lg:py-3 border border-blue-500/30 shadow-lg shadow-blue-500/5">
-          <div className="text-[9px] lg:text-xs text-gray-500 font-medium uppercase tracking-wider">{t("game.score")}</div>
+          <div className="text-[9px] lg:text-xs text-white font-medium uppercase tracking-wider">{t("game.score")}</div>
           <div className="text-lg lg:text-4xl font-bold text-white tabular-nums">{score}</div>
           {poolSize > 0 && (
             <div className="text-[9px] lg:text-xs text-cyan-400/90 mt-0.5 tabular-nums">

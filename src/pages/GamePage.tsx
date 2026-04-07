@@ -1,11 +1,13 @@
 import { Link } from "react-router-dom";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import GameCanvas from "../guitar/GameCanvas";
+import GameCanvas, { useCanvasWorldHeight } from "../guitar/GameCanvas";
+import CanvasViewControlButtons from "../guitar/ui/CanvasViewControlButtons";
 import GameHUD from "../guitar/ui/GameHUD";
 import GameFeedback from "../guitar/ui/GameFeedback";
 import Navbar from "../guitar/ui/Navbar";
 import MobileNav from "../guitar/ui/MobileNav";
+import PersistentScrollbar from "../guitar/ui/PersistentScrollbar";
 import useIsMobileLike from "../guitar/hooks/useIsMobileLike";
 import { useChordGame } from "../guitar/hooks/useChordGame";
 import type { GameMode, GameDifficulty } from "../guitar/hooks/useChordGame";
@@ -59,6 +61,7 @@ export default function GamePage() {
     mql.addEventListener("change", onChange);
     return () => mql.removeEventListener("change", onChange);
   }, []);
+  const canvasView = useCanvasWorldHeight(isBelowLg);
   const [isChecking, setIsChecking] = useState(false);
   const [showQuitModal, setShowQuitModal] = useState(false);
   const [selectedMode, setSelectedMode] = useState<GameMode>("practice");
@@ -152,12 +155,15 @@ export default function GamePage() {
             feedbackMarkers={feedbackMarkers}
             strumRef={strumRef}
             isBelowLg={isBelowLg}
+            canvasView={canvasView}
+            floatingViewControls={false}
           />
         </div>
 
-        {/* Scrollable UI overlay — pointer-events-none during gameplay so canvas stays interactive */}
-        <div className={`absolute inset-0 z-20 overflow-y-auto overscroll-contain scrollbar-visible ${isPlaying ? "pointer-events-none" : ""}`}>
-          <div className="flex flex-col min-h-full">
+        {/* Scrollable UI overlay — persistent rail; pointer-events-none during gameplay */}
+        <div className={`absolute inset-0 z-20 flex min-h-0 flex-col ${isPlaying ? "pointer-events-none" : ""}`}>
+          <PersistentScrollbar className="flex-1 min-h-0">
+            <div className="flex flex-col min-h-full">
 
             {/* Game HUD */}
             {isPlaying && currentChord && (
@@ -246,12 +252,14 @@ export default function GamePage() {
               </div>
             )}
 
-          </div>
+            </div>
+          </PersistentScrollbar>
         </div>
 
         {/* Start Screen */}
         {gameStatus === "idle" && (
-          <div className="absolute inset-0 z-50 overflow-y-auto overscroll-contain scrollbar-visible bg-black/60 backdrop-blur-sm">
+          <div className="absolute inset-0 z-50 flex min-h-0 flex-col bg-black/60 backdrop-blur-sm">
+            <PersistentScrollbar className="min-h-0 flex-1">
             <div className="flex items-center justify-center min-h-full p-4">
               <div className="bg-gray-900/95 backdrop-blur-md p-3 lg:p-6 xl:p-8 rounded-2xl shadow-2xl border border-gray-700/50 text-center max-w-sm lg:max-w-md xl:max-w-lg w-full">
                 <h2 className="text-lg lg:text-2xl xl:text-3xl font-bold text-yellow-400 mb-2 lg:mb-3 xl:mb-4">{t("game.startTitle")}</h2>
@@ -359,6 +367,7 @@ export default function GamePage() {
                 </button>
               </div>
             </div>
+            </PersistentScrollbar>
           </div>
         )}
 
@@ -477,14 +486,14 @@ export default function GamePage() {
         {/* Quit confirmation modal */}
         {showQuitModal && (
           <div className="absolute inset-0 flex items-center justify-center z-[60] bg-black/60 backdrop-blur-sm">
-            <div className="bg-gray-900/95 backdrop-blur-md p-6 lg:p-10 rounded-2xl shadow-2xl border border-red-500/30 text-center max-w-sm mx-4">
-              <div className="text-4xl mb-3">⚠️</div>
-              <h3 className="text-xl lg:text-2xl font-bold text-white mb-2">{t("game2.quitTitle")}</h3>
-              <p className="text-gray-400 text-sm lg:text-base mb-6">{t("game2.quitMessage")}</p>
+            <div className="bg-gray-900/95 backdrop-blur-md p-4 lg:p-6 rounded-2xl shadow-2xl border border-red-500/30 text-center max-w-sm mx-4">
+              <div className="text-2xl lg:text-4xl mb-3">⚠️</div>
+              <h3 className="text-[15px] lg:text-xl font-bold text-white mb-2">{t("game2.quitTitle")}</h3>
+              <p className="text-gray-400 text-xs lg:text-sm mb-6">{t("game2.quitMessage")}</p>
               <div className="flex justify-center gap-3">
                 <button
                   onClick={() => setShowQuitModal(false)}
-                  className="bg-gray-700 hover:bg-gray-600 text-white font-bold text-sm lg:text-base px-6 py-2.5 rounded-lg transition-all duration-200"
+                  className="bg-gray-700 hover:bg-gray-600 text-white font-bold text-xs lg:text-sm px-3 lg:px-5 py-1.5 lg:py-2 rounded-lg transition-all duration-200"
                 >
                   {t("game2.cancel")}
                 </button>
@@ -497,7 +506,7 @@ export default function GamePage() {
                     }
                     resetGame();
                   }}
-                  className="bg-red-600 hover:bg-red-500 text-white font-bold text-sm lg:text-base px-6 py-2.5 rounded-lg transition-all duration-200"
+                  className="bg-red-600 hover:bg-red-500 text-white font-bold text-xs lg:text-sm px-3 lg:px-5 py-1.5 lg:py-2 rounded-lg transition-all duration-200"
                 >
                   {t("game2.confirmQuit")}
                 </button>
@@ -505,6 +514,13 @@ export default function GamePage() {
             </div>
           </div>
         )}
+
+        {/* มุมมองคางคกิตาร์ — z-30 คลิกได้แม้ overlay เป็น pointer-events-none ตอนเล่น */}
+        <div
+          className="absolute z-30 pointer-events-auto bottom-[max(0.75rem,env(safe-area-inset-bottom,0px))] right-[max(0.75rem,env(safe-area-inset-right,0px))] lg:bottom-6 lg:right-6"
+        >
+          <CanvasViewControlButtons canvasView={canvasView} />
+        </div>
       </div>
     </div>
   );

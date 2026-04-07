@@ -3,12 +3,14 @@ import { Link, useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import Navbar from "../guitar/ui/Navbar";
 import MobileNav from "../guitar/ui/MobileNav";
-import GameCanvas from "../guitar/GameCanvas";
+import GameCanvas, { useCanvasWorldHeight } from "../guitar/GameCanvas";
 import type { StrumDirectionFn } from "../guitar/GuitarModel";
 import { SONGS } from "../guitar/data/songs";
 import { useSongPlayer } from "../guitar/hooks/useSongPlayer";
 import { useMetronome } from "../guitar/hooks/useMetronome";
 import useIsMobileLike from "../guitar/hooks/useIsMobileLike";
+import PersistentScrollbar from "../guitar/ui/PersistentScrollbar";
+import CanvasViewControlButtons from "../guitar/ui/CanvasViewControlButtons";
 
 export default function SongPlayerPage() {
   const { songId } = useParams<{ songId: string }>();
@@ -35,6 +37,7 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
   const navigate = useNavigate();
   const lyricsRef = useRef<HTMLDivElement>(null);
   const isMobileLike = useIsMobileLike();
+  const canvasView = useCanvasWorldHeight(isMobileLike);
 
   const {
     currentIndex,
@@ -201,11 +204,15 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
             currentChord={currentChordData}
             canPlay={false}
             onStrumReady={handleStrumReady}
+            isBelowLg={isMobileLike}
+            canvasView={canvasView}
+            floatingViewControls={false}
           />
         </div>
 
-        {/* Scrollable UI overlay */}
-        <div className="absolute inset-0 z-20 overflow-y-auto overscroll-contain scrollbar-visible">
+        {/* Scrollable UI overlay — persistent rail (iOS hides native bar) */}
+        <div className="absolute inset-0 z-20 flex min-h-0 flex-col">
+        <PersistentScrollbar className="flex-1 min-h-0" scrollClassName="overflow-x-hidden">
         <div className="flex flex-col min-h-full pointer-events-none">
 
         {/* Top section */}
@@ -493,14 +500,18 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
               </button>
             </div>
 
-            {/* Right: Counter */}
-            <div className="text-gray-400 text-xs lg:text-sm font-medium tabular-nums shrink-0 text-right justify-self-end">
-              {isCountingIn ? "—" : `${currentIndex + 1} / ${totalChords}`}
+            {/* Right: Counter + canvas view — shared styling with Game page */}
+            <div className="flex flex-col items-end gap-1.5 shrink-0 justify-self-end">
+              <div className="text-gray-400 text-xs lg:text-sm font-medium tabular-nums text-right">
+                {isCountingIn ? "—" : `${currentIndex + 1} / ${totalChords}`}
+              </div>
+              <CanvasViewControlButtons canvasView={canvasView} />
             </div>
           </div>
         </div>
-      </div>
-      </div>
+        </div>
+        </PersistentScrollbar>
+        </div>
       </div>
     </div>
   );

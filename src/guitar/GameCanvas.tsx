@@ -24,49 +24,8 @@ function readWorldHeightOffset(): number {
   }
 }
 
-interface GameCanvasProps {
-  currentChord: ChordData | null;
-  canPlay: boolean;
-  onStringPress?: (stringNum: number, fret: number) => void;
-  onBarrePress?: (strings: { stringNum: number; fret: number }[]) => void;
-  pressedPositions?: PressedPosition[];
-  pressedBarre?: PressedBarre | null;
-  feedbackMarkers?: FeedbackMarker[];
-  strumRef?: MutableRefObject<StrumHandle | null>;
-  onStrumReady?: (strumFn: StrumDirectionFn) => void;
-  isBelowLg?: boolean;
-}
-
-function FixedCamera({ worldHeight }: { worldHeight: number }) {
-  const { size } = useThree();
-
-  return (
-    <OrthographicCamera
-      makeDefault
-      position={[0, 0, 10]}
-      zoom={size.height / worldHeight}
-      near={0.1}
-      far={100}
-    />
-  );
-}
-
-function GameCanvas({
-  currentChord,
-  canPlay,
-  onStringPress,
-  onBarrePress,
-  pressedPositions = [],
-  pressedBarre = null,
-  feedbackMarkers = [],
-  strumRef,
-  onStrumReady,
-  isBelowLg = false,
-}: GameCanvasProps) {
-  const { t } = useTranslation();
-  const previousChordRef = useRef<ChordData | null>(null);
-  const chordRef = useRef<ChordData | null>(null);
-
+/** Shared with GameCanvas when parent renders view controls (e.g. SongPlayer control bar). */
+export function useCanvasWorldHeight(isBelowLg: boolean) {
   const baseWorldHeight = isBelowLg ? 0.95 : 1.1;
   const [heightOffset, setHeightOffset] = useState(readWorldHeightOffset);
 
@@ -106,6 +65,62 @@ function GameCanvas({
       /* ignore */
     }
   }, []);
+
+  return { worldHeight, bumpUp, bumpDown, resetHeight, atMin, atMax };
+}
+
+export type CanvasWorldHeight = ReturnType<typeof useCanvasWorldHeight>;
+
+interface GameCanvasProps {
+  currentChord: ChordData | null;
+  canPlay: boolean;
+  onStringPress?: (stringNum: number, fret: number) => void;
+  onBarrePress?: (strings: { stringNum: number; fret: number }[]) => void;
+  pressedPositions?: PressedPosition[];
+  pressedBarre?: PressedBarre | null;
+  feedbackMarkers?: FeedbackMarker[];
+  strumRef?: MutableRefObject<StrumHandle | null>;
+  onStrumReady?: (strumFn: StrumDirectionFn) => void;
+  isBelowLg?: boolean;
+  /** When set, GameCanvas uses this instead of an internal height hook (one source of truth). */
+  canvasView?: CanvasWorldHeight;
+  /** When false, floating +/−/reset are not shown (parent may render them). Default true. */
+  floatingViewControls?: boolean;
+}
+
+function FixedCamera({ worldHeight }: { worldHeight: number }) {
+  const { size } = useThree();
+
+  return (
+    <OrthographicCamera
+      makeDefault
+      position={[0, 0, 10]}
+      zoom={size.height / worldHeight}
+      near={0.1}
+      far={100}
+    />
+  );
+}
+
+function GameCanvasInner({
+  currentChord,
+  canPlay,
+  onStringPress,
+  onBarrePress,
+  pressedPositions = [],
+  pressedBarre = null,
+  feedbackMarkers = [],
+  strumRef,
+  onStrumReady,
+  isBelowLg = false,
+  canvasView,
+  floatingViewControls = true,
+}: GameCanvasProps & { canvasView: CanvasWorldHeight }) {
+  const { t } = useTranslation();
+  const previousChordRef = useRef<ChordData | null>(null);
+  const chordRef = useRef<ChordData | null>(null);
+
+  const { worldHeight, bumpUp, bumpDown, resetHeight, atMin, atMax } = canvasView;
 
   useEffect(() => {
     chordRef.current = currentChord;
@@ -151,66 +166,77 @@ function GameCanvas({
         />
       </Canvas>
 
-      {/* View height — stored in localStorage (responsive touch targets + spacing) */}
-      <div
-        className="absolute z-30 flex flex-row items-stretch gap-1.5 pointer-events-auto
-          bottom-[max(0.75rem,env(safe-area-inset-bottom,0px))] right-[max(0.75rem,env(safe-area-inset-right,0px))]
-          lg:bottom-6 lg:right-6 lg:gap-2.5"
-        role="group"
-        aria-label={t("game.canvasViewControls")}
-      >
-        <button
-          type="button"
-          onClick={bumpUp}
-          disabled={atMax}
-          title={t("game.canvasZoomOut")}
-          className="inline-flex items-center justify-center min-h-[32px] min-w-[32px] w-[32px] shrink-0
-            lg:min-h-[44px] lg:min-w-[44px] lg:w-[44px]
-            rounded-lg
-            bg-gray-900/90 border border-gray-600/70 sm:border-gray-500/60
-            text-gray-100 text-sm lg:text-xl font-bold
-            shadow-lg backdrop-blur-sm
-            hover:bg-gray-800 md:hover:border-gray-400/50
-            disabled:opacity-35 disabled:cursor-not-allowed
-            active:scale-95 transition touch-manipulation"
+      {floatingViewControls && (
+        <div
+          className="absolute z-30 flex flex-row items-stretch gap-1.5 pointer-events-auto
+            bottom-[max(0.75rem,env(safe-area-inset-bottom,0px))] right-[max(0.75rem,env(safe-area-inset-right,0px))]
+            lg:bottom-6 lg:right-6 lg:gap-2.5"
+          role="group"
+          aria-label={t("game.canvasViewControls")}
         >
-          +
-        </button>
-        <button
-          type="button"
-          onClick={bumpDown}
-          disabled={atMin}
-          title={t("game.canvasZoomIn")}
-          className="inline-flex items-center justify-center min-h-[32px] min-w-[32px] w-[32px] shrink-0
-            lg:min-h-[44px] lg:min-w-[44px] lg:w-[44px]
-            rounded-lg
-            bg-gray-900/90 border border-gray-600/70 sm:border-gray-500/60
-            text-gray-100 text-sm lg:text-xl font-bold
-            shadow-lg backdrop-blur-sm
-            hover:bg-gray-800 md:hover:border-gray-400/50
-            disabled:opacity-35 disabled:cursor-not-allowed
-            active:scale-95 transition touch-manipulation"
-        >
-          −
-        </button>
-        <button
-          type="button"
-          onClick={resetHeight}
-          title={t("game.canvasResetView")}
-          className="inline-flex items-center justify-center min-h-[32px] min-w-[32px] w-[32px] shrink-0 px-1
-            lg:min-h-[44px] lg:min-w-[44px] lg:w-[44px]
-            rounded-lg
-            bg-gray-800/95 border border-gray-600/60 sm:border-gray-500/50
-            text-[10px] lg:text-[12px] text-gray-300 leading-tight text-center
-            shadow-md backdrop-blur-sm
-            hover:bg-gray-700 md:hover:border-gray-400/40
-            active:scale-95 transition touch-manipulation"
-        >
-          {t("game.canvasResetButton")}
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={bumpUp}
+            disabled={atMax}
+            title={t("game.canvasZoomOut")}
+            className="inline-flex items-center justify-center min-h-[32px] min-w-[32px] w-[32px] shrink-0
+              lg:min-h-[44px] lg:min-w-[44px] lg:w-[44px]
+              rounded-lg
+              bg-gray-900/90 border border-gray-600/70 sm:border-gray-500/60
+              text-gray-100 text-sm lg:text-xl font-bold
+              shadow-lg backdrop-blur-sm
+              hover:bg-gray-800 md:hover:border-gray-400/50
+              disabled:opacity-35 disabled:cursor-not-allowed
+              active:scale-95 transition touch-manipulation"
+          >
+            +
+          </button>
+          <button
+            type="button"
+            onClick={bumpDown}
+            disabled={atMin}
+            title={t("game.canvasZoomIn")}
+            className="inline-flex items-center justify-center min-h-[32px] min-w-[32px] w-[32px] shrink-0
+              lg:min-h-[44px] lg:min-w-[44px] lg:w-[44px]
+              rounded-lg
+              bg-gray-900/90 border border-gray-600/70 sm:border-gray-500/60
+              text-gray-100 text-sm lg:text-xl font-bold
+              shadow-lg backdrop-blur-sm
+              hover:bg-gray-800 md:hover:border-gray-400/50
+              disabled:opacity-35 disabled:cursor-not-allowed
+              active:scale-95 transition touch-manipulation"
+          >
+            −
+          </button>
+          <button
+            type="button"
+            onClick={resetHeight}
+            title={t("game.canvasResetView")}
+            className="inline-flex items-center justify-center min-h-[32px] min-w-[32px] w-[32px] shrink-0 px-1
+              lg:min-h-[44px] lg:min-w-[44px] lg:w-[44px]
+              rounded-lg
+              bg-gray-800/95 border border-gray-600/60 sm:border-gray-500/50
+              text-[10px] lg:text-[12px] text-gray-300 leading-tight text-center
+              shadow-md backdrop-blur-sm
+              hover:bg-gray-700 md:hover:border-gray-400/40
+              active:scale-95 transition touch-manipulation"
+          >
+            {t("game.canvasResetButton")}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
 
-export default GameCanvas;
+function GameCanvasWithLocalHeight(props: Omit<GameCanvasProps, "canvasView">) {
+  const canvasView = useCanvasWorldHeight(props.isBelowLg ?? false);
+  return <GameCanvasInner {...props} canvasView={canvasView} />;
+}
+
+export default function GameCanvas(props: GameCanvasProps) {
+  if (props.canvasView != null) {
+    return <GameCanvasInner {...props} canvasView={props.canvasView} />;
+  }
+  return <GameCanvasWithLocalHeight {...props} />;
+}
