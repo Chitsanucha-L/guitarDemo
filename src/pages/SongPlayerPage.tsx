@@ -60,28 +60,28 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
     switchMode,
   } = useSongPlayer(song);
 
-  /** Extra chords shown in the strip: +2 when width ≤1024px, +6 when ≤1440px (and >1024), else 0. */
+  /** Extra chords: ≤1128 →+2; 1129–1439 →+4; ≥1440 →+6. */
   const [lineRangeExtra, setLineRangeExtra] = useState(() => {
-    if (typeof window === "undefined") return 0;
-    if (window.matchMedia("(max-width: 1024px)").matches) return 2;
-    if (window.matchMedia("(max-width: 1440px)").matches) return 6;
-    return 0;
+    if (typeof window === "undefined") return 6;
+    if (window.matchMedia("(max-width: 1128px)").matches) return 2;
+    if (window.matchMedia("(max-width: 1439px)").matches) return 4;
+    return 6;
   });
 
   useEffect(() => {
-    const m1024 = window.matchMedia("(max-width: 1024px)");
-    const m1440 = window.matchMedia("(max-width: 1440px)");
+    const m1128 = window.matchMedia("(max-width: 1128px)");
+    const m1439 = window.matchMedia("(max-width: 1439px)");
     const update = () => {
-      if (m1024.matches) setLineRangeExtra(2);
-      else if (m1440.matches) setLineRangeExtra(6);
-      else setLineRangeExtra(0);
+      if (m1128.matches) setLineRangeExtra(2);
+      else if (m1439.matches) setLineRangeExtra(4);
+      else setLineRangeExtra(6);
     };
     update();
-    m1024.addEventListener("change", update);
-    m1440.addEventListener("change", update);
+    m1128.addEventListener("change", update);
+    m1439.addEventListener("change", update);
     return () => {
-      m1024.removeEventListener("change", update);
-      m1440.removeEventListener("change", update);
+      m1128.removeEventListener("change", update);
+      m1439.removeEventListener("change", update);
     };
   }, []);
 

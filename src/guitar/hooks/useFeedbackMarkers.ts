@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
-import type { FeedbackMarker } from "./useChordGame";
+import type { FeedbackMarker, PressedBarre } from "./useChordGame";
 
 const NOTE_TO_STRING_NUM: Record<string, number> = {
   E6: 6, A: 5, D: 4, G: 3, B: 2, e1: 1,
@@ -36,6 +36,7 @@ const noopRaycast = () => {};
 export function useFeedbackMarkers(
   scene: THREE.Group | THREE.Scene,
   feedbackMarkers: FeedbackMarker[],
+  pressedBarre: PressedBarre | null = null,
 ) {
   const markersRef = useRef<THREE.Group | null>(null);
 
@@ -48,10 +49,18 @@ export function useFeedbackMarkers(
 
     if (feedbackMarkers.length === 0) return;
 
+    const barreSkip = new Set<string>();
+    if (pressedBarre && pressedBarre.fret > 0) {
+      for (const s of pressedBarre.strings) {
+        barreSkip.add(`${s}:${pressedBarre.fret}`);
+      }
+    }
+
     const group = new THREE.Group();
     group.name = "FeedbackMarkers";
 
     for (const fb of feedbackMarkers) {
+      if (barreSkip.has(`${fb.string}:${fb.fret}`)) continue;
       const stringNum = NOTE_TO_STRING_NUM[fb.string];
       if (!stringNum) continue;
 
@@ -107,5 +116,5 @@ export function useFeedbackMarkers(
         markersRef.current = null;
       }
     };
-  }, [scene, feedbackMarkers]);
+  }, [scene, feedbackMarkers, pressedBarre]);
 }

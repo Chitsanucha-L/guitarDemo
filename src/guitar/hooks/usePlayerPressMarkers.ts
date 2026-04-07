@@ -1,12 +1,15 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
-import type { PressedPosition, PressedBarre } from "./useChordGame";
+import type { PressedPosition, PressedBarre, FeedbackMarker } from "./useChordGame";
 
 const NOTE_TO_STRING_NUM: Record<string, number> = {
   E6: 6, A: 5, D: 4, G: 3, B: 2, e1: 1,
 };
 
 const PRESS_COLOR = 0x3b82f6;
+const CORRECT_COLOR = 0x22c55e;
+const WRONG_COLOR = 0xef4444;
+
 /** Dot radius — barre cross-string width matches dot diameter (2×). */
 const DOT_RADIUS = 0.022;
 const BAR_CROSS_WIDTH = DOT_RADIUS * 1.5;
@@ -55,14 +58,40 @@ function sortedBarreStringNums(strings: string[]): number[] {
 }
 
 /**
- * Renders blue markers for player-pressed positions.
+ * Resolve the barre bar color from feedback markers:
+ * - No feedback → blue (playing state)
+ * - All barre strings correct → green
+ * - Any barre string wrong → red
+ */
+function resolveBarreColor(
+  barre: PressedBarre,
+  feedback: FeedbackMarker[],
+): number {
+  if (feedback.length === 0) return PRESS_COLOR;
+
+  const fbMap = new Map<string, FeedbackMarker["type"]>();
+  for (const f of feedback) fbMap.set(`${f.string}:${f.fret}`, f.type);
+
+  let hasWrong = false;
+  for (const s of barre.strings) {
+    const type = fbMap.get(`${s}:${barre.fret}`);
+    if (type === "wrong") { hasWrong = true; break; }
+  }
+  return hasWrong ? WRONG_COLOR : CORRECT_COLOR;
+}
+
+/**
+ * Renders markers for player-pressed positions.
  * Barre uses explicit pressedBarre only; endpoints = highest vs lowest string
  * after sort (drag direction independent). Dots deduped; no dots under barre.
+ *
+ * When feedbackMarkers is non-empty the barre bar color switches to green/red.
  */
 export function usePlayerPressMarkers(
   scene: THREE.Group | THREE.Scene,
   pressedPositions: PressedPosition[],
   pressedBarre: PressedBarre | null = null,
+  feedbackMarkers: FeedbackMarker[] = [],
 ) {
   const markersRef = useRef<THREE.Group | null>(null);
 
@@ -99,6 +128,8 @@ export function usePlayerPressMarkers(
     if (hasBarre && pressedBarre) {
       const { fret } = pressedBarre;
       const stringNums = sortedBarreStringNums(pressedBarre.strings);
+
+      const barColor = resolveBarreColor(pressedBarre, feedbackMarkers);
 
       const endpoints: { stringNum: number; local: THREE.Vector3 }[] = [];
       for (const stringNum of stringNums) {
@@ -139,7 +170,7 @@ export function usePlayerPressMarkers(
         const barGlow = new THREE.Mesh(
           new THREE.ShapeGeometry(glowShape),
           new THREE.MeshBasicMaterial({
-            color: PRESS_COLOR,
+            color: barColor,
             side: THREE.DoubleSide,
             transparent: true,
             opacity: 0.2,
@@ -156,7 +187,7 @@ export function usePlayerPressMarkers(
         const bar = new THREE.Mesh(
           new THREE.ShapeGeometry(barShape),
           new THREE.MeshBasicMaterial({
-            color: PRESS_COLOR,
+            color: barColor,
             side: THREE.DoubleSide,
             transparent: true,
             opacity: 0.85,
@@ -227,5 +258,5 @@ export function usePlayerPressMarkers(
         markersRef.current = null;
       }
     };
-  }, [scene, pressedPositions, pressedBarre]);
+  }, [scene, pressedPositions, pressedBarre, feedbackMarkers]);
 }

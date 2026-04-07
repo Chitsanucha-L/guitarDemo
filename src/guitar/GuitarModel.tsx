@@ -100,8 +100,8 @@ export default function GuitarModel({
 
   useChordAnimation(scene, highlightChord, previousChord, stringFretMap);
   useScaleHighlight(scene, scaleNotes, rootSemitone, stringFretMap, scaleFretRange);
-  usePlayerPressMarkers(scene, pressedPositions, pressedBarre);
-  useFeedbackMarkers(scene, feedbackMarkers);
+  usePlayerPressMarkers(scene, pressedPositions, pressedBarre, feedbackMarkers);
+  useFeedbackMarkers(scene, feedbackMarkers, pressedBarre);
 
   return (
     <group 

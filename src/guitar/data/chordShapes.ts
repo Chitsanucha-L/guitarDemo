@@ -1159,6 +1159,28 @@ export function hasOverride(
   return overrideKey(root, quality, tension) in OVERRIDES;
 }
 
+/**
+ * Check whether pressing `stringName` at `fret` produces a valid chord tone
+ * for (root, quality, tension).  Used by the game checker to tolerate extra
+ * barre notes that are musically correct.
+ */
+export function isChordTone(
+  stringName: string,
+  fret: number,
+  root: Root,
+  quality: Quality,
+  tension?: string,
+): boolean {
+  if (fret < 0) return false;
+  const openSemi = STRING_OPEN[stringName as Note];
+  if (openSemi === undefined) return false;
+  const noteSemi = (openSemi + fret) % 12;
+  const rootSemi = SEMITONES[root];
+  const interval = (noteSemi - rootSemi + 12) % 12;
+  const intervals = buildChordIntervals(quality, tension);
+  return intervals.includes(interval);
+}
+
 // ---------------------------------------------------------------------------
 // Game-mode chord lists (open-position chords suitable for beginners)
 // ---------------------------------------------------------------------------

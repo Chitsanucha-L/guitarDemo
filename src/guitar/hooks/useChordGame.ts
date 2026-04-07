@@ -2,9 +2,11 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import type { ChordData } from "../data/types";
 import {
   getGameChordPool,
+  getAllVoicings,
   type GameDifficulty,
   type GameChordEntry,
 } from "../data/gameDifficulty";
+import { isChordTone } from "../data/chordShapes";
 
 export type GameStatus = "idle" | "playing" | "correct" | "wrong" | "gameover" | "won";
 export type GameMode = "practice" | "challenge";
@@ -44,7 +46,7 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 export function useChordGame() {
-  const [currentChord, setCurrentChord] = useState<{ name: string; data: ChordData } | null>(null);
+  const [currentChord, setCurrentChord] = useState<GameChordEntry | null>(null);
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(CHALLENGE_TIME_SECONDS);
   const [pressedPositions, setPressedPositions] = useState<PressedPosition[]>([]);
@@ -73,7 +75,7 @@ export function useChordGame() {
   const cycleQueueRef = useRef<GameChordEntry[]>([]);
 
   const applyChordPick = useCallback((entry: GameChordEntry) => {
-    setCurrentChord({ name: entry.name, data: entry.data });
+    setCurrentChord(entry);
     setPressedPositions([]);
     setFeedbackMarkers([]);
     setMissingCount(0);
@@ -222,24 +224,53 @@ export function useChordGame() {
   const buildFeedback = useCallback((): { isCorrect: boolean; markers: FeedbackMarker[]; missing: number } => {
     if (!currentChord) return { isCorrect: true, markers: [], missing: 0 };
 
-    const requiredPositions = getRequiredFingerPositions(currentChord.data);
-    const requiredKeySet = new Set(requiredPositions.map((p) => `${p.string}:${p.fret}`));
+    const { root, quality, tension } = currentChord;
+    const voicings = getAllVoicings(currentChord);
     const playedPositions = pressedPositions.filter((p) => p.fret > 0);
     const playedKeySet = new Set(playedPositions.map((p) => `${p.string}:${p.fret}`));
 
-    const missing = requiredPositions.filter((p) => !playedKeySet.has(`${p.string}:${p.fret}`)).length;
-    const markers: FeedbackMarker[] = [];
-    for (const p of playedPositions) {
-      const type = requiredKeySet.has(`${p.string}:${p.fret}`) ? "correct" : "wrong";
-      markers.push({ string: p.string, fret: p.fret, type });
+    let bestResult: { isCorrect: boolean; markers: FeedbackMarker[]; missing: number } | null = null;
+
+    for (const voicingData of voicings) {
+      const requiredPositions = getRequiredFingerPositions(voicingData);
+      const requiredKeySet = new Set(requiredPositions.map((p) => `${p.string}:${p.fret}`));
+
+      const mutedStrings = new Set<string>();
+      for (const [s, v] of Object.entries(voicingData.notes)) {
+        if (v.fret === -1) mutedStrings.add(s);
+      }
+
+      const missing = requiredPositions.filter((p) => !playedKeySet.has(`${p.string}:${p.fret}`)).length;
+      const markers: FeedbackMarker[] = [];
+
+      let extraWrongCount = 0;
+      for (const p of playedPositions) {
+        if (requiredKeySet.has(`${p.string}:${p.fret}`)) {
+          markers.push({ string: p.string, fret: p.fret, type: "correct" });
+        } else if (
+          !mutedStrings.has(p.string) &&
+          isChordTone(p.string, p.fret, root, quality, tension)
+        ) {
+          markers.push({ string: p.string, fret: p.fret, type: "correct" });
+        } else {
+          markers.push({ string: p.string, fret: p.fret, type: "wrong" });
+          extraWrongCount++;
+        }
+      }
+
+      const isCorrect =
+        requiredPositions.length > 0 &&
+        missing === 0 &&
+        extraWrongCount === 0;
+
+      if (isCorrect) return { isCorrect: true, markers, missing: 0 };
+
+      if (!bestResult || missing < bestResult.missing) {
+        bestResult = { isCorrect: false, markers, missing };
+      }
     }
 
-    const isCorrect =
-      requiredPositions.length > 0 &&
-      requiredPositions.length === playedPositions.length &&
-      missing === 0;
-
-    return { isCorrect, markers, missing };
+    return bestResult ?? { isCorrect: false, markers: [], missing: 0 };
   }, [currentChord, pressedPositions]);
 
   const validateChord = useCallback(() => {
