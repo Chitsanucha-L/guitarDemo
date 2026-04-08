@@ -12,7 +12,6 @@ export const OVERRIDES: Record<string, ChordData> = {
   D:  { notes: { E6: { fret: -1 }, A: { fret: -1 }, D: { fret: 0 }, G: { fret: 2, finger: 1 }, B: { fret: 3, finger: 3 }, e1: { fret: 2, finger: 2 } } },
   A:  { notes: { E6: { fret: 0 }, A: { fret: 0 }, D: { fret: 2, finger: 2 }, G: { fret: 2, finger: 3 }, B: { fret: 2, finger: 4 }, e1: { fret: 0 } } },
   E:  { notes: { E6: { fret: 0 }, A: { fret: 2, finger: 2 }, D: { fret: 2, finger: 3 }, G: { fret: 1, finger: 1 }, B: { fret: 0 }, e1: { fret: 0 } } },
-  F:  { notes: { E6: { fret: 1, finger: 1 }, A: { fret: 3, finger: 3 }, D: { fret: 3, finger: 4 }, G: { fret: 2, finger: 2 }, B: { fret: 1, finger: 1 }, e1: { fret: 1, finger: 1 } }, _barre: { fret: 1, finger: 1, fromString: "E6", toString: "e1" } },
 
   // ---- Minor (open) ----
   Am: { notes: { E6: { fret: 0 }, A: { fret: 0 }, D: { fret: 2, finger: 2 }, G: { fret: 2, finger: 3 }, B: { fret: 1, finger: 1 }, e1: { fret: 0 } } },
@@ -26,7 +25,6 @@ export const OVERRIDES: Record<string, ChordData> = {
   D7:  { notes: { E6: { fret: -1 }, A: { fret: -1 }, D: { fret: 0 }, G: { fret: 2, finger: 2 }, B: { fret: 1, finger: 1 }, e1: { fret: 2, finger: 3 } } },
   A7:  { notes: { E6: { fret: 0 }, A: { fret: 0 }, D: { fret: 2, finger: 2 }, G: { fret: 0 }, B: { fret: 2, finger: 3 }, e1: { fret: 0 } } },
   E7:  { notes: { E6: { fret: 0 }, A: { fret: 2, finger: 2 }, D: { fret: 0 }, G: { fret: 1, finger: 1 }, B: { fret: 0 }, e1: { fret: 0 } } },
-  F7:  { notes: { E6: { fret: 1, finger: 1 }, A: { fret: 3, finger: 3 }, D: { fret: 2, finger: 2 }, G: { fret: 2, finger: 2 }, B: { fret: 1, finger: 1 }, e1: { fret: 1, finger: 1 } }, _barre: { fret: 1, finger: 1, fromString: "E6", toString: "e1" } },
   Am7: { notes: { E6: { fret: 0 }, A: { fret: 0 }, D: { fret: 2, finger: 2 }, G: { fret: 0 }, B: { fret: 1, finger: 1 }, e1: { fret: 0 } } },
   Em7: { notes: { E6: { fret: 0 }, A: { fret: 2, finger: 2 }, D: { fret: 0 }, G: { fret: 0 }, B: { fret: 0 }, e1: { fret: 0 } } },
   Dm7: { notes: { E6: { fret: -1 }, A: { fret: -1 }, D: { fret: 0 }, G: { fret: 2, finger: 2 }, B: { fret: 1, finger: 1 }, e1: { fret: 1, finger: 1 } }, _barre: { fret: 1, finger: 1, fromString: "B", toString: "e1" } },
@@ -36,22 +34,23 @@ export const OVERRIDES: Record<string, ChordData> = {
   Gmaj7: { notes: { E6: { fret: 3, finger: 3 }, A: { fret: 2, finger: 2 }, D: { fret: 0 }, G: { fret: 0 }, B: { fret: 0 }, e1: { fret: 2, finger: 1 } } },
   Dmaj7: { notes: { E6: { fret: -1 }, A: { fret: -1 }, D: { fret: 0 }, G: { fret: 2, finger: 1 }, B: { fret: 2, finger: 2 }, e1: { fret: 2, finger: 3 } } },
   Amaj7: { notes: { E6: { fret: 0 }, A: { fret: 0 }, D: { fret: 2, finger: 2 }, G: { fret: 1, finger: 1 }, B: { fret: 2, finger: 3 }, e1: { fret: 0 } } },
-  Emaj7: { notes: { E6: { fret: 0 }, A: { fret: 2, finger: 2 }, D: { fret: 1, finger: 1 }, G: { fret: 1, finger: 1 }, B: { fret: 0 }, e1: { fret: 0 } }, _barre: { fret: 1, finger: 1, fromString: "D", toString: "G" } },
-  Fmaj7: { notes: { E6: { fret: 1, finger: 1 }, A: { fret: 3, finger: 3 }, D: { fret: 3, finger: 4 }, G: { fret: 2, finger: 2 }, B: { fret: 1, finger: 1 }, e1: { fret: 0 } }, _barre: { fret: 1, finger: 1, fromString: "E6", toString: "B" } },
+  Emaj7: { notes: { E6: { fret: 0 }, A: { fret: 2, finger: 3 }, D: { fret: 1, finger: 1 }, G: { fret: 1, finger: 2 }, B: { fret: 0 }, e1: { fret: 0 } } },
   Ammaj7: { notes: { E6: { fret: 0 }, A: { fret: 0 }, D: { fret: 2, finger: 2 }, G: { fret: 1, finger: 1 }, B: { fret: 1, finger: 1 }, e1: { fret: 0 } }, _barre: { fret: 1, finger: 1, fromString: "G", toString: "B" } },
   Emmaj7: { notes: { E6: { fret: 0 }, A: { fret: 2, finger: 2 }, D: { fret: 1, finger: 1 }, G: { fret: 0 }, B: { fret: 0 }, e1: { fret: 0 } } },
   Dmmaj7: { notes: { E6: { fret: -1 }, A: { fret: -1 }, D: { fret: 0 }, G: { fret: 2, finger: 2 }, B: { fret: 2, finger: 3 }, e1: { fret: 1, finger: 1 } } },
 
   // ---- sus4 ----
-  Csus4: { notes: { E6: { fret: -1 }, A: { fret: 3, finger: 4 }, D: { fret: 2, finger: 2 }, G: { fret: 0 }, B: { fret: 1, finger: 1 }, e1: { fret: 3, finger: 3 } } },
+  Csus4: { notes: { E6: { fret: -1 }, A: { fret: 3, finger: 3 }, D: { fret: 3, finger: 4 }, G: { fret: 0 }, B: { fret: 1, finger: 1 }, e1: { fret: 1, finger: 1 } }, _barre: { fret: 1, finger: 1, fromString: "B", toString: "e1" } },
   Gsus4: { notes: { E6: { fret: 3, finger: 2 }, A: { fret: 2, finger: 1 }, D: { fret: 0 }, G: { fret: 0 }, B: { fret: 1, finger: 3 }, e1: { fret: 3, finger: 4 } } },
   Dsus4: { notes: { E6: { fret: -1 }, A: { fret: -1 }, D: { fret: 0 }, G: { fret: 2, finger: 1 }, B: { fret: 3, finger: 3 }, e1: { fret: 3, finger: 4 } } },
   Asus4: { notes: { E6: { fret: 0 }, A: { fret: 0 }, D: { fret: 2, finger: 2 }, G: { fret: 2, finger: 3 }, B: { fret: 3, finger: 4 }, e1: { fret: 0 } } },
   Esus4: { notes: { E6: { fret: 0 }, A: { fret: 2, finger: 2 }, D: { fret: 2, finger: 3 }, G: { fret: 2, finger: 4 }, B: { fret: 0 }, e1: { fret: 0 } } },
-  Fsus4: { notes: { E6: { fret: 1, finger: 1 }, A: { fret: 3, finger: 4 }, D: { fret: 3, finger: 3 }, G: { fret: 3, finger: 2 }, B: { fret: 1, finger: 1 }, e1: { fret: 1, finger: 1 } }, _barre: { fret: 1, finger: 1, fromString: "E6", toString: "e1" } },
   Amsus4: { notes: { E6: { fret: 0 }, A: { fret: 0 }, D: { fret: 2, finger: 2 }, G: { fret: 2, finger: 3 }, B: { fret: 3, finger: 4 }, e1: { fret: 0 } } },
   Emsus4: { notes: { E6: { fret: 0 }, A: { fret: 2, finger: 2 }, D: { fret: 2, finger: 3 }, G: { fret: 0 }, B: { fret: 0 }, e1: { fret: 0 } } },
   Dmsus4: { notes: { E6: { fret: -1 }, A: { fret: -1 }, D: { fret: 0 }, G: { fret: 2, finger: 2 }, B: { fret: 3, finger: 4 }, e1: { fret: 3, finger: 3 } } },
+
+  // ---- sus2 ----
+  Esus2: { notes: { E6: { fret: -1 }, A: { fret: -1 }, D: { fret: 2, finger: 1 }, G: { fret: 4, finger: 3 }, B: { fret: 5, finger: 4 }, e1: { fret: 2, finger: 1 } }, _barre: { fret: 2, finger: 1, fromString: "D", toString: "e1" } },
 
   // ---- add9 ----
   Cadd9: { notes: { E6: { fret: -1 }, A: { fret: 3, finger: 2 }, D: { fret: 2, finger: 1 }, G: { fret: 0 }, B: { fret: 3, finger: 3 }, e1: { fret: 0 } } },
@@ -59,7 +58,6 @@ export const OVERRIDES: Record<string, ChordData> = {
   Dadd9: { notes: { E6: { fret: 0 }, A: { fret: 0 }, D: { fret: 0 }, G: { fret: 2, finger: 1 }, B: { fret: 3, finger: 2 }, e1: { fret: 0 } } },
   Aadd9: { notes: { E6: { fret: 0 }, A: { fret: 0 }, D: { fret: 2, finger: 1 }, G: { fret: 4, finger: 3 }, B: { fret: 2, finger: 2 }, e1: { fret: 0 } } },
   Eadd9: { notes: { E6: { fret: 0 }, A: { fret: 2, finger: 1 }, D: { fret: 2, finger: 2 }, G: { fret: 1, finger: 3 }, B: { fret: 0 }, e1: { fret: 2, finger: 4 } } },
-  Fadd9: { notes: { E6: { fret: 1, finger: 1 }, A: { fret: 3, finger: 3 }, D: { fret: 3, finger: 4 }, G: { fret: 2, finger: 2 }, B: { fret: 1, finger: 1 }, e1: { fret: 3, finger: 2 } }, _barre: { fret: 1, finger: 1, fromString: "E6", toString: "B" } },
   Amadd9: { notes: { E6: { fret: 0 }, A: { fret: 0 }, D: { fret: 2, finger: 1 }, G: { fret: 4, finger: 3 }, B: { fret: 1, finger: 2 }, e1: { fret: 0 } } },
   Emadd9: { notes: { E6: { fret: 0 }, A: { fret: 2, finger: 1 }, D: { fret: 2, finger: 2 }, G: { fret: 0 }, B: { fret: 0 }, e1: { fret: 2, finger: 3 } } },
   Dmadd9: { notes: { E6: { fret: 0 }, A: { fret: 0 }, D: { fret: 0 }, G: { fret: 2, finger: 1 }, B: { fret: 3, finger: 2 }, e1: { fret: 0 } } },
@@ -84,20 +82,25 @@ export const OVERRIDES: Record<string, ChordData> = {
   "E6/9": { notes: { E6: { fret: 0 }, A: { fret: 2, finger: 1 }, D: { fret: 2, finger: 1 }, G: { fret: 1, finger: 2 }, B: { fret: 2, finger: 3 }, e1: { fret: 2, finger: 4 } } },
 
   // ---- 6 ----
-  C6:  { notes: { E6: { fret: -1 }, A: { fret: 3, finger: 3 }, D: { fret: 2, finger: 2 }, G: { fret: 2, finger: 4 }, B: { fret: 1, finger: 1 }, e1: { fret: 0 } } },
-  A6:  { notes: { E6: { fret: -1 }, A: { fret: 0 }, D: { fret: 2, finger: 2 }, G: { fret: 2, finger: 3 }, B: { fret: 2, finger: 4 }, e1: { fret: 2, finger: 1 } } },
+  C6:  { notes: { E6: { fret: -1 }, A: { fret: 3, finger: 4 }, D: { fret: 2, finger: 2 }, G: { fret: 2, finger: 3 }, B: { fret: 1, finger: 1 }, e1: { fret: 0 } } },
+  A6:  { notes: { E6: { fret: -1 }, A: { fret: 0 }, D: { fret: 2, finger: 1 }, G: { fret: 2, finger: 1 }, B: { fret: 2, finger: 1 }, e1: { fret: 2, finger: 1 } }, _barre: { fret: 2, finger: 1, fromString: "D", toString: "e1" } },
   D6:  { notes: { E6: { fret: -1 }, A: { fret: -1 }, D: { fret: 0 }, G: { fret: 2, finger: 1 }, B: { fret: 0 }, e1: { fret: 2, finger: 2 } } },
   "E6":  { notes: { E6: { fret: 0 }, A: { fret: 2, finger: 2 }, D: { fret: 2, finger: 3 }, G: { fret: 1, finger: 1 }, B: { fret: 2, finger: 4 }, e1: { fret: 0 } } },
   G6:  { notes: { E6: { fret: 3, finger: 2 }, A: { fret: 2, finger: 1 }, D: { fret: 0 }, G: { fret: 0 }, B: { fret: 0 }, e1: { fret: 0 } } },
+  Am6: { notes: { E6: { fret: -1 }, A: { fret: 0 }, D: { fret: 2, finger: 2 }, G: { fret: 2, finger: 3 }, B: { fret: 1, finger: 1 }, e1: { fret: 2, finger: 4 } } },
 
   // ---- dim ----
   Cdim:  { notes: { E6: { fret: -1 }, A: { fret: 3, finger: 2 }, D: { fret: 4, finger: 3 }, G: { fret: 2, finger: 1 }, B: { fret: 4, finger: 4 }, e1: { fret: -1 } } },
 
   // ---- dim7 ----
-  Cdim7: { notes: { E6: { fret: -1 }, A: { fret: 3, finger: 2 }, D: { fret: 4, finger: 3 }, G: { fret: 2, finger: 1 }, B: { fret: 4, finger: 4 }, e1: { fret: 2, finger: 1 } } },
+  Cdim7: { notes: { E6: { fret: -1 }, A: { fret: 3, finger: 2 }, D: { fret: 4, finger: 3 }, G: { fret: 2, finger: 1 }, B: { fret: 4, finger: 4 }, e1: { fret: 2, finger: 1 } }, _barre: { fret: 2, finger: 1, fromString: "G", toString: "e1" } },
+  Adim7: { notes: { E6: { fret: -1 }, A: { fret: 0 }, D: { fret: 1, finger: 1 }, G: { fret: 2, finger: 3 }, B: { fret: 1, finger: 2 }, e1: { fret: 2, finger: 4 } } },
 
   // ---- aug ----
-  Caug:  { notes: { E6: { fret: -1 }, A: { fret: 3, finger: 3 }, D: { fret: 2, finger: 2 }, G: { fret: 1, finger: 1 }, B: { fret: 1, finger: 1 }, e1: { fret: 0 } } },
+  Caug:  { notes: { E6: { fret: -1 }, A: { fret: 3, finger: 3 }, D: { fret: 2, finger: 2 }, G: { fret: 1, finger: 1 }, B: { fret: 1, finger: 1 }, e1: { fret: -1 } }, _barre: { fret: 1, finger: 1, fromString: "G", toString: "B" } },
+  Eaug:  { notes: { E6: { fret: 0 }, A: { fret: 3, finger: 3 }, D: { fret: 2, finger: 2 }, G: { fret: 1, finger: 1 }, B: { fret: 1, finger: 1 }, e1: { fret: 0 } }, _barre: { fret: 1, finger: 1, fromString: "G", toString: "B" } },
+  Aaug:  { notes: { E6: { fret: -1 }, A: { fret: 0 }, D: { fret: 3, finger: 4 }, G: { fret: 2, finger: 2 }, B: { fret: 2, finger: 3 }, e1: { fret: 1, finger: 1 } } },
+  Faug:  { notes: { E6: { fret: -1 }, A: { fret: -1 }, D: { fret: 3, finger: 4 }, G: { fret: 2, finger: 2 }, B: { fret: 2, finger: 3 }, e1: { fret: 1, finger: 1 } } },
 };
 
 // ---------------------------------------------------------------------------
@@ -219,7 +222,7 @@ const SHAPES: Record<Quality, ChordShape[]> = {
     { baseSemitone: 9, rootStringIndex: 1, frets: [null, 0, 2, 0, 1, 0] },
   ],
   "6": [
-    { baseSemitone: 4, rootStringIndex: 0, frets: [0, 2, 2, 1, 2, 0] },
+    { baseSemitone: 4, rootStringIndex: 0, frets: [null, 2, 2, 1, 2, null] },
     { baseSemitone: 9, rootStringIndex: 1, frets: [null, 0, 2, 2, 2, 2] },
   ],
   m6: [
@@ -230,11 +233,10 @@ const SHAPES: Record<Quality, ChordShape[]> = {
     { baseSemitone: 9, rootStringIndex: 1, frets: [null, 0, 1, 2, 1, null] },
   ],
   dim7: [
-    { baseSemitone: 9, rootStringIndex: 1, frets: [null, 0, 1, 2, 1, 2] },
+    { baseSemitone: 9, rootStringIndex: 1, frets: [null, null, 1, 2, 1, 2] },
   ],
   aug: [
-    { baseSemitone: 4, rootStringIndex: 0, frets: [0, 3, 2, 1, 1, 0] },
-    { baseSemitone: 9, rootStringIndex: 1, frets: [null, 0, 3, 2, 2, 1] },
+    { baseSemitone: 9, rootStringIndex: 1, frets: [null, null, 3, 2, 2, 1] },
   ],
   sus4: [
     { baseSemitone: 4, rootStringIndex: 0, frets: [0, 2, 2, 2, 0, 0] },
@@ -242,7 +244,7 @@ const SHAPES: Record<Quality, ChordShape[]> = {
   ],
   sus2: [
     { baseSemitone: 9, rootStringIndex: 1, frets: [null, 0, 2, 2, 0, 0] },
-    { baseSemitone: 4, rootStringIndex: 0, frets: [0, 2, 4, 4, 0, 0] },
+    { baseSemitone: 4, rootStringIndex: 0, frets: [null, null, 2, 4, 5, 2] },
   ],
 };
 
@@ -406,26 +408,100 @@ function transposeShape(shape: ChordShape, targetRoot: Root): ChordData {
     ? Math.min(...played.map(s => s.fret))
     : 0;
   const atMin = played.filter(s => s.fret === minFret);
-  const hasBarre = offset > 0 && atMin.length >= 2 && minFret > 0;
+  let hasBarre = offset > 0 && atMin.length >= 2 && minFret > 0;
 
-  const barreIndices = hasBarre ? atMin.map(s => s.index) : [];
-  const bFrom = hasBarre ? Math.min(...barreIndices) : undefined;
-  const bTo = hasBarre ? Math.max(...barreIndices) : undefined;
+  // Barre must span ALL played strings (lowest to highest index).
+  // Standard barre chords (E/A shape) cover the full range with individual
+  // fingers on top. A narrow barre that doesn't reach the outermost played
+  // strings (e.g. dim7 [x,x,2,3,2,3]) is not a real barre pattern.
+  if (hasBarre) {
+    const barreIndicesCheck = atMin.map(s => s.index);
+    const playedLo = Math.min(...played.map(s => s.index));
+    const playedHi = Math.max(...played.map(s => s.index));
+    const barreLo = Math.min(...barreIndicesCheck);
+    const barreHi = Math.max(...barreIndicesCheck);
+    if (barreLo !== playedLo || barreHi !== playedHi) {
+      hasBarre = false;
+    }
+  }
 
-  const fingerMap = assignFingers(played, hasBarre, minFret, bFrom, bTo);
-  for (const [idx, finger] of fingerMap) {
-    notes[STRING_NAMES[idx]].finger = finger;
+  let barreIndices = hasBarre ? atMin.map(s => s.index) : [];
+  let barreFret = minFret;
+  let secondaryBarre = false;
+
+  // Secondary barre: bass note(s) sit below a group of 3+ consecutive strings
+  // at a higher fret. e.g. A6-shape C6 [x,3,5,5,5,5] → barre at fret 5, bass at fret 3.
+  // The barre is only valid if no string in its range needs a different fret.
+  if (!hasBarre && offset > 0 && minFret > 0) {
+    const fretGroups = new Map<number, typeof played>();
+    for (const s of played) {
+      if (s.fret > minFret) {
+        if (!fretGroups.has(s.fret)) fretGroups.set(s.fret, []);
+        fretGroups.get(s.fret)!.push(s);
+      }
+    }
+    for (const [fret, strings] of fretGroups) {
+      if (strings.length >= 3) {
+        const indices = strings.map(s => s.index);
+        const lo = Math.min(...indices);
+        const hi = Math.max(...indices);
+        // Every string between lo and hi must be at this fret or muted
+        const blocked = played.some(
+          s => s.index > lo && s.index < hi && s.fret !== fret,
+        );
+        if (!blocked) {
+          hasBarre = true;
+          secondaryBarre = true;
+          barreFret = fret;
+          barreIndices = indices;
+          break;
+        }
+      }
+    }
   }
 
   const result: ChordData = { notes };
 
-  if (hasBarre) {
+  if (secondaryBarre) {
+    // Bass notes below the barre get ascending fingers starting from index
+    const bassNotes = played
+      .filter(s => s.fret < barreFret)
+      .sort((a, b) => a.index - b.index);
+    let nextFinger = 1;
+    for (const s of bassNotes) {
+      notes[STRING_NAMES[s.index]].finger = nextFinger as Finger;
+      nextFinger++;
+    }
+    // Barre with ring finger (3) — natural reach over bass notes
+    const barreFinger = Math.min(nextFinger + 1, 4) as Finger;
+    for (const idx of barreIndices) {
+      notes[STRING_NAMES[idx]].finger = barreFinger;
+    }
+    const bFrom = Math.min(...barreIndices);
+    const bTo = Math.max(...barreIndices);
     result._barre = {
-      fret: minFret,
-      finger: 1,
-      fromString: STRING_NAMES[bFrom!],
-      toString: STRING_NAMES[bTo!],
+      fret: barreFret,
+      finger: barreFinger,
+      fromString: STRING_NAMES[bFrom],
+      toString: STRING_NAMES[bTo],
     };
+  } else {
+    const bFrom = hasBarre ? Math.min(...barreIndices) : undefined;
+    const bTo = hasBarre ? Math.max(...barreIndices) : undefined;
+
+    const fingerMap = assignFingers(played, hasBarre, barreFret, bFrom, bTo);
+    for (const [idx, finger] of fingerMap) {
+      notes[STRING_NAMES[idx]].finger = finger;
+    }
+
+    if (hasBarre) {
+      result._barre = {
+        fret: barreFret,
+        finger: 1,
+        fromString: STRING_NAMES[bFrom!],
+        toString: STRING_NAMES[bTo!],
+      };
+    }
   }
 
   return result;
@@ -1019,13 +1095,17 @@ export function generateFingerings(
   if (OVERRIDES[key]) {
     const override = OVERRIDES[key];
 
-    // Determine if this is truly an open voicing or a barre shape.
-    // Open = has open strings and no barre. Barre = labeled by shape family.
+    // Determine if this is truly an open voicing or a movable barre shape.
+    // Movable barre = barre starts from E6 or A string, no open strings.
+    // Partial barres (starting from D/G/B) are fingering details, not movable shapes.
     let overId: string;
     let overLabel: string;
 
-    if (override._barre) {
-      // Barre chord — classify by bass string
+    const hasOpenString = Object.values(override.notes).some(n => n.fret === 0);
+    const isMovableBarre = override._barre && !hasOpenString
+      && (override._barre.fromString === "E6" || override._barre.fromString === "A");
+
+    if (isMovableBarre) {
       const e6Fret = override.notes.E6.fret;
       if (e6Fret >= 0) {
         overId = "e-shape";
@@ -1046,15 +1126,18 @@ export function generateFingerings(
   if (!tension) {
     const shapes = SHAPES[quality];
     if (shapes) {
-      const hasOverrideVoicing = result.length > 0; // override was added in step 1
+      const overrideFamily = result.length > 0 ? result[0].id : null;
 
       for (const shape of shapes) {
-        // If offset is 0, this shape IS the open position.
-        // Skip it when we already have an override (avoids near-duplicate).
-        // E.g. A open = [0,0,2,2,2,0], A-shape offset 0 = [x,0,2,2,2,0]
+        const shapeType = shape.rootStringIndex === 0 ? "e-shape" : "a-shape";
+
+        // Skip when the override already covers this shape family
+        if (overrideFamily === shapeType) continue;
+
         const rootString = STRING_NAMES[shape.rootStringIndex];
         const offset = (SEMITONES[root] - STRING_OPEN[rootString] + 12) % 12;
-        if (offset === 0 && hasOverrideVoicing) continue;
+        // Open-position duplicate: skip when override is "open" (same voicing)
+        if (offset === 0 && overrideFamily === "open") continue;
 
         const chord = transposeShape(shape, root);
 
@@ -1069,7 +1152,6 @@ export function generateFingerings(
         const isDuplicate = result.some(v => isSameShape(v.data, chord));
         if (isDuplicate) continue;
 
-        const shapeType = shape.rootStringIndex === 0 ? "e-shape" : "a-shape";
         const label = shape.rootStringIndex === 0 ? "E Shape" : "A Shape";
 
         result.push({ id: shapeType, label, data: chord });

@@ -34,10 +34,7 @@ const DISABLED_TABS_WHILE_PLAYING = new Set<import("./ui/MobileBottomTabs").Mobi
 
 const DEFAULT_POSITION = new THREE.Vector3(0.3, 6, 0.01);
 const DEFAULT_TARGET = new THREE.Vector3(0, 0, 0);
-const DEFAULT_SPHERICAL = new THREE.Spherical().setFromVector3(
-  new THREE.Vector3().subVectors(DEFAULT_POSITION, DEFAULT_TARGET),
-);
-const LERP_SPEED = 3.5;
+const LERP_SPEED = 5;
 
 function CameraController({ isPlayMode }: { isPlayMode: boolean }) {
   const controlsRef = useRef<OrbitControlsImpl>(null!);
@@ -48,55 +45,45 @@ function CameraController({ isPlayMode }: { isPlayMode: boolean }) {
   useEffect(() => {
     if (isPlayMode && !wasPlayMode.current) {
       animating.current = true;
+    } else if (!isPlayMode && wasPlayMode.current) {
+      animating.current = false;
     }
     wasPlayMode.current = isPlayMode;
   }, [isPlayMode]);
 
   useFrame((_, delta) => {
-    if (!animating.current || !controlsRef.current) return;
-
     const controls = controlsRef.current;
-    const t = Math.min(LERP_SPEED * delta, 1);
+    if (!controls) return;
 
-    // Lerp the orbit target
-    controls.target.lerp(DEFAULT_TARGET, t);
+    if (animating.current) {
+      controls.enableZoom = false;
+      controls.enablePan = false;
+      controls.enableRotate = false;
+      controls.enableDamping = false;
 
-    // Animate in spherical coordinates so the camera orbits smoothly
-    const offset = new THREE.Vector3().subVectors(camera.position, controls.target);
-    const current = new THREE.Spherical().setFromVector3(offset);
+      const t = Math.min(LERP_SPEED * delta, 1);
 
-    // Shortest-path for the horizontal angle (avoids spinning the long way)
-    let dTheta = DEFAULT_SPHERICAL.theta - current.theta;
-    if (dTheta > Math.PI) dTheta -= 2 * Math.PI;
-    if (dTheta < -Math.PI) dTheta += 2 * Math.PI;
-
-    current.radius += (DEFAULT_SPHERICAL.radius - current.radius) * t;
-    current.phi += (DEFAULT_SPHERICAL.phi - current.phi) * t;
-    current.theta += dTheta * t;
-
-    camera.position.copy(controls.target).add(
-      new THREE.Vector3().setFromSpherical(current),
-    );
-    controls.update();
-
-    // Snap when close enough
-    const posDist = camera.position.distanceTo(DEFAULT_POSITION);
-    const tgtDist = controls.target.distanceTo(DEFAULT_TARGET);
-    if (posDist < 0.01 && tgtDist < 0.01) {
-      camera.position.copy(DEFAULT_POSITION);
-      controls.target.copy(DEFAULT_TARGET);
+      controls.target.lerp(DEFAULT_TARGET, t);
+      camera.position.lerp(DEFAULT_POSITION, t);
       controls.update();
-      animating.current = false;
+
+      const posDist = camera.position.distanceTo(DEFAULT_POSITION);
+      const tgtDist = controls.target.distanceTo(DEFAULT_TARGET);
+      if (posDist < 0.01 && tgtDist < 0.01) {
+        camera.position.copy(DEFAULT_POSITION);
+        controls.target.copy(DEFAULT_TARGET);
+        controls.update();
+        animating.current = false;
+      }
+    } else {
+      controls.enableZoom = true;
+      controls.enablePan = true;
+      controls.enableRotate = !isPlayMode;
+      controls.enableDamping = true;
     }
   });
 
-  return (
-    <OrbitControls
-      ref={controlsRef}
-      enableDamping
-      enableRotate={!isPlayMode}
-    />
-  );
+  return <OrbitControls ref={controlsRef} />;
 }
 
 function SectionHeader({
