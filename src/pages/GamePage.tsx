@@ -375,34 +375,34 @@ export default function GamePage() {
         {gameStatus === "won" && (
           <div className="absolute inset-0 z-50 overflow-y-auto overscroll-contain scrollbar-visible bg-black/70 backdrop-blur-md">
             <div className="flex items-center justify-center min-h-full p-4">
-              <div className="bg-gray-900/95 backdrop-blur-md p-4 lg:p-8 rounded-2xl shadow-2xl border border-green-500/40 text-center max-w-lg w-full">
-                <h2 className="text-2xl lg:text-4xl font-bold text-green-400 mb-2 lg:mb-4">{t("game.youWin")}</h2>
-                <p className="text-gray-300 text-sm lg:text-base mb-3 lg:mb-5">{t("game.youWinDesc", { count: poolSize })}</p>
+              <div className="bg-gray-900/95 backdrop-blur-md p-4 lg:p-6 rounded-2xl shadow-2xl border border-green-500/40 text-center max-w-sm lg:max-w-md w-full">
+                <h2 className="text-lg lg:text-xl xl:text-2xl font-bold text-green-400 mb-2 lg:mb-4">{t("game.youWin")}</h2>
+                <p className="text-gray-300 text-sm lg:text-[15px] mb-3 lg:mb-5">{t("game.youWinDesc", { count: poolSize })}</p>
                 <div className="grid grid-cols-3 gap-2 lg:gap-3 mb-4 lg:mb-6">
-                  <div className="bg-gray-800/60 rounded-xl p-2 lg:p-3 border border-gray-700/30">
+                  <div className="bg-gray-800/60 rounded-xl p-1.5 lg:p-2.5 border border-gray-700/30">
                     <div className="text-[10px] lg:text-xs text-gray-500 uppercase">{t("stats.totalCorrect")}</div>
-                    <div className="text-lg lg:text-2xl font-bold text-green-400">{correctCount}</div>
+                    <div className="text-lg lg:text-xl font-bold text-green-400">{correctCount}</div>
                   </div>
-                  <div className="bg-gray-800/60 rounded-xl p-2 lg:p-3 border border-gray-700/30">
+                  <div className="bg-gray-800/60 rounded-xl p-1.5 lg:p-2.5 border border-gray-700/30">
                     <div className="text-[10px] lg:text-xs text-gray-500 uppercase">{t("stats.totalWrong")}</div>
-                    <div className="text-lg lg:text-2xl font-bold text-red-400">{wrongCount}</div>
+                    <div className="text-lg lg:text-xl font-bold text-red-400">{wrongCount}</div>
                   </div>
-                  <div className="bg-gray-800/60 rounded-xl p-2 lg:p-3 border border-gray-700/30">
+                  <div className="bg-gray-800/60 rounded-xl p-1.5 lg:p-2.5 border border-gray-700/30">
                     <div className="text-[10px] lg:text-xs text-gray-500 uppercase">{t("game.finalScore")}</div>
-                    <div className="text-lg lg:text-2xl font-bold text-yellow-400">{score}</div>
+                    <div className="text-lg lg:text-xl font-bold text-yellow-400">{score}</div>
                   </div>
                 </div>
                 <div className="flex justify-center gap-3 lg:gap-4">
                   <button
                     type="button"
                     onClick={resetGame}
-                    className="bg-green-600 hover:bg-green-500 text-white font-bold text-base lg:text-xl px-6 lg:px-8 py-2.5 lg:py-3 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg shadow-green-500/20"
+                    className="bg-green-600 hover:bg-green-500 text-white font-bold text-sm lg:text-base px-4 lg:px-5 py-2 lg:py-2.5 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg shadow-green-500/20"
                   >
                     {t("game.playAgain")}
                   </button>
                   <Link
                     to="/"
-                    className="inline-block bg-gray-700 hover:bg-gray-600 text-white font-bold text-base lg:text-xl px-6 lg:px-8 py-2.5 lg:py-3 rounded-xl transition-all duration-200 transform hover:scale-105"
+                    className="inline-block bg-gray-700 hover:bg-gray-600 text-white font-bold text-sm lg:text-base px-4 lg:px-5 py-2 lg:py-2.5 rounded-xl transition-all duration-200 transform hover:scale-105"
                   >
                     {t("game.exit")}
                   </Link>
@@ -416,38 +416,38 @@ export default function GamePage() {
         {gameStatus === "gameover" && (
           <div className="absolute inset-0 z-50 overflow-y-auto overscroll-contain scrollbar-visible bg-black/70 backdrop-blur-md">
             <div className="flex items-center justify-center min-h-full p-4">
-              <div className="bg-gray-900/95 backdrop-blur-md p-4 lg:p-8 rounded-2xl shadow-2xl border border-red-500/30 text-center max-w-lg w-full">
-                <h2 className="text-2xl lg:text-4xl font-bold text-red-400 mb-2 lg:mb-4">{t("game.gameOver")}</h2>
+              <div className="bg-gray-900/95 backdrop-blur-md p-4 lg:p-6 rounded-2xl shadow-2xl border border-red-500/30 text-center max-w-sm lg:max-w-md w-full">
+                <h2 className="text-lg lg:text-2xl xl:text-3xl font-bold text-red-400 mb-2 lg:mb-3">{t("game.gameOver")}</h2>
 
                 <div className="my-3 lg:my-6">
-                  <div className="text-gray-400 text-lg lg:text-xl mb-1">{t("game.finalScore")}</div>
-                  <div className="text-4xl lg:text-6xl font-black text-yellow-400">{score}</div>
+                  <div className="text-gray-400 text-base lg:text-lg mb-1">{t("game.finalScore")}</div>
+                  <div className="text-2xl lg:text-4xl font-black text-yellow-400">{score}</div>
                   {score >= activeStats.bestScore && score > 0 && (
-                    <div className="text-yellow-300 text-sm lg:text-base font-bold mt-1">
+                    <div className="text-yellow-300 text-xs lg:text-sm font-bold mt-1">
                       🏆 {t("stats.newBest")}
                     </div>
                   )}
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 lg:gap-3 mb-4 lg:mb-6">
-                  <div className="bg-gray-800/60 rounded-xl p-2 lg:p-3 border border-gray-700/30">
+                <div className="grid grid-cols-3 gap-2 lg:gap-3 mb-3 lg:mb-4">
+                  <div className="bg-gray-800/60 rounded-xl p-1.5 lg:p-2.5 border border-gray-700/30">
                     <div className="text-[10px] lg:text-xs text-gray-500 uppercase">{t("stats.totalCorrect")}</div>
-                    <div className="text-lg lg:text-2xl font-bold text-green-400">{correctCount}</div>
+                    <div className="text-lg lg:text-xl font-bold text-green-400">{correctCount}</div>
                   </div>
-                  <div className="bg-gray-800/60 rounded-xl p-2 lg:p-3 border border-gray-700/30">
+                  <div className="bg-gray-800/60 rounded-xl p-1.5 lg:p-2.5 border border-gray-700/30">
                     <div className="text-[10px] lg:text-xs text-gray-500 uppercase">{t("stats.totalWrong")}</div>
-                    <div className="text-lg lg:text-2xl font-bold text-red-400">{wrongCount}</div>
+                    <div className="text-lg lg:text-xl font-bold text-red-400">{wrongCount}</div>
                   </div>
-                  <div className="bg-gray-800/60 rounded-xl p-2 lg:p-3 border border-gray-700/30">
+                  <div className="bg-gray-800/60 rounded-xl p-1.5 lg:p-2.5 border border-gray-700/30">
                     <div className="text-[10px] lg:text-xs text-gray-500 uppercase">{t("stats.accuracy")}</div>
-                    <div className="text-lg lg:text-2xl font-bold text-cyan-400">
+                    <div className="text-lg lg:text-xl font-bold text-cyan-400">
                       {correctCount + wrongCount > 0 ? Math.round((correctCount / (correctCount + wrongCount)) * 100) : 0}%
                     </div>
                   </div>
                 </div>
 
-                <div className="border-t border-gray-700/50 pt-3 lg:pt-4 mb-4 lg:mb-6">
-                  <div className="text-xs lg:text-sm text-gray-500 uppercase tracking-wider mb-2">{t("stats.title")}</div>
+                <div className="border-t border-gray-700/50 pt-3 lg:pt-4 mb-4 lg:mb-5">
+                  <div className="text-xs lg:text-[13px] text-gray-500 uppercase tracking-wider mb-2">{t("stats.title")}</div>
                   <div className="grid grid-cols-3 gap-2 lg:gap-3">
                     <div className="bg-gray-800/40 rounded-lg p-1.5 lg:p-2">
                       <div className="text-[9px] lg:text-[10px] text-gray-500 uppercase">{t("stats.bestScore")}</div>
@@ -467,13 +467,13 @@ export default function GamePage() {
                 <div className="flex justify-center gap-3 lg:gap-4">
                   <button
                     onClick={resetGame}
-                    className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-base lg:text-xl px-6 lg:px-8 py-2.5 lg:py-3 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg shadow-blue-500/20"
+                    className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm lg:text-base px-4 lg:px-5 py-2 lg:py-2.5 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg shadow-blue-500/20"
                   >
                     {t("game.playAgain")}
                   </button>
                   <Link
                     to="/"
-                    className="inline-block bg-gray-700 hover:bg-gray-600 text-white font-bold text-base lg:text-xl px-6 lg:px-8 py-2.5 lg:py-3 rounded-xl transition-all duration-200 transform hover:scale-105"
+                    className="inline-block bg-gray-700 hover:bg-gray-600 text-white font-bold text-sm lg:text-base px-4 lg:px-5 py-2 lg:py-2.5 rounded-xl transition-all duration-200 transform hover:scale-105"
                   >
                     {t("game.exit")}
                   </Link>
