@@ -41,7 +41,8 @@ This repo works well as a **senior project or portfolio** piece. It combines:
 | 3D guitar | GLB model; finger dots follow `ChordData` |
 | Chord picker | Root, quality, tension → voicings from `chordShapes.ts` |
 | Play mode | Click string/fret → plays `String_{n}_{fret}.mp3` |
-| Strum / progression / scale | Extra panels in `Guitar3D.tsx` |
+| Strumming | Pattern presets (Basic 4/4, Groove 1, Groove 2) with a BPM slider and live BPM readout |
+| Progression / scale | Extra panels in `Guitar3D.tsx` |
 
 ### Game Mode `/game`
 
@@ -58,7 +59,7 @@ This repo works well as a **senior project or portfolio** piece. It combines:
 
 | Item | Description |
 |------|-------------|
-| Song list | e.g. Stand By Me, Let It Be, Knockin' on Heaven's Door |
+| Song list | e.g. Stand By Me, Let It Be, Zombie |
 | Player | Chord + lyric slices with `beats` and BPM |
 | Auto Play | Chord changes on the beat (pre-scheduled timeline) |
 | Step by Step | Manual next chord |
@@ -68,6 +69,7 @@ This repo works well as a **senior project or portfolio** piece. It combines:
 
 - **EN / TH** language toggle (stored in `localStorage`)
 - Portrait warning on small screens (landscape recommended)
+- **Audio error modal** — If samples fail to preload or a buffer is missing at playback time, a modal prompts the user to reload
 
 ---
 
@@ -88,7 +90,7 @@ This repo works well as a **senior project or portfolio** piece. It combines:
 
 - **Node.js** (LTS 20+ recommended)
 - A browser with **WebGL** and **Web Audio API**
-- **`public/sounds/`** should contain the full MP3 set (see below). The app still runs if some files are missing, but those notes will be silent.
+- **`public/sounds/`** should contain the full MP3 set (see below). If any sample fails to load or decode, the app surfaces `AudioErrorModal` and asks the user to reload the page.
 
 ---
 
@@ -148,20 +150,24 @@ guitar-3d/
 │       ├── Guitar3D.tsx            # Home UI + guitar canvas
 │       ├── GuitarModel.tsx         # GLB, audio, pointer, strumRef / onStrumReady
 │       ├── GameCanvas.tsx          # Game / Song canvas (orthographic camera)
+│       ├── audioPreload.ts         # Shared AudioContext, batched sample loader
+│       ├── audioError.ts           # Pub/sub latch for preload/playback failures
 │       ├── data/
 │       │   ├── chordShapes.ts      # OVERRIDES, GAME_CHORDS, generateFingering
 │       │   ├── songs.ts            # Song Mode data
 │       │   ├── types.ts            # ChordData, Note, …
 │       │   └── …
 │       ├── hooks/
-│       │   ├── useGuitarAudio.ts   # Samples, playSound, strumDirection
+│       │   ├── useGuitarAudio.ts   # Master compressor bus, playSound, strumDirection
+│       │   ├── useAudioPreload.ts  # Subscribes to preload progress (loading screen)
+│       │   ├── useStrummingEngine.ts # Pattern + BPM → stroke callbacks
 │       │   ├── useChordGame.ts     # Game state
 │       │   ├── useSongPlayer.ts    # Song timeline, pre-scheduled timeouts
 │       │   ├── useMetronome.ts
 │       │   ├── usePlayerPressMarkers.ts
 │       │   ├── useGuitarInteraction.ts
 │       │   └── …
-│       └── ui/                     # GameHUD, GameFeedback, LanguageSwitcher, …
+│       └── ui/                     # GameHUD, GameFeedback, AudioErrorModal, LanguageSwitcher, …
 ├── package.json
 └── README.md
 ```
@@ -179,7 +185,9 @@ guitar-3d/
 ### Audio
 
 - Loaded from **`/sounds/String_{n}_{fret}.mp3`** (n = 1…6, fret = 0…20)
-- Used in `useGuitarAudio` and for strums (CHECK / Song Mode)
+- Preloaded on app start via **`audioPreload.ts`** (batched fetches with a 15 s per-request timeout) and decoded/played through a **single shared `AudioContext`**
+- At playback time, every voice is routed through a master `DynamicsCompressorNode` + `GainNode` in `useGuitarAudio.ts`, so full 6-string strums do not clip
+- Preload failures or a missing buffer on pluck are reported through **`audioError.ts`**, which drives the **`AudioErrorModal`**
 
 ### Chords
 
@@ -217,8 +225,10 @@ guitar-3d/
 1. **GameCanvas** — With `strumRef` or non-empty `pressedPositions`, the canvas is in “game mode”: no full chord highlight; shows player dots + feedback markers instead.
 2. **Song Mode** — Uses **`onStrumReady`** from `GuitarModel` to call **`strumDirection("down", delayMs)`**; `delayMs` scales with BPM.
 3. **Barre rendering** — See **`usePlayerPressMarkers.ts`**.
-4. **AudioContext** — Many browsers require a user gesture before audio plays.
-5. **License** — `package.json` has `private: true`; add your own license and respect song copyright if you ship publicly.
+4. **AudioContext** — One shared context is created in `audioPreload.ts` (`getAudioContext()`) and reused everywhere. Many browsers require a user gesture before audio actually starts, so the context is `resume()`d on the first interaction.
+5. **Master audio bus** — Every voice in `useGuitarAudio.ts` connects to a master `DynamicsCompressorNode → GainNode → destination`. Individual voices use a ~3 ms attack envelope and an explicit gain ramp for voice-stealing to avoid clicks.
+6. **Audio error flow** — `reportAudioError("preload" | "playback")` latches the failure; `AudioErrorModal` subscribes and blocks the UI with a reload prompt. In **dev builds** the modal can be triggered manually via `Ctrl/Cmd + Shift + E` (preload), `Ctrl/Cmd + Shift + P` (playback), or `__triggerAudioError()` / `__clearAudioError()` from the console.
+7. **License** — `package.json` has `private: true`; add your own license and respect song copyright if you ship publicly.
 
 ---
 

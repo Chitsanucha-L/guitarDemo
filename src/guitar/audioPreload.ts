@@ -3,13 +3,34 @@
  * Fetches each file once; decoded AudioBuffers are reused (no repeated network/decode).
  */
 
+import { reportAudioError } from "./audioError";
+
 const STRINGS = 6;
 const FRETS = 21;
 export const TOTAL_AUDIO_FILES = STRINGS * FRETS;
 
+/** Per-request timeout so a stuck connection can't hang the loading screen. */
+const FETCH_TIMEOUT_MS = 15_000;
+
 const cache: Record<string, AudioBuffer> = {};
 let loadingPromise: Promise<void> | null = null;
 let onProgressCallback: ((loaded: number, total: number) => void) | null = null;
+
+let sharedAudioContext: AudioContext | null = null;
+
+/**
+ * Single shared AudioContext used for both decoding samples and playback.
+ * Keeping decode + playback on the same context means decoded AudioBuffers
+ * already match the output sample rate, avoiding per-playback resampling
+ * (which can add subtle high-frequency hash when multiple voices stack).
+ */
+export function getAudioContext(): AudioContext {
+  if (!sharedAudioContext) {
+    const Ctor = window.AudioContext || (window as any).webkitAudioContext;
+    sharedAudioContext = new Ctor();
+  }
+  return sharedAudioContext;
+}
 
 function getAllKeys(): string[] {
   const keys: string[] = [];
@@ -62,9 +83,10 @@ export function startAudioPreload(
   const keys = getAllKeys();
 
   loadingPromise = (async () => {
-    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const ctx = getAudioContext();
     const BATCH = 12;
     let loaded = 0;
+    let failed = 0;
 
     const report = () => {
       const pct = TOTAL_AUDIO_FILES ? (loaded / TOTAL_AUDIO_FILES) * 100 : 0;
@@ -76,20 +98,40 @@ export function startAudioPreload(
       const batch = keys.slice(i, i + BATCH);
       const results = await Promise.allSettled(
         batch.map(async (meshName) => {
-          const res = await fetch(`/sounds/${meshName}.mp3`, { cache: "force-cache" });
-          const buf = await res.arrayBuffer();
-          const decoded = await ctx.decodeAudioData(buf.slice(0));
-          return { meshName, decoded };
+          const controller = new AbortController();
+          const timer = window.setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+          try {
+            const res = await fetch(`/sounds/${meshName}.mp3`, {
+              cache: "force-cache",
+              signal: controller.signal,
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const buf = await res.arrayBuffer();
+            const decoded = await ctx.decodeAudioData(buf.slice(0));
+            return { meshName, decoded };
+          } finally {
+            clearTimeout(timer);
+          }
         })
       );
 
       for (const r of results) {
         if (r.status === "fulfilled") {
           cache[r.value.meshName] = r.value.decoded;
+        } else {
+          failed++;
         }
         loaded++;
       }
       report();
+    }
+
+    // If any sample failed, the guitar is only partially usable — some frets
+    // will play silence. Mark ready so the loading screen clears (don't trap
+    // the user there), but raise the audio-error latch so the modal can
+    // prompt them to reload.
+    if (failed > 0 || Object.keys(cache).length < TOTAL_AUDIO_FILES) {
+      reportAudioError("preload");
     }
     notify({ ready: true, progress: 100 });
   })();

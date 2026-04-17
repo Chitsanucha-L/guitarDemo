@@ -150,6 +150,13 @@
     "veryHardDesc": "Hard + tension chords",
     "barreEasy": "No barre chords on Easy — open shapes only."
   },
+  "audioError": {
+    "title": "Guitar Audio Unavailable",
+    "preloadMessage": "Some guitar sound files couldn't be loaded. Please check your connection and reload the page.",
+    "playbackMessage": "A guitar sound failed to play. The audio may not have loaded correctly. Please reload the page.",
+    "reload": "Reload Page",
+    "dismiss": "Dismiss"
+  },
   "song": {
     "title": "Song Mode",
     "subtitle": "Pick a beginner song and practice chord changes on the fretboard",

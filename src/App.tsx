@@ -8,6 +8,7 @@ import SongListPage from "./pages/SongListPage";
 import SongPlayerPage from "./pages/SongPlayerPage";
 import PortraitWarning from "./guitar/ui/PortraitWarning";
 import GlobalLoadingScreen from "./guitar/ui/GlobalLoadingScreen";
+import AudioErrorModal from "./guitar/ui/AudioErrorModal";
 import PreloadScene from "./guitar/PreloadScene";
 import { startAudioPreload } from "./guitar/audioPreload";
 import { useAudioPreload } from "./guitar/hooks/useAudioPreload";
@@ -33,6 +34,7 @@ function App() {
           audioReady={audioReady}
           audioProgress={audioProgress}
         />
+        <AudioErrorModal />
         <Canvas
           camera={{ position: [0, 0, 1], fov: 30 }}
           gl={{ alpha: true, antialias: false }}
@@ -55,6 +57,7 @@ function App() {
   return (
     <BrowserRouter>
       <PortraitWarning />
+      <AudioErrorModal />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/game" element={<GamePage />} />

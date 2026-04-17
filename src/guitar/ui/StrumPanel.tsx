@@ -182,9 +182,15 @@ const StrumPanel = forwardRef<StrumPanelHandle, StrumPanelProps>(function StrumP
 
       {/* BPM slider */}
       <div className="space-y-1">
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex items-baseline justify-between gap-2">
           <span className="text-gray-500 text-[10px] font-semibold uppercase tracking-wider">
             {t("strum.bpm")}
+          </span>
+          <span className="text-violet-300 text-sm font-bold tabular-nums">
+            {bpm}
+            <span className="text-gray-500 text-[10px] font-semibold uppercase tracking-wider ml-1">
+              {t("strum.bpm")}
+            </span>
           </span>
         </div>
         <div className="py-2">

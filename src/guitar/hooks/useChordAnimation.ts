@@ -308,9 +308,9 @@ export function useChordAnimation(
         local: THREE.Vector3;
       }> = [];
 
-      console.log("[Voicing]", Object.fromEntries(
-        Object.entries(highlightChord.notes).map(([k, v]) => [k, v.fret])
-      ), highlightChord._barre ? `barre: fret ${highlightChord._barre.fret} ${highlightChord._barre.fromString}→${highlightChord._barre.toString}` : "no barre");
+      // console.log("[Voicing]", Object.fromEntries(
+      //   Object.entries(highlightChord.notes).map(([k, v]) => [k, v.fret])
+      // ), highlightChord._barre ? `barre: fret ${highlightChord._barre.fret} ${highlightChord._barre.fromString}→${highlightChord._barre.toString}` : "no barre");
 
       Object.entries(highlightChord.notes).forEach(([noteKey, chordNote]) => {
         const note = noteKey as Note;

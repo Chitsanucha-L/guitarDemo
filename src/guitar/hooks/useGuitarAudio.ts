@@ -2,17 +2,43 @@ import { useEffect, useMemo, useCallback, useRef } from "react";
 import type { MutableRefObject } from "react";
 import type { ChordData } from "../data/types";
 import { stringToNote, getNoteName } from "../data/constants";
-import { getAudioBufferCache } from "../audioPreload";
+import { getAudioBufferCache, getAudioContext } from "../audioPreload";
+import { reportAudioError } from "../audioError";
 
 export function useGuitarAudio(
   highlightChord: ChordData | null,
   onNotePlay: (note: string) => void,
   chordRef?: MutableRefObject<ChordData | null>,
 ) {
-  const audioContext = useMemo(() => new (window.AudioContext || (window as any).webkitAudioContext)(), []);
+  const audioContext = useMemo(() => getAudioContext(), []);
   /** Use shared preload cache so we never re-fetch/re-decode; no local loading. */
   const sounds = useMemo(() => getAudioBufferCache(), []);
   const volume = 0.3;
+
+  /**
+   * Master bus: compressor + gain → destination.
+   *
+   * All voices route through here instead of straight to `destination`. When
+   * several strings are plucked at once (e.g. a full 6-string strum) their
+   * summed amplitude can exceed ±1.0 and get hard-clipped by the browser,
+   * which sounds like gritty digital noise. A mild compressor tames peaks
+   * before they reach the output.
+   */
+  const masterBus = useMemo(() => {
+    const comp = audioContext.createDynamicsCompressor();
+    comp.threshold.setValueAtTime(-6, audioContext.currentTime);
+    comp.knee.setValueAtTime(12, audioContext.currentTime);
+    comp.ratio.setValueAtTime(4, audioContext.currentTime);
+    comp.attack.setValueAtTime(0.003, audioContext.currentTime);
+    comp.release.setValueAtTime(0.15, audioContext.currentTime);
+
+    const gain = audioContext.createGain();
+    gain.gain.setValueAtTime(0.9, audioContext.currentTime);
+
+    comp.connect(gain);
+    gain.connect(audioContext.destination);
+    return comp;
+  }, [audioContext]);
 
   const lastPlayed = useRef<{ meshName: string; time: number } | null>(null);
   const strumGeneration = useRef(0);
@@ -45,23 +71,46 @@ export function useGuitarAudio(
     }
 
     const buf = sounds[meshName];
-    if (!buf) return;
+    if (!buf) {
+      // The user pressed a string but we have no sample to play for it.
+      // This means the preload either never completed for this key or the
+      // cache was somehow cleared. Surface the audio-error modal so the
+      // user knows to reload rather than silently failing.
+      reportAudioError("playback");
+      return;
+    }
 
+    const now = audioContext.currentTime;
+
+    // Voice stealing: fade the previous note on this string to silence before
+    // starting a new one. Schedule the starting value explicitly so the ramp
+    // has a defined origin (mixing `.value = x` with `linearRampToValueAtTime`
+    // without an anchor can cause micro-clicks during fast replacements).
     const prev = activeSources.current.get(stringNum);
     if (prev) {
       try {
-        prev.gain.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.03);
-        prev.source.stop(audioContext.currentTime + 0.03);
+        const g = prev.gain.gain;
+        g.cancelScheduledValues(now);
+        g.setValueAtTime(g.value, now);
+        g.linearRampToValueAtTime(0, now + 0.03);
+        prev.source.stop(now + 0.035);
       } catch { /* already stopped */ }
     }
 
     const src = audioContext.createBufferSource();
     src.buffer = buf;
     const gainNode = audioContext.createGain();
-    gainNode.gain.value = volume * Math.min(1, Math.max(0, volumeMultiplier));
+
+    // Short attack envelope (3 ms) so the voice's gain steps up smoothly
+    // instead of snapping to its target value. Keeps the transient clean
+    // even when six of them stack up during a strum.
+    const target = volume * Math.min(1, Math.max(0, volumeMultiplier));
+    gainNode.gain.setValueAtTime(0, now);
+    gainNode.gain.linearRampToValueAtTime(target, now + 0.003);
+
     src.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    src.start();
+    gainNode.connect(masterBus);
+    src.start(now);
 
     activeSources.current.set(stringNum, { source: src, gain: gainNode });
     src.onended = () => {
@@ -84,7 +133,7 @@ export function useGuitarAudio(
       onNotePlay("");
       noteDisplayTimeout.current = null;
     }, 2000);
-  }, [audioContext, sounds, onNotePlay]);
+  }, [audioContext, sounds, onNotePlay, masterBus]);
 
   const strumDirection = useCallback(async (direction: "down" | "up", delayMs = 75, subdivision?: number) => {
     // Bump generation — any in-flight strum with an older gen will stop itself
@@ -136,10 +185,14 @@ export function useGuitarAudio(
   }, [strumDirection]);
 
   const stopAllStrings = useCallback(() => {
+    const now = audioContext.currentTime;
     for (const [, node] of activeSources.current) {
       try {
-        node.gain.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.05);
-        node.source.stop(audioContext.currentTime + 0.05);
+        const g = node.gain.gain;
+        g.cancelScheduledValues(now);
+        g.setValueAtTime(g.value, now);
+        g.linearRampToValueAtTime(0, now + 0.05);
+        node.source.stop(now + 0.055);
       } catch { /* already stopped */ }
     }
     activeSources.current.clear();

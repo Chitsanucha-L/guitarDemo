@@ -235,7 +235,7 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
                   {countInNumber !== null ? (
                     <>
                       <div className="absolute -inset-1 bg-blue-500/20 rounded-2xl blur-lg" />
-                      <div className="relative bg-gray-900/90 backdrop-blur-md rounded-2xl px-4 py-1.5 border-2 border-blue-500/50">
+                      <div className="relative bg-gray-900/90 backdrop-blur-md rounded-2xl px-4 py-1.5 border-2 border-blue-500/50 w-[150px]">
                         <div className="text-[8px] text-white/90 text-center uppercase tracking-wider">COUNT IN</div>
                         <div className="text-lg font-black text-blue-400 text-center tabular-nums">{countInNumber}</div>
                       </div>
@@ -243,8 +243,13 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
                   ) : (
                     <>
                       <div className="absolute -inset-1 bg-yellow-500/20 rounded-2xl blur-lg" />
-                      <div className="relative bg-gray-900/80 backdrop-blur-md rounded-2xl px-4 py-1.5 border-2 border-yellow-500/40">
-                        <div className="text-[8px] text-gray-500 text-center uppercase tracking-wider">{song.title}</div>
+                      <div className="relative bg-gray-900/80 backdrop-blur-md rounded-2xl px-4 py-1.5 border-2 border-yellow-500/40 w-[150px]">
+                        <div
+                          className="text-[8px] text-gray-500 text-center uppercase tracking-wider truncate"
+                          title={song.title}
+                        >
+                          {song.title}
+                        </div>
                         <div className="text-lg font-black text-yellow-400 text-center tabular-nums">{currentChordName || "—"}</div>
                         <div className="mt-0.5 w-full h-[2px] bg-gray-700/50 rounded-full overflow-hidden">
                           <div className="h-full bg-yellow-400/80 rounded-full transition-none" style={{ width: `${beatProgress * 100}%` }} />
@@ -309,7 +314,7 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
                   {countInNumber !== null ? (
                     <>
                       <div className="absolute -inset-1 bg-blue-500/20 rounded-2xl blur-lg" />
-                      <div className="relative bg-gray-900/90 backdrop-blur-md rounded-2xl px-5 lg:px-10 py-2 lg:py-3 border-2 border-blue-500/50">
+                      <div className="relative bg-gray-900/90 backdrop-blur-md rounded-2xl px-5 lg:px-10 py-2 lg:py-3 border-2 border-blue-500/50 w-[220px]">
                         <div className="text-[9px] lg:text-xs xl:text-sm text-white/90 text-center uppercase tracking-wider">
                           COUNT IN
                         </div>
@@ -321,8 +326,11 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
                   ) : (
                     <>
                       <div className="absolute -inset-1 bg-yellow-500/20 rounded-2xl blur-lg" />
-                      <div className="relative bg-gray-900/80 backdrop-blur-md rounded-2xl px-5 lg:px-10 py-2 lg:py-3 border-2 border-yellow-500/40">
-                        <div className="text-[10px] lg:text-xs xl:text-sm text-gray-500 text-center uppercase tracking-wider">
+                      <div className="relative bg-gray-900/80 backdrop-blur-md rounded-2xl px-5 lg:px-10 py-2 lg:py-3 border-2 border-yellow-500/40 w-[220px]">
+                        <div
+                          className="text-[10px] lg:text-xs xl:text-sm text-gray-500 text-center uppercase tracking-wider truncate"
+                          title={song.title}
+                        >
                           {song.title}
                         </div>
                         <div className="mt-0 lg:mt-1 text-2xl lg:text-4xl xl:text-5xl font-black text-yellow-400 text-center tabular-nums">

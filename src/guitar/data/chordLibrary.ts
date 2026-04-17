@@ -20,14 +20,14 @@ export function resolveChordSelection(selection: ChordSelection): ChordData | nu
   try {
     const result = generateFingering(root, quality, tension ?? undefined);
 
-    console.group(`[Fingering] ${buildChordName(selection)}`);
-    console.table(
-      Object.fromEntries(
-        Object.entries(result.notes).map(([s, d]) => [s, { fret: d.fret, finger: d.finger ?? "-" }]),
-      ),
-    );
-    if (result._barre) console.log("Barre:", result._barre);
-    console.groupEnd();
+    // console.group(`[Fingering] ${buildChordName(selection)}`);
+    // console.table(
+    //   Object.fromEntries(
+    //     Object.entries(result.notes).map(([s, d]) => [s, { fret: d.fret, finger: d.finger ?? "-" }]),
+    //   ),
+    // );
+    // if (result._barre) console.log("Barre:", result._barre);
+    // console.groupEnd();
 
     return result;
   } catch {
