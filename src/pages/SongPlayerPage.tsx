@@ -60,28 +60,28 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
     switchMode,
   } = useSongPlayer(song);
 
-  /** Extra chords: ≤1128 →+2; 1129–1439 →+4; ≥1440 →+6. */
+  /** Extra chords: ≤1128 →+2; 1129–1791 →+4; ≥1792 →+6. */
   const [lineRangeExtra, setLineRangeExtra] = useState(() => {
-    if (typeof window === "undefined") return 6;
-    if (window.matchMedia("(max-width: 1128px)").matches) return 2;
-    if (window.matchMedia("(max-width: 1439px)").matches) return 4;
+    if (typeof window === "undefined") return 4;
+    if (window.matchMedia("(max-width: 1128px)").matches) return 1;
+    if (window.matchMedia("(max-width: 1791px)").matches) return 4;
     return 6;
   });
 
   useEffect(() => {
     const m1128 = window.matchMedia("(max-width: 1128px)");
-    const m1439 = window.matchMedia("(max-width: 1439px)");
+    const m1791 = window.matchMedia("(max-width: 1791px)");
     const update = () => {
-      if (m1128.matches) setLineRangeExtra(2);
-      else if (m1439.matches) setLineRangeExtra(4);
+      if (m1128.matches) setLineRangeExtra(1);
+      else if (m1791.matches) setLineRangeExtra(4);
       else setLineRangeExtra(6);
     };
     update();
     m1128.addEventListener("change", update);
-    m1439.addEventListener("change", update);
+    m1791.addEventListener("change", update);
     return () => {
       m1128.removeEventListener("change", update);
-      m1439.removeEventListener("change", update);
+      m1791.removeEventListener("change", update);
     };
   }, []);
 
@@ -390,7 +390,7 @@ function SongPlayerInner({ song }: { song: (typeof SONGS)[number] }) {
                       {entry.chord}
                     </span>
                     <span
-                      className={`leading-tight text-center max-w-[6.5rem] lg:max-w-[8rem] truncate text-[9px] lg:text-xs ${
+                      className={`leading-tight text-center text-[9px] lg:text-xs ${
                         isActive ? "text-white" : isPast ? "text-gray-600" : "text-gray-400"
                       }`}
                       title={lyric || undefined}
