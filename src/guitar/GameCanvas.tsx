@@ -141,7 +141,7 @@ function GameCanvasInner({
         <directionalLight position={[5, 10, 5]} intensity={1} />
 
         <GuitarModel
-          position={isBelowLg ? [-0.8, -0.04, 0] : [-0.8, 0, 0]}
+          position={isBelowLg && isGameMode ? [-0.8, -0.04, 0] : [-0.8, 0, 0]}
           rotation={[Math.PI / 2, -Math.PI / 2 + 0.01, 0]}
           highlightChord={isGameMode ? null : currentChord}
           chordRef={chordRef}
